@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "201578437650",
+    "project_id": "kawamen-f1098",
+    "storage_bucket": "kawamen-f1098.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:201578437650:android:3e113b5051e07be2f84ccb",
+        "android_client_info": {
+          "package_name": "com.kawamen.android"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCLQ2_Xjm7brlTCDSONbCJtKaZW6PscZzU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
