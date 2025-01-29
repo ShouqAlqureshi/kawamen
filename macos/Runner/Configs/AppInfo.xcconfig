@@ -8,7 +8,7 @@
 PRODUCT_NAME = kawamen
 
 // The application's bundle identifier
-PRODUCT_BUNDLE_IDENTIFIER = com.example.kawamen
+PRODUCT_BUNDLE_IDENTIFIER = com.kawamen.android
 
 // The copyright displayed in application information
 PRODUCT_COPYRIGHT = Copyright © 2025 com.example. All rights reserved.
