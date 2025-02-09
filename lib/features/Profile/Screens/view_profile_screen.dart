@@ -1,12 +1,9 @@
-import 'dart:developer';
 
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:kawamen/features/Profile/Screens/edit_profile_screen.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'profile_bloc.dart';
+
 
 class ViewProfileScreen extends StatelessWidget {
   const ViewProfileScreen({super.key});

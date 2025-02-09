@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:kawamen/features/Profile/Screens/profile_bloc.dart';
 import 'package:kawamen/features/Profile/Screens/view_profile_screen.dart';
+import 'package:kawamen/features/LogIn/view/login_page.dart';
 
 void main() {
    WidgetsFlutterBinding.ensureInitialized();
@@ -44,6 +45,7 @@ class MyApp extends StatelessWidget {
         create: (context) => ProfileBloc(),
         child: const ViewProfileScreen(),
       ),
+
     );
   }
 }
