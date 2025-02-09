@@ -10,7 +10,7 @@ import 'package:kawamen/firebase_options.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
+    options: DefaultFirebaseOptions.currentPlatform, // If using Firebase CLI
   );
   runApp(App());
 }
