@@ -1,107 +1,50 @@
+import 'dart:developer';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:kawamen/Edit_profile_screen.dart';
+import 'package:kawamen/features/Profile/Screens/edit_profile_screen.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'profile_bloc.dart';
 
-class ViewProfileScreen extends StatefulWidget {
+class ViewProfileScreen extends StatelessWidget {
   const ViewProfileScreen({super.key});
-
+  
   @override
-  State<ViewProfileScreen> createState() => _ViewProfileScreenState();
-}
-
-class _ViewProfileScreenState extends State<ViewProfileScreen> {
-  bool emotionDetectionToggle = false;
-  bool notificationToggle = false;
-  bool microphoneToggle = false;
-  bool showControlCenter = false;
-
-  // User info variables
-  String userName = 'shouq alqureshi'; //for testing purposes
-  String userEmail = 'shooq@gmail.com';
-  String userAge = '16';
-  String avatarText = 'SB';
-
-  @override
-  void initState() {
-    super.initState();
-    fetchUserInfo();
-  }
-
-  // Function to get initials from name
-  String getInitials(String name) {
-    if (name.isEmpty) return '';
-
-    List<String> nameParts = name.trim().split(' ');
-    String initials = '';
-
-    for (var part in nameParts) {
-      if (part.isNotEmpty) {
-        initials += part[0].toUpperCase();
-      }
-    }
-
-    return initials;
-  }
-
-  Future<Map<String, String>> fetchUserInfo() async {
-    Map<String, String> userInfo = {
-      'name': '',
-      'email': '',
-      'age': '',
-    };
-
-    try {
-      final String? userId = FirebaseAuth.instance.currentUser?.uid;
-
-      if (userId != null) {
-        DocumentSnapshot userDoc = await FirebaseFirestore.instance
-            .collection('Usersinfo')
-            .doc(userId)
-            .get();
-
-        if (userDoc.exists) {
-          Map<String, dynamic> userData =
-              userDoc.data() as Map<String, dynamic>;
-
-          userInfo = {
-            'name': userData['name']?.toString() ?? '',
-            'email': userData['email']?.toString() ?? '',
-            'age': userData['age']?.toString() ?? '',
-          };
-
-          setState(() {
-            userName = userInfo['name'] ?? '';
-            userEmail = userInfo['email'] ?? '';
-            userAge = userInfo['age'] ?? '';
-            avatarText = getInitials(userName);
-          });
-        }
-      }
-    } catch (e) {
-      print('Error fetching user info: $e');
-    }
-    return userInfo;
-  }
-
-  void navigateToEditProfile() async {
-    final userInfo = await fetchUserInfo();
-    if (mounted) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => EditProfileScreen(
-            initialUserInfo: userInfo,
-            onProfileUpdated: () {
-              fetchUserInfo(); // Refresh profile data after update
-            },
-          ),
+  Widget build(BuildContext context) {
+    return BlocProvider(
+      create: (context) => ProfileBloc()..add(FetchToggleStates()),
+      child: Scaffold(
+        backgroundColor: const Color.fromARGB(255, 32, 32, 32),
+        body: BlocBuilder<ProfileBloc, ProfileState>(
+          builder: (context, state) {
+            if (state is ProfileLoading) {
+              return const Center(child: CircularProgressIndicator());
+            } else if (state is ToggleStatesLoaded) {
+              return _buildProfile(context, state);
+            } else if (state is ProfileError) {
+              print(state.message);
+              return Center(
+                  child: Text(
+                state.message,
+                style: const TextStyle(color: Colors.white),
+              ));
+            } else {
+              return const Center(child: Text('Something went wrong'));
+            }
+          },
         ),
-      );
-    }
+      ),
+    );
   }
 
-  Widget buildProfile() {
+  Widget _buildProfile(BuildContext context, ToggleStatesLoaded state) {
+    String userName = state.userData['fullName'] ?? '';
+    String userEmail = state.userData['email'] ?? '';
+    String userAge = state.userData['age'] ?? '';
+    String avatarText = getInitials(userName);
+    bool showControlCenter = false;
     return Scaffold(
       backgroundColor: const Color.fromARGB(255, 32, 32, 32),
       body: Center(
@@ -143,7 +86,7 @@ class _ViewProfileScreenState extends State<ViewProfileScreen> {
               ),
               const SizedBox(height: 4),
               Text(
-                userAge.isNotEmpty ? '$userAge years old' : '',
+                userAge.isNotEmpty ? '$userAge سنه' : '',
                 style: const TextStyle(
                   fontSize: 16,
                   color: Colors.white70,
@@ -159,7 +102,7 @@ class _ViewProfileScreenState extends State<ViewProfileScreen> {
                       child: ListTile(
                         title: const Center(
                           child: Text(
-                            "Edit Profile",
+                            "تعديل معلومات الحساب",
                             style: TextStyle(color: Colors.white),
                           ),
                         ),
@@ -169,8 +112,21 @@ class _ViewProfileScreenState extends State<ViewProfileScreen> {
                           color: Colors.white,
                           size: 20,
                         ),
-                        onTap:
-                            navigateToEditProfile, // Fixed: Call the function directly
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => EditProfileScreen(
+                                initialUserInfo: state.userData,
+                                onProfileUpdated: () {
+                                  context
+                                      .read<ProfileBloc>()
+                                      .add(FetchUserInfo());
+                                },
+                              ),
+                            ),
+                          );
+                        },
                       ),
                     ),
                     Card(
@@ -178,14 +134,16 @@ class _ViewProfileScreenState extends State<ViewProfileScreen> {
                       child: ListTile(
                         title: const Center(
                           child: Text(
-                            "Control Center",
+                            "لوحة تحكم",
                             style: TextStyle(color: Colors.white),
                           ),
                         ),
                         tileColor: showControlCenter
+                            // ignore: dead_code
                             ? const Color.fromARGB(255, 94, 94, 94)
                             : const Color.fromARGB(255, 48, 48, 48),
                         trailing: showControlCenter
+                            // ignore: dead_code
                             ? const Icon(
                                 Icons.keyboard_arrow_down_rounded,
                                 color: Colors.white,
@@ -197,9 +155,7 @@ class _ViewProfileScreenState extends State<ViewProfileScreen> {
                                 size: 20,
                               ),
                         onTap: () {
-                          setState(() {
-                            showControlCenter = !showControlCenter;
-                          });
+                          showControlCenter = !showControlCenter;
                         },
                       ),
                     ),
@@ -213,14 +169,17 @@ class _ViewProfileScreenState extends State<ViewProfileScreen> {
                             ),
                           ),
                           title: const Text(
-                            'Emotion Detection',
+                            'اكتشاف المشاعر',
                             style: TextStyle(color: Colors.white),
                           ),
-                          value: emotionDetectionToggle,
-                          onChanged: (bool value) {
-                            setState(() {
-                              emotionDetectionToggle = value;
-                            });
+                          value: state.emotionDetectionToggle,
+                          onChanged: (value) {
+                            context.read<ProfileBloc>().add(
+                                  UpdateToggleState(
+                                    toggleName: 'emotionDetectionToggle',
+                                    newValue: value,
+                                  ),
+                                );
                           },
                           subtitle: const Text(
                             "Unenabling this won't allow the app to provide treatments",
@@ -231,14 +190,17 @@ class _ViewProfileScreenState extends State<ViewProfileScreen> {
                           inactiveTrackColor: Colors.white24),
                       SwitchListTile(
                           title: const Text(
-                            'Microphone',
+                            'المايكروفون',
                             style: TextStyle(color: Colors.white),
                           ),
-                          value: microphoneToggle,
-                          onChanged: (bool value) {
-                            setState(() {
-                              microphoneToggle = value;
-                            });
+                          value: state.microphoneToggle,
+                          onChanged: (value) {
+                            context.read<ProfileBloc>().add(
+                                  UpdateToggleState(
+                                    toggleName: 'microphoneToggle',
+                                    newValue: value,
+                                  ),
+                                );
                           },
                           subtitle: const Text(
                             "Unenabling this won't allow the app to passively listen and detect emotion",
@@ -255,14 +217,17 @@ class _ViewProfileScreenState extends State<ViewProfileScreen> {
                             ),
                           ),
                           title: const Text(
-                            'Notification',
+                            'الاشعارات',
                             style: TextStyle(color: Colors.white),
                           ),
-                          value: notificationToggle,
-                          onChanged: (bool value) {
-                            setState(() {
-                              notificationToggle = value;
-                            });
+                          value: state.notificationToggle,
+                          onChanged: (value) {
+                            context.read<ProfileBloc>().add(
+                                  UpdateToggleState(
+                                    toggleName: 'notificationToggle',
+                                    newValue: value,
+                                  ),
+                                );
                           },
                           subtitle: const Text(
                             "Unenabling this won't allow the app to send treatment suggestions",
@@ -283,7 +248,7 @@ class _ViewProfileScreenState extends State<ViewProfileScreen> {
                         ),
                         title: const Center(
                           child: Text(
-                            "Log out",
+                            "تسجيل خروج",
                             style: TextStyle(color: Colors.white),
                           ),
                         ),
@@ -294,14 +259,9 @@ class _ViewProfileScreenState extends State<ViewProfileScreen> {
                           size: 20,
                         ),
                         onTap: () {
-                          if (mounted) {
-                            // Navigator.push(
-                            //   context,
-                            //   MaterialPageRoute(
-                            //     builder: (context) => logout(),
-                            //   ),
-                            // );
-                          }
+                          // context.read<ProfileBloc>().add(
+                          //       logout(),
+                          //     );
                         },
                       ),
                     ),
@@ -315,8 +275,15 @@ class _ViewProfileScreenState extends State<ViewProfileScreen> {
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return buildProfile();
+  String getInitials(String name) {
+    if (name.isEmpty) return '';
+    List<String> nameParts = name.trim().split(' ');
+    String initials = '';
+    for (var part in nameParts) {
+      if (part.isNotEmpty) {
+        initials += part[0].toUpperCase();
+      }
+    }
+    return initials;
   }
 }

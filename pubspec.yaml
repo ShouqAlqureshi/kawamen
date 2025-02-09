@@ -41,6 +41,9 @@ dependencies:
   firebase_storage: ^12.4.1
   firebase_crashlytics: ^4.3.1
   dio: ^5.8.0+1
+  shared_preferences: ^2.5.1
+  flutter_bloc: ^9.0.0
+  bloc: ^9.0.0
 
 dev_dependencies:
   flutter_test:

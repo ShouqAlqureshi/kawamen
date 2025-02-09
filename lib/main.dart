@@ -1,6 +1,14 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:kawamen/features/Profile/Screens/profile_bloc.dart';
+import 'package:kawamen/features/Profile/Screens/view_profile_screen.dart';
 
 void main() {
+   WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform, // If using Firebase CLI
+  );
   runApp(const MyApp());
 }
 
@@ -31,7 +39,11 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      
+      home: BlocProvider(
+        create: (context) => ProfileBloc(),
+        child: const ViewProfileScreen(),
+      ),
     );
   }
 }
