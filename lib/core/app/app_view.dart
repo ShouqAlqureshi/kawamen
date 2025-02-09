@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:kawamen/features/Profile/Screens/view_profile_screen.dart';
 import 'package:kawamen/features/registration/screens/registration_screen.dart';
 
 class AppView extends StatelessWidget {
@@ -13,7 +14,7 @@ class AppView extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: RegistrationScreen(), // Force app to start at registration screen
+      home: ViewProfileScreen(), // Force app to start at registration screen
     );
   }
 }

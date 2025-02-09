@@ -22,3 +22,5 @@ class UpdateToggleState extends ProfileEvent {
 }
 
 class DeleteAccount extends ProfileEvent {}
+class ToggleControlCenter extends ProfileEvent {}  // Add this
+

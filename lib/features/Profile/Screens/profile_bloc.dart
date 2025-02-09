@@ -11,8 +11,22 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
     on<DeleteAccount>(_onDeleteAccount);
     on<FetchToggleStates>(_onFetchToggleStates);
     on<UpdateToggleState>(_onUpdateToggleState);
-  }
+        on<ToggleControlCenter>(_onToggleControlCenter);  // Add this
 
+  }
+  // Add this method
+  void _onToggleControlCenter(
+    ToggleControlCenter event,
+    Emitter<ProfileState> emit,
+  ) {
+    if (state is ToggleStatesLoaded) {
+      final currentState = state as ToggleStatesLoaded;
+      emit(currentState.copyWith(
+        showControlCenter: !currentState.showControlCenter,
+      ));
+    }
+  }
+  
   Future<void> _onFetchToggleStates(
       FetchToggleStates event, Emitter<ProfileState> emit) async {
     emit(ProfileLoading());
@@ -22,6 +36,7 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
           prefs.getBool('emotionDetectionToggle') ?? false;
       final notificationToggle = prefs.getBool('notificationToggle') ?? false;
       final microphoneToggle = prefs.getBool('microphoneToggle') ?? false;
+      
       // Fetch user data from Firestore
       // final String? userId = FirebaseAuth.instance.currentUser?.uid;
       final String? userId = "abcDEF789";
@@ -39,6 +54,7 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
             emotionDetectionToggle: emotionDetectionToggle,
             notificationToggle: notificationToggle,
             microphoneToggle: microphoneToggle,
+            
           ));
         }
       }
