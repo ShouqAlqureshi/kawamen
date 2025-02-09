@@ -3,18 +3,12 @@ class UserModel {
   final String fullName;
   final String email;
   final int age;
-  final Map<String, dynamic> dashboard;
-  final List<Map<String, dynamic>> emotionalData;
-  final List<Map<String, dynamic>> userTreatments;
 
   UserModel({
     required this.uid,
     required this.fullName,
     required this.email,
     required this.age,
-    required this.dashboard,
-    required this.emotionalData,
-    required this.userTreatments,
   });
 
   Map<String, dynamic> toMap() {
@@ -23,9 +17,6 @@ class UserModel {
       'fullName': fullName,
       'email': email,
       'age': age,
-      'dashboard': dashboard,
-      'emotionalData': emotionalData,
-      'userTreatments': userTreatments,
     };
   }
 
@@ -35,11 +26,6 @@ class UserModel {
       fullName: map['fullName'] ?? '',
       email: map['email'] ?? '',
       age: map['age'] ?? 0,
-      dashboard: Map<String, dynamic>.from(map['dashboard'] ?? {}),
-      emotionalData:
-          List<Map<String, dynamic>>.from(map['emotionalData'] ?? []),
-      userTreatments:
-          List<Map<String, dynamic>>.from(map['userTreatments'] ?? []),
     );
   }
 }
