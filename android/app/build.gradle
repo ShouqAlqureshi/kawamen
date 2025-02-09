@@ -1,7 +1,8 @@
 plugins {
     id "com.android.application"
     id "kotlin-android"
-    id "com.google.gms.google-services"  // Keep this only once
+    id "com.google.gms.google-services"
+    id 'com.google.firebase.crashlytics'  // Keep this only once
     id "dev.flutter.flutter-gradle-plugin"  // Flutter plugin
 }
 
