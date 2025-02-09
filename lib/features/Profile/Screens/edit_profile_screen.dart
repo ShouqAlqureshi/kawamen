@@ -46,7 +46,7 @@ class _EditProfileScreenContent extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         title: const Text(
-          'Edit Profile',
+          "تعديل معلومات الحساب",
           style: TextStyle(color: Colors.white),
         ),
         leading: IconButton(
@@ -66,7 +66,7 @@ class _EditProfileScreenContent extends StatelessWidget {
               controller: nameController,
               style: const TextStyle(color: Colors.white),
               decoration: const InputDecoration(
-                labelText: 'Name',
+                labelText: 'الاسم',
                 labelStyle: TextStyle(color: Colors.white70),
                 enabledBorder: OutlineInputBorder(
                   borderSide: BorderSide(color: Colors.white70),
@@ -81,10 +81,10 @@ class _EditProfileScreenContent extends StatelessWidget {
               maxLength: 30,
               validator: (value) {
                 if (value == null || value.trim().isEmpty) {
-                  return 'Name is required';
+                  return 'الاسم مطلوب';
                 }
                 if (value.startsWith(' ')) {
-                  return 'Name cannot start with spaces';
+                  return 'لا يمكن أن يبدأ الاسم بمسافات';
                 }
                 return null;
               },
@@ -93,7 +93,7 @@ class _EditProfileScreenContent extends StatelessWidget {
               controller: emailController,
               style: const TextStyle(color: Colors.white),
               decoration: const InputDecoration(
-                labelText: 'Email',
+                labelText: 'البريد الالكتروني',
                 labelStyle: TextStyle(color: Colors.white70),
                 enabledBorder: OutlineInputBorder(
                   borderSide: BorderSide(color: Colors.white70),
@@ -108,13 +108,13 @@ class _EditProfileScreenContent extends StatelessWidget {
               maxLength: 50,
               validator: (value) {
                 if (value == null || value.trim().isEmpty) {
-                  return 'Email is required';
+                  return 'البريد الالكتروني مطلوب';
                 }
                 if (value.startsWith(' ')) {
-                  return 'Email cannot start with spaces';
+                  return 'البريد الإلكتروني لا يمكن أن يبدأ بمسافات';
                 }
                 if (!value.contains('@')) {
-                  return 'Enter a valid email address';
+                  return 'أدخل عنوان بريد إلكتروني صالح';
                 }
                 return null;
               },
@@ -123,7 +123,7 @@ class _EditProfileScreenContent extends StatelessWidget {
               controller: ageController,
               style: const TextStyle(color: Colors.white),
               decoration: const InputDecoration(
-                labelText: 'Age',
+                labelText: 'العمر',
                 labelStyle: TextStyle(color: Colors.white70),
                 enabledBorder: OutlineInputBorder(
                   borderSide: BorderSide(color: Colors.white70),
@@ -140,11 +140,11 @@ class _EditProfileScreenContent extends StatelessWidget {
               inputFormatters: [FilteringTextInputFormatter.digitsOnly],
               validator: (value) {
                 if (value == null || value.trim().isEmpty) {
-                  return 'Age is required';
+                  return 'العمر مطلوب';
                 }
                 int? age = int.tryParse(value);
                 if (age == null || age <= 0 || age > 150) {
-                  return 'Enter a valid age';
+                  return 'أدخل عمر صالح';
                 }
                 return null;
               },
@@ -158,12 +158,12 @@ class _EditProfileScreenContent extends StatelessWidget {
                     ));
                 onProfileUpdated();
               },
-              child: const Text('Save Changes'),
+              child: const Text('حفظ التغييرات'),
             ),
             ListTile(
               title: const Center(
                 child: Text(
-                  'Delete Account',
+                  'حذف الحساب',
                   style: TextStyle(
                       fontSize: 16, color: Color.fromARGB(255, 246, 20, 4)),
                 ),

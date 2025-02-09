@@ -1,13 +1,11 @@
-
 import 'package:flutter/material.dart';
 import 'package:kawamen/features/Profile/Screens/edit_profile_screen.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'profile_bloc.dart';
 
-
 class ViewProfileScreen extends StatelessWidget {
   const ViewProfileScreen({super.key});
-  
+
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
@@ -179,7 +177,7 @@ class ViewProfileScreen extends StatelessWidget {
                                 );
                           },
                           subtitle: const Text(
-                            "Unenabling this won't allow the app to provide treatments",
+                            "ايقاف هذه الخاصيه لن يسمح للتطبيق توفير اقتراحات العلاج",
                             style: TextStyle(fontSize: 10, color: Colors.white),
                           ),
                           tileColor: const Color.fromARGB(255, 48, 48, 48),
@@ -200,7 +198,7 @@ class ViewProfileScreen extends StatelessWidget {
                                 );
                           },
                           subtitle: const Text(
-                            "Unenabling this won't allow the app to passively listen and detect emotion",
+                            "ايقاف هذه الخاصيه لن يسمح للتطبيق من تحليل المشاعر",
                             style: TextStyle(fontSize: 10, color: Colors.white),
                           ),
                           tileColor: const Color.fromARGB(255, 48, 48, 48),
@@ -227,7 +225,7 @@ class ViewProfileScreen extends StatelessWidget {
                                 );
                           },
                           subtitle: const Text(
-                            "Unenabling this won't allow the app to send treatment suggestions",
+                            "ايقاف هذه الخاصيه لن يسمح للتطبيق من تحليل المشاعر وتوفير اقتراحات العلاج",
                             style: TextStyle(fontSize: 10, color: Colors.white),
                           ),
                           tileColor: const Color.fromARGB(255, 48, 48, 48),
