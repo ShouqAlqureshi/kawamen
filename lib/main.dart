@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:kawamen/features/Profile/Screens/view_profile_screen.dart';
+import 'package:kawamen/features/LogIn/view/login_page.dart';
 void main() {
   runApp(const MyApp());
 }
