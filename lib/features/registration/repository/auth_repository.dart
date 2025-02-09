@@ -36,4 +36,8 @@ class AuthRepository {
       throw Exception("Registration failed: ${e.toString()}");
     }
   }
+
+  signOut() {}
+
+  signIn({required String email, required String password}) {}
 }

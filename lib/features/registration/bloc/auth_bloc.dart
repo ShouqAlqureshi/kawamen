@@ -1,4 +1,3 @@
-// features/registration/bloc/auth_bloc.dart
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../repository/auth_repository.dart';
 import 'auth_event.dart';
@@ -19,8 +18,10 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     emit(AuthLoading());
     try {
       await _authRepository.registerUser(
+        fullName: event.fullName,
         email: event.email,
         password: event.password,
+        age: event.age,
       );
       emit(AuthSuccess());
     } catch (e) {
@@ -32,7 +33,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   Future<void> _onLoginUser(LoginUser event, Emitter<AuthState> emit) async {
     emit(AuthLoading());
     try {
-      await _authRepository.loginUser(
+      await _authRepository.signIn(  // Changed loginUser to signIn to match repository
         email: event.email,
         password: event.password,
       );
@@ -45,7 +46,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   // Handle User Logout
   Future<void> _onLogoutUser(LogoutUser event, Emitter<AuthState> emit) async {
     try {
-      await _authRepository.logout();
+      await _authRepository.signOut();  // Changed logout to signOut to match repository
       emit(AuthInitial());
     } catch (e) {
       emit(AuthFailure(error: e.toString()));
