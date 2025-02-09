@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:kawamen/features/Profile/Bloc/microphone_bloc.dart';
 import 'package:kawamen/features/Profile/Screens/edit_profile_screen.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'profile_bloc.dart';
@@ -183,54 +184,48 @@ class ViewProfileScreen extends StatelessWidget {
                           tileColor: const Color.fromARGB(255, 48, 48, 48),
                           activeColor: Colors.green,
                           inactiveTrackColor: Colors.white24),
-                      SwitchListTile(
-                          title: const Text(
-                            'المايكروفون',
-                            style: TextStyle(color: Colors.white),
-                          ),
-                          value: state.microphoneToggle,
-                          onChanged: (value) {
-                            context.read<ProfileBloc>().add(
-                                  UpdateToggleState(
-                                    toggleName: 'microphoneToggle',
-                                    newValue: value,
-                                  ),
-                                );
-                          },
-                          subtitle: const Text(
-                            "ايقاف هذه الخاصيه لن يسمح للتطبيق من تحليل المشاعر",
-                            style: TextStyle(fontSize: 10, color: Colors.white),
-                          ),
-                          tileColor: const Color.fromARGB(255, 48, 48, 48),
-                          activeColor: Colors.green,
-                          inactiveTrackColor: Colors.white24),
-                      SwitchListTile(
-                          shape: const RoundedRectangleBorder(
-                            borderRadius: BorderRadius.only(
-                              bottomLeft: Radius.circular(25),
-                              bottomRight: Radius.circular(25),
-                            ),
-                          ),
-                          title: const Text(
-                            'الاشعارات',
-                            style: TextStyle(color: Colors.white),
-                          ),
-                          value: state.notificationToggle,
-                          onChanged: (value) {
-                            context.read<ProfileBloc>().add(
-                                  UpdateToggleState(
-                                    toggleName: 'notificationToggle',
-                                    newValue: value,
-                                  ),
-                                );
-                          },
-                          subtitle: const Text(
-                            "ايقاف هذه الخاصيه لن يسمح للتطبيق من تحليل المشاعر وتوفير اقتراحات العلاج",
-                            style: TextStyle(fontSize: 10, color: Colors.white),
-                          ),
-                          tileColor: const Color.fromARGB(255, 48, 48, 48),
-                          activeColor: Colors.green,
-                          inactiveTrackColor: Colors.white24),
+                      BlocBuilder<MicrophoneBloc, MicrophoneState>(
+                        builder: (context, micState) {
+                          bool isMicEnabled = micState is MicrophoneEnabled;
+
+                          return SwitchListTile(
+                              title: const Text(
+                                'المايكروفون',
+                                style: TextStyle(color: Colors.white),
+                              ),
+                              value: isMicEnabled,
+                              onChanged: (value) {
+                                // First trigger microphone permission request
+                                context
+                                    .read<MicrophoneBloc>()
+                                    .add(ToggleMicrophone());
+
+                                // Only update the profile toggle if permission was granted
+                                if (micState is MicrophoneEnabled) {
+                                  context.read<ProfileBloc>().add(
+                                        UpdateToggleState(
+                                          toggleName: 'microphoneToggle',
+                                          newValue: value,
+                                        ),
+                                      );
+                                }
+                              },
+                              subtitle: Text(
+                                micState is MicrophonePermissionDenied
+                                    ? "يرجى السماح بإذن المايكروفون في إعدادات التطبيق"
+                                    : "ايقاف هذه الخاصيه لن يسمح للتطبيق من تحليل المشاعر",
+                                style: TextStyle(
+                                    fontSize: 10,
+                                    color:
+                                        micState is MicrophonePermissionDenied
+                                            ? Colors.red
+                                            : Colors.white),
+                              ),
+                              tileColor: const Color.fromARGB(255, 48, 48, 48),
+                              activeColor: Colors.green,
+                              inactiveTrackColor: Colors.white24);
+                        },
+                      ),
                     ],
                     const SizedBox(height: 46),
                     Card(
