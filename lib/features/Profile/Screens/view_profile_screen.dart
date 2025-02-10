@@ -1,9 +1,13 @@
+
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:kawamen/features/Profile/Bloc/microphone_bloc.dart';
 import 'package:kawamen/features/Profile/Screens/edit_profile_screen.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'profile_bloc.dart';
+import 'package:kawamen/features/Reset%20Password/bloc/bloc/reset_password_bloc.dart';
+import 'package:kawamen/features/Reset%20Password/bloc/bloc/screen/reset_password_screen.dart';
+import '../Bloc/profile_bloc.dart';
 
 class ViewProfileScreen extends StatelessWidget {
   const ViewProfileScreen({super.key});
@@ -11,7 +15,7 @@ class ViewProfileScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => ProfileBloc()..add(FetchToggleStates()),
+      create: (context) => ProfileBloc(context: context)..add(FetchToggleStates()),
       child: Scaffold(
         backgroundColor: const Color.fromARGB(255, 32, 32, 32),
         body: BlocBuilder<ProfileBloc, ProfileState>(
@@ -254,6 +258,54 @@ class ViewProfileScreen extends StatelessWidget {
                         },
                       ),
                     ],
+                    const SizedBox(height: 46),
+                    //this should be in the sign in page 
+                    Card(
+                      clipBehavior: Clip.hardEdge,
+                      child: ListTile(
+                        leading: const Icon(
+                          Icons.password_rounded,
+                          color: Colors.white,
+                          size: 20,
+                        ),
+                        title: const Center(
+                          child: Text(
+                            "reset password",
+                            style: TextStyle(color: Colors.white),
+                          ),
+                        ),
+                        tileColor: const Color.fromARGB(255, 48, 48, 48),
+                        trailing: const Icon(
+                          Icons.arrow_forward_ios_rounded,
+                          color: Colors.white,
+                          size: 20,
+                        ),
+                        onTap: () {
+                        //   Navigator.of(context).push(
+                        //     MaterialPageRoute(
+                        //       builder: (_) => ResetPasswordPage(
+                        //         onReauthenticationRequired: (context) async {
+                        //           // Navigate to sign in page and wait for result
+                        //           final credential = await Navigator.of(context)
+                        //               .push<UserCredential>(
+                        //             MaterialPageRoute(
+                        //                 builder: (_) => SignInPage()),
+                        //           );
+
+                        //           // If we got credentials back, complete the reset password flow
+                        //           if (credential != null) {
+                        //             context.read<ResetPasswordBloc>().add(
+                        //                   ResetPasswordReauthenticationComplete(
+                        //                       credential),
+                        //                 );
+                        //           }
+                        //         },
+                        //       ),
+                        //     ),
+                        //   );
+                        },
+                      ),
+                    ),
                     const SizedBox(height: 46),
                     Card(
                       clipBehavior: Clip.hardEdge,

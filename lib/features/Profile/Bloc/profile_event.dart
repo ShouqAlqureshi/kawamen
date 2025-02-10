@@ -22,5 +22,11 @@ class UpdateToggleState extends ProfileEvent {
 }
 
 class DeleteAccount extends ProfileEvent {}
+
+class ReauthenticationComplete extends ProfileEvent {
+  final UserCredential credential;
+  ReauthenticationComplete(this.credential);
+}
+
 class ToggleControlCenter extends ProfileEvent {}  // Add this
 

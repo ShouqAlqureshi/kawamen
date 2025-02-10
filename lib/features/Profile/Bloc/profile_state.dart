@@ -6,6 +6,15 @@ class ProfileInitial extends ProfileState {}
 
 class ProfileLoading extends ProfileState {}
 
+class ProfileUpdated extends ProfileState {}
+
+class ProfileNeedsReauth extends ProfileState {}
+
+class ProfileNeedsVerification extends ProfileState {
+  final String email;
+  ProfileNeedsVerification(this.email);
+}
+
 class ProfileLoaded extends ProfileState {
   final Map<String, dynamic> userData;
 
@@ -45,7 +54,7 @@ class ToggleStatesLoaded extends ProfileState {
 }
 
 
-class ProfileUpdated extends ProfileState {}
+
 
 class AccountDeleted extends ProfileState {}
 
