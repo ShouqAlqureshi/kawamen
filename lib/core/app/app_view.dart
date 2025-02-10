@@ -11,11 +11,8 @@ class AppView extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Kawamen',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        useMaterial3: true,
-      ),
-      home: RegistrationScreen(), // Force app to start at registration screen
+      theme: AppTheme.darkTheme,
+      home: ViewProfileScreen(), // Force app to start at registration screen
     );
   }
 }
