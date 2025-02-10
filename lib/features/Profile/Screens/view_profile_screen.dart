@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:kawamen/features/Profile/Bloc/microphone_bloc.dart';
 import 'package:kawamen/features/Profile/Screens/edit_profile_screen.dart';
@@ -38,9 +39,15 @@ class ViewProfileScreen extends StatelessWidget {
   Widget _buildProfile(BuildContext context, ToggleStatesLoaded state) {
     String userName = state.userData['fullName'] ?? '';
     String userEmail = state.userData['email'] ?? '';
-String userAge = state.userData['age'] is int
-    ? state.userData['age'].toString()
-    : (state.userData['age'] ?? '');
+    // Debug print
+    if (kDebugMode) {
+      print('Raw age data: ${state.userData['age']}');
+    }
+    if (kDebugMode) {
+      print('Age type: ${state.userData['age'].runtimeType}');
+    }
+    String userAge =
+        state.userData['age'] != null ? state.userData['age'].toString() : '';
     String avatarText = getInitials(userName);
     bool showControlCenter = false;
     return Scaffold(
@@ -127,48 +134,51 @@ String userAge = state.userData['age'] is int
                         },
                       ),
                     ),
-                       Card(
-      clipBehavior: Clip.hardEdge,
-      child: ListTile(
-        title: const Center(
-          child: Text(
-            "لوحة تحكم",
-            style: TextStyle(color: Colors.white),
-          ),
-        ),
-        tileColor: state.showControlCenter  // Use state instead of local variable
-            ? const Color.fromARGB(255, 94, 94, 94)
-            : const Color.fromARGB(255, 48, 48, 48),
-        trailing: state.showControlCenter  // Use state instead of local variable
-            ? const Icon(
-                Icons.keyboard_arrow_down_rounded,
-                color: Colors.white,
-                size: 20,
-              )
-            : const Icon(
-                Icons.arrow_forward_ios_rounded,
-                color: Colors.white,
-                size: 20,
-              ),
-        onTap: () {
-  Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (context) => EditProfileScreen(
-        initialUserInfo: state.userData,
-        onProfileUpdated: () {
-          if (context.mounted) {
-            context.read<ProfileBloc>().add(FetchUserInfo());
-          }
-        },
-      ),
-    ),
-  );
-},
-
-      ),
-    ),
-    if (state.showControlCenter) ...[ 
+                    Card(
+                      clipBehavior: Clip.hardEdge,
+                      child: ListTile(
+                        title: const Center(
+                          child: Text(
+                            "لوحة تحكم",
+                            style: TextStyle(color: Colors.white),
+                          ),
+                        ),
+                        tileColor: state
+                                .showControlCenter // Use state instead of local variable
+                            ? const Color.fromARGB(255, 94, 94, 94)
+                            : const Color.fromARGB(255, 48, 48, 48),
+                        trailing: state
+                                .showControlCenter // Use state instead of local variable
+                            ? const Icon(
+                                Icons.keyboard_arrow_down_rounded,
+                                color: Colors.white,
+                                size: 20,
+                              )
+                            : const Icon(
+                                Icons.arrow_forward_ios_rounded,
+                                color: Colors.white,
+                                size: 20,
+                              ),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => EditProfileScreen(
+                                initialUserInfo: state.userData,
+                                onProfileUpdated: () {
+                                  if (context.mounted) {
+                                    context
+                                        .read<ProfileBloc>()
+                                        .add(FetchUserInfo());
+                                  }
+                                },
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                    if (state.showControlCenter) ...[
                       const SizedBox(height: 8),
                       SwitchListTile(
                           shape: const RoundedRectangleBorder(
@@ -207,19 +217,26 @@ String userAge = state.userData['age'] is int
                                 style: TextStyle(color: Colors.white),
                               ),
                               value: isMicEnabled,
-                             onChanged: (value) async {
-  context.read<MicrophoneBloc>().add(ToggleMicrophone());
+                              onChanged: (value) async {
+                                context
+                                    .read<MicrophoneBloc>()
+                                    .add(ToggleMicrophone());
 
-  await Future.delayed(Duration(milliseconds: 200)); // Wait for state update
+                                await Future.delayed(Duration(
+                                    milliseconds:
+                                        200)); // Wait for state update
 
-  if (context.mounted && context.read<MicrophoneBloc>().state is MicrophoneEnabled) {
-    context.read<ProfileBloc>().add(UpdateToggleState(
-      toggleName: 'microphoneToggle',
-      newValue: value,
-    ));
-  }
-},
-
+                                if (context.mounted &&
+                                    context.read<MicrophoneBloc>().state
+                                        is MicrophoneEnabled) {
+                                  context
+                                      .read<ProfileBloc>()
+                                      .add(UpdateToggleState(
+                                        toggleName: 'microphoneToggle',
+                                        newValue: value,
+                                      ));
+                                }
+                              },
                               subtitle: Text(
                                 micState is MicrophonePermissionDenied
                                     ? "يرجى السماح بإذن المايكروفون في إعدادات التطبيق"
