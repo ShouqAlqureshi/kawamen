@@ -121,7 +121,8 @@ Widget build(BuildContext context) {
                       children: [
                         TextButton(
                           onPressed: () {
-                            // Navigate to signup page
+                          Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const RegistrationScreen()));
+
                           },
                           child: Text(
                             'قم بإنشاء حساب',
