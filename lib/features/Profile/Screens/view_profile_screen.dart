@@ -1,4 +1,3 @@
-
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -12,12 +11,13 @@ import '../Bloc/profile_bloc.dart';
 class ViewProfileScreen extends StatelessWidget {
   const ViewProfileScreen({super.key});
 
-   @override
+  @override
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
         BlocProvider(
-          create: (context) => ProfileBloc(context: context)..add(FetchToggleStates()),
+          create: (context) =>
+              ProfileBloc(context: context)..add(FetchToggleStates()),
         ),
         BlocProvider(
           create: (context) => MicrophoneBloc(),
@@ -32,7 +32,9 @@ class ViewProfileScreen extends StatelessWidget {
             } else if (state is ToggleStatesLoaded) {
               return _buildProfile(context, state);
             } else if (state is ProfileError) {
-              return Center(child: Text(state.message, style: const TextStyle(color: Colors.white)));
+              return Center(
+                  child: Text(state.message,
+                      style: const TextStyle(color: Colors.white)));
             }
             return const Center(child: Text('Something went wrong'));
           },
@@ -163,89 +165,116 @@ class ViewProfileScreen extends StatelessWidget {
                                 color: Colors.white,
                                 size: 20,
                               ),
-                        onTap: () {  context.read<ProfileBloc>().add(ToggleControlCenter());
+                        onTap: () {
+                          context
+                              .read<ProfileBloc>()
+                              .add(ToggleControlCenter());
                         },
                       ),
                     ),
                     // Replace the if (state.showControlCenter) block with:
-AnimatedContainer(
-  duration: const Duration(milliseconds: 300),
-  height: state.showControlCenter ? 140 : 0,
-  child: SingleChildScrollView(
-    child: Column(
-      children: [
-        const SizedBox(height: 8),
-        SwitchListTile(
-          shape: const RoundedRectangleBorder(
-            borderRadius: BorderRadius.only(
-              topLeft: Radius.circular(25),
-              topRight: Radius.circular(25),
-            ),
-          ),
-          title: const Text(
-            'اكتشاف المشاعر',
-            style: TextStyle(color: Colors.white),
-          ),
-          value: state.emotionDetectionToggle,
-          onChanged: (value) {
-            context.read<ProfileBloc>().add(
-              UpdateToggleState(
-                toggleName: 'emotionDetectionToggle',
-                newValue: value,
-              ),
-            );
-          },
-          subtitle: const Text(
-            "ايقاف هذه الخاصيه لن يسمح للتطبيق توفير اقتراحات العلاج",
-            style: TextStyle(fontSize: 10, color: Colors.white),
-          ),
-          tileColor: const Color.fromARGB(255, 48, 48, 48),
-          activeColor: Colors.green,
-          inactiveTrackColor: Colors.white24,
-        ),
-        BlocBuilder<MicrophoneBloc, MicrophoneState>(
-          builder: (context, micState) {
-            bool isMicEnabled = micState is MicrophoneEnabled;
-            return SwitchListTile(
-              title: const Text(
-                'المايكروفون',
-                style: TextStyle(color: Colors.white),
-              ),
-              value: isMicEnabled,
-              onChanged: (value) async {
-                context.read<MicrophoneBloc>().add(ToggleMicrophone());
-                await Future.delayed(const Duration(milliseconds: 200));
-                if (context.mounted && 
-                    context.read<MicrophoneBloc>().state is MicrophoneEnabled) {
-                  context.read<ProfileBloc>().add(UpdateToggleState(
-                    toggleName: 'microphoneToggle',
-                    newValue: value,
-                  ));
-                }
-              },
-              subtitle: Text(
-                micState is MicrophonePermissionDenied
-                    ? "يرجى السماح بإذن المايكروفون في إعدادات التطبيق"
-                    : "ايقاف هذه الخاصيه لن يسمح للتطبيق من تحليل المشاعر",
-                style: TextStyle(
-                  fontSize: 10,
-                  color: micState is MicrophonePermissionDenied
-                      ? Colors.red
-                      : Colors.white,
-                ),
-              ),
-              tileColor: const Color.fromARGB(255, 48, 48, 48),
-              activeColor: Colors.green,
-              inactiveTrackColor: Colors.white24,
-            );
-          },
-        ),
-      ],
-    ),
-  ),
-),
+                    if (state.showControlCenter)
+                      AnimatedSlide(
+                        duration: const Duration(milliseconds: 500),
+                        curve: Curves.easeInOut,
+                        offset: const Offset(0, 0),
+                        child: AnimatedOpacity(
+                          duration: const Duration(milliseconds: 500),
+                          opacity: 1.0,
+                          curve: Curves.easeInOut,
+                          child: Container(
+                            height: 140,
+                            child: SingleChildScrollView(
+                              child: Column(
+                                children: [
+                                  const SizedBox(height: 8),
+                                  SwitchListTile(
+                                    shape: const RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.only(
+                                        topLeft: Radius.circular(25),
+                                        topRight: Radius.circular(25),
+                                      ),
+                                    ),
+                                    title: const Text(
+                                      'اكتشاف المشاعر',
+                                      style: TextStyle(color: Colors.white),
+                                    ),
+                                    value: state.emotionDetectionToggle,
+                                    onChanged: (value) {
+                                      context.read<ProfileBloc>().add(
+                                            UpdateToggleState(
+                                              toggleName:
+                                                  'emotionDetectionToggle',
+                                              newValue: value,
+                                            ),
+                                          );
+                                    },
+                                    subtitle: const Text(
+                                      "ايقاف هذه الخاصيه لن يسمح للتطبيق توفير اقتراحات العلاج",
+                                      style: TextStyle(
+                                          fontSize: 10, color: Colors.white),
+                                    ),
+                                    tileColor:
+                                        const Color.fromARGB(255, 48, 48, 48),
+                                    activeColor: Colors.green,
+                                    inactiveTrackColor: Colors.white24,
+                                  ),
+                                  BlocBuilder<MicrophoneBloc, MicrophoneState>(
+                                    builder: (context, micState) {
+                                      bool isMicEnabled =
+                                          micState is MicrophoneEnabled;
+                                      return SwitchListTile(
+                                        title: const Text(
+                                          'المايكروفون',
+                                          style: TextStyle(color: Colors.white),
+                                        ),
+                                        value: isMicEnabled,
+                                        onChanged: (value) async {
+                                          context
+                                              .read<MicrophoneBloc>()
+                                              .add(ToggleMicrophone());
+                                          await Future.delayed(const Duration(
+                                              milliseconds: 200));
+                                          if (context.mounted &&
+                                              context
+                                                  .read<MicrophoneBloc>()
+                                                  .state is MicrophoneEnabled) {
+                                            context
+                                                .read<ProfileBloc>()
+                                                .add(UpdateToggleState(
+                                                  toggleName:
+                                                      'microphoneToggle',
+                                                  newValue: value,
+                                                ));
+                                          }
+                                        },
+                                        subtitle: Text(
+                                          micState is MicrophonePermissionDenied
+                                              ? "يرجى السماح بإذن المايكروفون في إعدادات التطبيق"
+                                              : "ايقاف هذه الخاصيه لن يسمح للتطبيق من تحليل المشاعر",
+                                          style: TextStyle(
+                                            fontSize: 10,
+                                            color: micState
+                                                    is MicrophonePermissionDenied
+                                                ? Colors.red
+                                                : Colors.white,
+                                          ),
+                                        ),
+                                        tileColor: const Color.fromARGB(
+                                            255, 48, 48, 48),
+                                        activeColor: Colors.green,
+                                        inactiveTrackColor: Colors.white24,
+                                      );
+                                    },
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
                     const SizedBox(height: 46),
-                    //this should be in the sign in page 
+                    //this should be in the sign in page
                     Card(
                       clipBehavior: Clip.hardEdge,
                       child: ListTile(
@@ -267,28 +296,28 @@ AnimatedContainer(
                           size: 20,
                         ),
                         onTap: () {
-                        //   Navigator.of(context).push(
-                        //     MaterialPageRoute(
-                        //       builder: (_) => ResetPasswordPage(
-                        //         onReauthenticationRequired: (context) async {
-                        //           // Navigate to sign in page and wait for result
-                        //           final credential = await Navigator.of(context)
-                        //               .push<UserCredential>(
-                        //             MaterialPageRoute(
-                        //                 builder: (_) => SignInPage()),
-                        //           );
+                          //   Navigator.of(context).push(
+                          //     MaterialPageRoute(
+                          //       builder: (_) => ResetPasswordPage(
+                          //         onReauthenticationRequired: (context) async {
+                          //           // Navigate to sign in page and wait for result
+                          //           final credential = await Navigator.of(context)
+                          //               .push<UserCredential>(
+                          //             MaterialPageRoute(
+                          //                 builder: (_) => SignInPage()),
+                          //           );
 
-                        //           // If we got credentials back, complete the reset password flow
-                        //           if (credential != null) {
-                        //             context.read<ResetPasswordBloc>().add(
-                        //                   ResetPasswordReauthenticationComplete(
-                        //                       credential),
-                        //                 );
-                        //           }
-                        //         },
-                        //       ),
-                        //     ),
-                        //   );
+                          //           // If we got credentials back, complete the reset password flow
+                          //           if (credential != null) {
+                          //             context.read<ResetPasswordBloc>().add(
+                          //                   ResetPasswordReauthenticationComplete(
+                          //                       credential),
+                          //                 );
+                          //           }
+                          //         },
+                          //       ),
+                          //     ),
+                          //   );
                         },
                       ),
                     ),
