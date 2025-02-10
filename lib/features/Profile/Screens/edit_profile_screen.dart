@@ -1,7 +1,8 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'profile_bloc.dart';
+import '../Bloc/profile_bloc.dart';
 
 class EditProfileScreen extends StatelessWidget {
   final Map<String, dynamic> initialUserInfo;
@@ -12,17 +13,59 @@ class EditProfileScreen extends StatelessWidget {
     required this.initialUserInfo,
     required this.onProfileUpdated,
   });
-
   @override
-  Widget build(BuildContext context) {
+Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => ProfileBloc(),
-      child: _EditProfileScreenContent(
+      create: (context) => ProfileBloc(context: context),
+      child: BlocListener<ProfileBloc, ProfileState>(
+        listener: (context, state) async {
+          if (state is ProfileNeedsReauth) {
+            // final credential = await Navigator.of(context).push<UserCredential>(
+            //   MaterialPageRoute(builder: (_) => SignInPage()),
+            // );
+            // if (credential != null) {
+            //   context.read<ProfileBloc>().add(ReauthenticationComplete(credential));
+            // }
+          }
+
+          if (state is ProfileNeedsVerification) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  'Please verify your new email address. '
+                  'A verification link has been sent to ${state.email}',
+                ),
+                duration: const Duration(seconds: 5),
+              ),
+            );
+          }
+
+          if (state is ProfileError) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(state.message),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+
+          if (state is ProfileUpdated) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Profile updated successfully!'),
+                backgroundColor: Colors.green,
+              ),
+            );
+          }
+        },
+        child: _EditProfileScreenContent(
         initialUserInfo: initialUserInfo,
         onProfileUpdated: onProfileUpdated,
       ),
+      ),
     );
   }
+
 }
 
 class _EditProfileScreenContent extends StatelessWidget {
