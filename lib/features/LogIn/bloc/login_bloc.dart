@@ -4,19 +4,17 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'login_event.dart';
 import 'login_state.dart';
 
-
 class LoginBloc extends Bloc<LoginEvent, LoginState> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  final BuildContext context; // Add context to the LoginBloc
   String? _email;
 
-  LoginBloc(this.context) : super(LoginInitial()) {
+  LoginBloc() : super(LoginInitial()) {
     on<LoginButtonPressed>(_onLoginButtonPressed);
     on<ForgotPasswordPressed>(_onForgotPasswordPressed);
   }
 
   Future<void> _onLoginButtonPressed(
-    LoginButtonPressed event,
+    LoginButtonPressed event, 
     Emitter<LoginState> emit
   ) async {
     emit(LoginLoading());
@@ -24,23 +22,21 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
     try {
       _email = event.email;
 
-      // Validate email and password
       if (event.email.isEmpty || event.password.isEmpty) {
         emit(LoginFailure(error: 'Please enter email and password'));
         return;
       }
 
+      // Attempt to sign in with Firebase
       UserCredential userCredential = await _auth.signInWithEmailAndPassword(
         email: event.email.trim(),
         password: event.password.trim(),
       );
 
-      Navigator.of(context).pop(userCredential);
-
-      // If you still want to emit a success state
-      emit(LoginSuccess());
+      // Emit success with the userCredential
+      emit(LoginSuccessState(userCredential));  // Updated to use LoginSuccessState
+      
     } on FirebaseAuthException catch (e) {
-      // Handle specific Firebase authentication errors
       String errorMessage;
       switch (e.code) {
         case 'user-not-found':
@@ -58,10 +54,8 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
         default:
           errorMessage = 'Authentication failed. Please try again.';
       }
-
       emit(LoginFailure(error: errorMessage));
     } catch (e) {
-      // Catch any other unexpected errors
       emit(LoginFailure(error: 'An unexpected error occurred'));
     }
   }
