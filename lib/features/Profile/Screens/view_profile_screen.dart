@@ -26,6 +26,7 @@ class ViewProfileScreen extends StatelessWidget {
         ),
       ],
       child: Scaffold(
+        backgroundColor: theme.colorScheme.background,
         body: BlocBuilder<ProfileBloc, ProfileState>(
           builder: (context, state) {
             if (state is ProfileLoading) {
@@ -164,9 +165,8 @@ class ViewProfileScreen extends StatelessWidget {
                       theme: theme,
                       leading: Icons.logout,
                       onTap: () {
-                        // context.read<ProfileBloc>().add(
-                        //       logout(),
-                        //     );
+                            context.read<ProfileBloc>().add(Logout()); // Trigger logout event
+
                       },
                     ),
                   ],

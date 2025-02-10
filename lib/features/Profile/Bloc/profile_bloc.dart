@@ -23,7 +23,8 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
     on<DeleteAccount>(_onDeleteAccount);
     on<FetchToggleStates>(_onFetchToggleStates);
     on<UpdateToggleState>(_onUpdateToggleState);
-    on<ToggleControlCenter>(_onToggleControlCenter); // Add this
+    on<ToggleControlCenter>(_onToggleControlCenter); 
+    on<Logout>(_onLogout);  
   }
   // Add this method
   void _onToggleControlCenter(
@@ -184,4 +185,22 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
       emit(ProfileError('Error deleting account: $e'));
     }
   }
+  Future<void> _onLogout(
+  Logout event,
+  Emitter<ProfileState> emit,
+) async {
+  emit(ProfileLoading());
+  try {
+    await _auth.signOut();  // Sign out from Firebase
+
+    // Optionally, clear shared preferences if needed
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.clear();
+
+    emit(ProfileInitial()); // Reset the profile state to initial
+  } catch (e) {
+    emit(ProfileError('Error logging out: ${e.toString()}'));
+  }
+}
+
 }
