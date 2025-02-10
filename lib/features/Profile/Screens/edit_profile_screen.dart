@@ -82,8 +82,11 @@ class _EditProfileScreenContent extends StatelessWidget {
     final nameController = TextEditingController(text: initialUserInfo['fullName']);
     final emailController =
         TextEditingController(text: initialUserInfo['email']);
-    final ageController = TextEditingController(text: initialUserInfo['age']);
-
+final ageController = TextEditingController(
+  text: initialUserInfo['age'] != null 
+    ? initialUserInfo['age'].toString() 
+    : ''
+);
     return Scaffold(
       backgroundColor: const Color.fromARGB(255, 32, 32, 32),
       appBar: AppBar(
