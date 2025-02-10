@@ -125,101 +125,7 @@ class ViewProfileScreen extends StatelessWidget {
                       },
                     ),
                     if (state.showControlCenter)
-AnimatedSlide(
-  duration: const Duration(milliseconds: 500),
-  curve: Curves.easeInOut,
-  offset: const Offset(0, 0),
-  child: AnimatedOpacity(
-    duration: const Duration(milliseconds: 500),
-    opacity: 1.0,
-    curve: Curves.easeInOut,
-    child: Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceVariant, // Adjust based on your theme
-        borderRadius: BorderRadius.circular(25),
-      ),
-      child: Column(
-        children: [
-          SwitchListTile(
-            shape: const RoundedRectangleBorder(
-              borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(25),
-                topRight: Radius.circular(25),
-              ),
-            ),
-            title: Text(
-              'اكتشاف المشاعر',
-              style: theme.textTheme.bodyLarge?.copyWith(
-                color: theme.colorScheme.onSurface,
-              ),
-            ),
-            value: state.emotionDetectionToggle,
-            onChanged: (value) {
-              context.read<ProfileBloc>().add(
-                    UpdateToggleState(
-                      toggleName: 'emotionDetectionToggle',
-                      newValue: value,
-                    ),
-                  );
-            },
-            subtitle: Text(
-              "ايقاف هذه الخاصيه لن يسمح للتطبيق توفير اقتراحات العلاج",
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurface.withOpacity(0.7),
-              ),
-            ),
-            tileColor: theme.colorScheme.surfaceVariant,
-            activeColor: theme.colorScheme.primary,
-            inactiveTrackColor: theme.colorScheme.onSurface.withOpacity(0.3),
-          ),
-          const Divider(height: 1, thickness: 1),
-          BlocBuilder<MicrophoneBloc, MicrophoneState>(
-            builder: (context, micState) {
-              bool isMicEnabled = micState is MicrophoneEnabled;
-              return SwitchListTile(
-                title: Text(
-                  'المايكروفون',
-                  style: theme.textTheme.bodyLarge?.copyWith(
-                    color: theme.colorScheme.onSurface,
-                  ),
-                ),
-                value: isMicEnabled,
-                onChanged: (value) async {
-                  context.read<MicrophoneBloc>().add(ToggleMicrophone());
-                  await Future.delayed(const Duration(milliseconds: 200));
-                  if (context.mounted &&
-                      context.read<MicrophoneBloc>().state is MicrophoneEnabled) {
-                    context.read<ProfileBloc>().add(
-                          UpdateToggleState(
-                            toggleName: 'microphoneToggle',
-                            newValue: value,
-                          ),
-                        );
-                  }
-                },
-                subtitle: Text(
-                  micState is MicrophonePermissionDenied
-                      ? "يرجى السماح بإذن المايكروفون في إعدادات التطبيق"
-                      : "ايقاف هذه الخاصيه لن يسمح للتطبيق من تحليل المشاعر",
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: micState is MicrophonePermissionDenied
-                        ? Colors.red
-                        : theme.colorScheme.onSurface.withOpacity(0.7),
-                  ),
-                ),
-                tileColor: theme.colorScheme.surfaceVariant,
-                activeColor: theme.colorScheme.primary,
-                inactiveTrackColor: theme.colorScheme.onSurface.withOpacity(0.3),
-              );
-            },
-          ),
-        ],
-      ),
-    ),
-  ),
-),
-
+                      _buildControlCenter(context, state, theme),
                     const SizedBox(height: 46),
                     _buildCard(
                       context: context,
@@ -318,68 +224,100 @@ AnimatedSlide(
     ThemeData theme,
   ) {
     return AnimatedSlide(
-      duration: const Duration(milliseconds: 500),
-      curve: Curves.easeInOut,
-      offset: const Offset(0, 0),
-      child: AnimatedOpacity(
-        duration: const Duration(milliseconds: 500),
-        opacity: 1.0,
-        curve: Curves.easeInOut,
-        child: Container(
-          height: 140,
-          child: SingleChildScrollView(
-            child: Column(
-              children: [
-                const SizedBox(height: 8),
-                _buildToggleCard(
-                  title: 'اكتشاف المشاعر',
-                  subtitle:
-                      "ايقاف هذه الخاصيه لن يسمح للتطبيق توفير اقتراحات العلاج",
-                  value: state.emotionDetectionToggle,
-                  onChanged: (value) {
+  duration: const Duration(milliseconds: 500),
+  curve: Curves.easeInOut,
+  offset: const Offset(0, 0),
+  child: AnimatedOpacity(
+    duration: const Duration(milliseconds: 500),
+    opacity: 1.0,
+    curve: Curves.easeInOut,
+    child: Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceVariant, // Adjust based on your theme
+        borderRadius: BorderRadius.circular(25),
+      ),
+      child: Column(
+        children: [
+          SwitchListTile(
+            shape: const RoundedRectangleBorder(
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(25),
+                topRight: Radius.circular(25),
+              ),
+            ),
+            title: Text(
+              'اكتشاف المشاعر',
+              style: theme.textTheme.bodyLarge?.copyWith(
+                color: theme.colorScheme.onSurface,
+              ),
+            ),
+            value: state.emotionDetectionToggle,
+            onChanged: (value) {
+              context.read<ProfileBloc>().add(
+                    UpdateToggleState(
+                      toggleName: 'emotionDetectionToggle',
+                      newValue: value,
+                    ),
+                  );
+            },
+            subtitle: Text(
+              "ايقاف هذه الخاصيه لن يسمح للتطبيق توفير اقتراحات العلاج",
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurface.withOpacity(0.7),
+              ),
+            ),
+            tileColor: theme.colorScheme.surfaceVariant,
+            activeColor: theme.colorScheme.primary,
+            inactiveTrackColor: theme.colorScheme.onSurface.withOpacity(0.3),
+          ),
+          const Divider(height: 1, thickness: 1),
+          BlocBuilder<MicrophoneBloc, MicrophoneState>(
+            builder: (context, micState) {
+              bool isMicEnabled = micState is MicrophoneEnabled;
+              return SwitchListTile(
+                title: Text(
+                  'المايكروفون',
+                  style: theme.textTheme.bodyLarge?.copyWith(
+                    color: theme.colorScheme.onSurface,
+                  ),
+                ),
+                value: isMicEnabled,
+                onChanged: (value) async {
+                  context.read<MicrophoneBloc>().add(ToggleMicrophone());
+                  await Future.delayed(const Duration(milliseconds: 200));
+                  if (context.mounted &&
+                      context.read<MicrophoneBloc>().state is MicrophoneEnabled) {
                     context.read<ProfileBloc>().add(
                           UpdateToggleState(
-                            toggleName: 'emotionDetectionToggle',
+                            toggleName: 'microphoneToggle',
                             newValue: value,
                           ),
                         );
-                  },
-                  theme: theme,
+                  }
+                },
+                subtitle: Text(
+                  micState is MicrophonePermissionDenied
+                      ? "يرجى السماح بإذن المايكروفون في إعدادات التطبيق"
+                      : "ايقاف هذه الخاصيه لن يسمح للتطبيق من تحليل المشاعر",
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: micState is MicrophonePermissionDenied
+                        ? Colors.red
+                        : theme.colorScheme.onSurface.withOpacity(0.7),
+                  ),
                 ),
-                BlocBuilder<MicrophoneBloc, MicrophoneState>(
-                  builder: (context, micState) {
-                    bool isMicEnabled = micState is MicrophoneEnabled;
-                    return _buildToggleCard(
-                      title: 'المايكروفون',
-                      subtitle: micState is MicrophonePermissionDenied
-                          ? "يرجى السماح بإذن المايكروفون في إعدادات التطبيق"
-                          : "ايقاف هذه الخاصيه لن يسمح للتطبيق من تحليل المشاعر",
-                      value: isMicEnabled,
-                      onChanged: (value) async {
-                        context.read<MicrophoneBloc>().add(ToggleMicrophone());
-                        await Future.delayed(const Duration(milliseconds: 200));
-                        if (context.mounted &&
-                            context.read<MicrophoneBloc>().state
-                                is MicrophoneEnabled) {
-                          context.read<ProfileBloc>().add(UpdateToggleState(
-                                toggleName: 'microphoneToggle',
-                                newValue: value,
-                              ));
-                        }
-                      },
-                      theme: theme,
-                      subtitleColor: micState is MicrophonePermissionDenied
-                          ? Colors.red
-                          : null,
-                    );
-                  },
-                ),
-              ],
-            ),
+                tileColor: theme.colorScheme.surfaceVariant,
+                activeColor: theme.colorScheme.primary,
+                inactiveTrackColor: theme.colorScheme.onSurface.withOpacity(0.3),
+              );
+            },
           ),
-        ),
+        ],
       ),
-    );
+    ),
+  ),
+);
+
   }
 
   Widget _buildToggleCard({
