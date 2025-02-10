@@ -14,7 +14,7 @@ class App extends StatelessWidget {
           create: (context) => AuthBloc(AuthRepository()),
         ),
         BlocProvider<LoginBloc>(
-          create: (context) => LoginBloc(),
+          create: (context) => LoginBloc(context),
         ),
       ],
       child: const AppView(), // Delegating UI decisions to AppView
