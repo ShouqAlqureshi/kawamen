@@ -32,12 +32,22 @@ class MicrophonePermissionDenied extends MicrophoneState {}
 class MicrophoneBloc extends Bloc<MicrophoneEvent, MicrophoneState> {
   MicrophoneBloc() : super(MicrophoneInitial()) {
     on<ToggleMicrophone>((event, emit) async {
-      PermissionStatus status = await Permission.microphone.request();
+      if (state is MicrophoneEnabled) {
+        emit(MicrophoneDisabled());
+        return;
+      }
 
+      PermissionStatus status = await Permission.microphone.status;
+      
       if (status.isGranted) {
         emit(MicrophoneEnabled());
       } else {
-        emit(MicrophonePermissionDenied());
+        status = await Permission.microphone.request();
+        if (status.isGranted) {
+          emit(MicrophoneEnabled());
+        } else {
+          emit(MicrophonePermissionDenied());
+        }
       }
     });
   }

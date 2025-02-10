@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:kawamen/core/utils/theme/theme.dart';
 import 'package:kawamen/features/Profile/Screens/view_profile_screen.dart';
 import 'package:kawamen/features/registration/screens/registration_screen.dart';
 
