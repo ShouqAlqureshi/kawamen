@@ -23,8 +23,7 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
     on<DeleteAccount>(_onDeleteAccount);
     on<FetchToggleStates>(_onFetchToggleStates);
     on<UpdateToggleState>(_onUpdateToggleState);
-    on<ToggleControlCenter>(_onToggleControlCenter);  // Add this
-
+    on<ToggleControlCenter>(_onToggleControlCenter); // Add this
   }
   // Add this method
   void _onToggleControlCenter(
@@ -92,8 +91,8 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
   ) async {
     emit(ProfileLoading());
     final user = _auth.currentUser;
-    final String? userId = user?.uid;
-
+    // final String? userId = user?.uid;
+    final String? userId = "abcDEF789";
     try {
       if (userId == null || user == null) {
         emit(ProfileError('No user logged in'));
