@@ -24,14 +24,15 @@ class LoginView extends StatelessWidget {
             if (state is LoginSuccessState) {
               Navigator.pushReplacement(
                 context,
-                MaterialPageRoute(builder: (_) => RegistrationScreen()),
+                MaterialPageRoute(builder: (_) => const RegistrationScreen()),
               );
             } else if (state is LoginFailure) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text(state.error),
-                  backgroundColor:
-                      state.error.contains('reset') ? Colors.green : Colors.red,
+                  backgroundColor: state.error.contains('reset')
+                      ? Colors.green
+                      : Colors.red,
                 ),
               );
             }
@@ -117,8 +118,7 @@ class LoginView extends StatelessWidget {
                           ),
                         ),
                         child: state is LoginLoading
-                            ? const CircularProgressIndicator(
-                                color: Colors.white)
+                            ? const CircularProgressIndicator(color: Colors.white)
                             : const Text(
                                 'تسجيل دخول',
                                 style: TextStyle(color: Colors.white),
@@ -133,7 +133,7 @@ class LoginView extends StatelessWidget {
                               Navigator.pushReplacement(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (_) => RegistrationScreen(),
+                                  builder: (_) => const RegistrationScreen(),
                                 ),
                               );
                             },
