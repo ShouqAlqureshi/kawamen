@@ -13,6 +13,8 @@ class ViewProfileScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return MultiBlocProvider(
       providers: [
         BlocProvider(
@@ -24,40 +26,40 @@ class ViewProfileScreen extends StatelessWidget {
         ),
       ],
       child: Scaffold(
-        backgroundColor: const Color.fromARGB(255, 32, 32, 32),
         body: BlocBuilder<ProfileBloc, ProfileState>(
           builder: (context, state) {
             if (state is ProfileLoading) {
               return const Center(child: CircularProgressIndicator());
             } else if (state is ToggleStatesLoaded) {
-              return _buildProfile(context, state);
+              return _buildProfile(context, state, theme);
             } else if (state is ProfileError) {
               return Center(
-                  child: Text(state.message,
-                      style: const TextStyle(color: Colors.white)));
+                child: Text(
+                  state.message,
+                  style: theme.textTheme.bodyLarge,
+                ),
+              );
             }
-            return const Center(child: Text('Something went wrong'));
+            return Center(
+              child: Text(
+                'Something went wrong',
+                style: theme.textTheme.bodyLarge,
+              ),
+            );
           },
         ),
       ),
     );
   }
 
-  Widget _buildProfile(BuildContext context, ToggleStatesLoaded state) {
+  Widget _buildProfile(
+      BuildContext context, ToggleStatesLoaded state, ThemeData theme) {
     String userName = state.userData['fullName'] ?? '';
     String userEmail = state.userData['email'] ?? '';
-    // Debug print
-    if (kDebugMode) {
-      print('Raw age data: ${state.userData['age']}');
-    }
-    if (kDebugMode) {
-      print('Age type: ${state.userData['age'].runtimeType}');
-    }
-    String userAge =
-        state.userData['age'] != null ? state.userData['age'].toString() : '';
+    String userAge = state.userData['age']?.toString() ?? '';
     String avatarText = getInitials(userName);
+
     return Scaffold(
-      backgroundColor: const Color.fromARGB(255, 32, 32, 32),
       body: Center(
         child: SingleChildScrollView(
           child: Column(
@@ -66,288 +68,200 @@ class ViewProfileScreen extends StatelessWidget {
               const SizedBox(height: 10),
               CircleAvatar(
                 radius: 70,
-                backgroundColor: const Color.fromARGB(255, 48, 48, 48),
+                backgroundColor: theme.colorScheme.secondary,
                 child: Text(
                   avatarText,
-                  style: const TextStyle(
-                    fontSize: 40,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
+                  style: theme.textTheme.headlineMedium,
                 ),
               ),
               const SizedBox(height: 16),
-
-              /// User information///
               Text(
                 userName,
-                style: const TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
+                style: theme.textTheme.headlineMedium,
               ),
               const SizedBox(height: 8),
               Text(
                 userEmail,
-                style: const TextStyle(
-                  fontSize: 16,
-                  color: Colors.white70,
-                ),
+                style: theme.textTheme.bodyMedium,
               ),
               const SizedBox(height: 4),
-              Text(
-                userAge.isNotEmpty ? '$userAge سنه' : '',
-                style: const TextStyle(
-                  fontSize: 16,
-                  color: Colors.white70,
+              if (userAge.isNotEmpty)
+                Text(
+                  '$userAge سنه',
+                  style: theme.textTheme.bodyMedium,
                 ),
-              ),
               const SizedBox(height: 16),
               SizedBox(
                 width: 300,
                 child: Column(
                   children: [
-                    Card(
-                      clipBehavior: Clip.hardEdge,
-                      child: ListTile(
-                        title: const Center(
-                          child: Text(
-                            "تعديل معلومات الحساب",
-                            style: TextStyle(color: Colors.white),
-                          ),
-                        ),
-                        tileColor: const Color.fromARGB(255, 48, 48, 48),
-                        trailing: const Icon(
-                          Icons.arrow_forward_ios_rounded,
-                          color: Colors.white,
-                          size: 20,
-                        ),
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => EditProfileScreen(
-                                initialUserInfo: state.userData,
-                                onProfileUpdated: () {
-                                  context
-                                      .read<ProfileBloc>()
-                                      .add(FetchUserInfo());
-                                },
-                              ),
+                    _buildCard(
+                      context: context,
+                      title: "تعديل معلومات الحساب",
+                      theme: theme,
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => EditProfileScreen(
+                              initialUserInfo: state.userData,
+                              onProfileUpdated: () {
+                                context
+                                    .read<ProfileBloc>()
+                                    .add(FetchUserInfo());
+                              },
                             ),
-                          );
-                        },
-                      ),
-                    ),
-                    Card(
-                      clipBehavior: Clip.hardEdge,
-                      child: ListTile(
-                        title: const Center(
-                          child: Text(
-                            "لوحة تحكم",
-                            style: TextStyle(color: Colors.white),
                           ),
-                        ),
-                        tileColor: state
-                                .showControlCenter // Use state instead of local variable
-                            ? const Color.fromARGB(255, 94, 94, 94)
-                            : const Color.fromARGB(255, 48, 48, 48),
-                        trailing: state
-                                .showControlCenter // Use state instead of local variable
-                            ? const Icon(
-                                Icons.keyboard_arrow_down_rounded,
-                                color: Colors.white,
-                                size: 20,
-                              )
-                            : const Icon(
-                                Icons.arrow_forward_ios_rounded,
-                                color: Colors.white,
-                                size: 20,
-                              ),
-                        onTap: () {
-                          context
-                              .read<ProfileBloc>()
-                              .add(ToggleControlCenter());
-                        },
-                      ),
+                        );
+                      },
                     ),
-                    // Replace the if (state.showControlCenter) block with:
+                    _buildCard(
+                      context: context,
+                      title: "لوحة تحكم",
+                      theme: theme,
+                      isSelected: state.showControlCenter,
+                      onTap: () {
+                        context.read<ProfileBloc>().add(ToggleControlCenter());
+                      },
+                    ),
                     if (state.showControlCenter)
-                      AnimatedSlide(
-                        duration: const Duration(milliseconds: 500),
-                        curve: Curves.easeInOut,
-                        offset: const Offset(0, 0),
-                        child: AnimatedOpacity(
-                          duration: const Duration(milliseconds: 500),
-                          opacity: 1.0,
-                          curve: Curves.easeInOut,
-                          child: Container(
-                            height: 140,
-                            child: SingleChildScrollView(
-                              child: Column(
-                                children: [
-                                  const SizedBox(height: 8),
-                                  SwitchListTile(
-                                    shape: const RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.only(
-                                        topLeft: Radius.circular(25),
-                                        topRight: Radius.circular(25),
-                                      ),
-                                    ),
-                                    title: const Text(
-                                      'اكتشاف المشاعر',
-                                      style: TextStyle(color: Colors.white),
-                                    ),
-                                    value: state.emotionDetectionToggle,
-                                    onChanged: (value) {
-                                      context.read<ProfileBloc>().add(
-                                            UpdateToggleState(
-                                              toggleName:
-                                                  'emotionDetectionToggle',
-                                              newValue: value,
-                                            ),
-                                          );
-                                    },
-                                    subtitle: const Text(
-                                      "ايقاف هذه الخاصيه لن يسمح للتطبيق توفير اقتراحات العلاج",
-                                      style: TextStyle(
-                                          fontSize: 10, color: Colors.white),
-                                    ),
-                                    tileColor:
-                                        const Color.fromARGB(255, 48, 48, 48),
-                                    activeColor: Colors.green,
-                                    inactiveTrackColor: Colors.white24,
-                                  ),
-                                  BlocBuilder<MicrophoneBloc, MicrophoneState>(
-                                    builder: (context, micState) {
-                                      bool isMicEnabled =
-                                          micState is MicrophoneEnabled;
-                                      return SwitchListTile(
-                                        title: const Text(
-                                          'المايكروفون',
-                                          style: TextStyle(color: Colors.white),
-                                        ),
-                                        value: isMicEnabled,
-                                        onChanged: (value) async {
-                                          context
-                                              .read<MicrophoneBloc>()
-                                              .add(ToggleMicrophone());
-                                          await Future.delayed(const Duration(
-                                              milliseconds: 200));
-                                          if (context.mounted &&
-                                              context
-                                                  .read<MicrophoneBloc>()
-                                                  .state is MicrophoneEnabled) {
-                                            context
-                                                .read<ProfileBloc>()
-                                                .add(UpdateToggleState(
-                                                  toggleName:
-                                                      'microphoneToggle',
-                                                  newValue: value,
-                                                ));
-                                          }
-                                        },
-                                        subtitle: Text(
-                                          micState is MicrophonePermissionDenied
-                                              ? "يرجى السماح بإذن المايكروفون في إعدادات التطبيق"
-                                              : "ايقاف هذه الخاصيه لن يسمح للتطبيق من تحليل المشاعر",
-                                          style: TextStyle(
-                                            fontSize: 10,
-                                            color: micState
-                                                    is MicrophonePermissionDenied
-                                                ? Colors.red
-                                                : Colors.white,
-                                          ),
-                                        ),
-                                        tileColor: const Color.fromARGB(
-                                            255, 48, 48, 48),
-                                        activeColor: Colors.green,
-                                        inactiveTrackColor: Colors.white24,
-                                      );
-                                    },
-                                  ),
-                                ],
-                              ),
-                            ),
+AnimatedSlide(
+  duration: const Duration(milliseconds: 500),
+  curve: Curves.easeInOut,
+  offset: const Offset(0, 0),
+  child: AnimatedOpacity(
+    duration: const Duration(milliseconds: 500),
+    opacity: 1.0,
+    curve: Curves.easeInOut,
+    child: Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceVariant, // Adjust based on your theme
+        borderRadius: BorderRadius.circular(25),
+      ),
+      child: Column(
+        children: [
+          SwitchListTile(
+            shape: const RoundedRectangleBorder(
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(25),
+                topRight: Radius.circular(25),
+              ),
+            ),
+            title: Text(
+              'اكتشاف المشاعر',
+              style: theme.textTheme.bodyLarge?.copyWith(
+                color: theme.colorScheme.onSurface,
+              ),
+            ),
+            value: state.emotionDetectionToggle,
+            onChanged: (value) {
+              context.read<ProfileBloc>().add(
+                    UpdateToggleState(
+                      toggleName: 'emotionDetectionToggle',
+                      newValue: value,
+                    ),
+                  );
+            },
+            subtitle: Text(
+              "ايقاف هذه الخاصيه لن يسمح للتطبيق توفير اقتراحات العلاج",
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurface.withOpacity(0.7),
+              ),
+            ),
+            tileColor: theme.colorScheme.surfaceVariant,
+            activeColor: theme.colorScheme.primary,
+            inactiveTrackColor: theme.colorScheme.onSurface.withOpacity(0.3),
+          ),
+          const Divider(height: 1, thickness: 1),
+          BlocBuilder<MicrophoneBloc, MicrophoneState>(
+            builder: (context, micState) {
+              bool isMicEnabled = micState is MicrophoneEnabled;
+              return SwitchListTile(
+                title: Text(
+                  'المايكروفون',
+                  style: theme.textTheme.bodyLarge?.copyWith(
+                    color: theme.colorScheme.onSurface,
+                  ),
+                ),
+                value: isMicEnabled,
+                onChanged: (value) async {
+                  context.read<MicrophoneBloc>().add(ToggleMicrophone());
+                  await Future.delayed(const Duration(milliseconds: 200));
+                  if (context.mounted &&
+                      context.read<MicrophoneBloc>().state is MicrophoneEnabled) {
+                    context.read<ProfileBloc>().add(
+                          UpdateToggleState(
+                            toggleName: 'microphoneToggle',
+                            newValue: value,
                           ),
-                        ),
-                      ),
-                    const SizedBox(height: 46),
-                    //this should be in the sign in page
-                    Card(
-                      clipBehavior: Clip.hardEdge,
-                      child: ListTile(
-                        leading: const Icon(
-                          Icons.password_rounded,
-                          color: Colors.white,
-                          size: 20,
-                        ),
-                        title: const Center(
-                          child: Text(
-                            "reset password",
-                            style: TextStyle(color: Colors.white),
-                          ),
-                        ),
-                        tileColor: const Color.fromARGB(255, 48, 48, 48),
-                        trailing: const Icon(
-                          Icons.arrow_forward_ios_rounded,
-                          color: Colors.white,
-                          size: 20,
-                        ),
-                        onTap: () {
-                          //   Navigator.of(context).push(
-                          //     MaterialPageRoute(
-                          //       builder: (_) => ResetPasswordPage(
-                          //         onReauthenticationRequired: (context) async {
-                          //           // Navigate to sign in page and wait for result
-                          //           final credential = await Navigator.of(context)
-                          //               .push<UserCredential>(
-                          //             MaterialPageRoute(
-                          //                 builder: (_) => SignInPage()),
-                          //           );
+                        );
+                  }
+                },
+                subtitle: Text(
+                  micState is MicrophonePermissionDenied
+                      ? "يرجى السماح بإذن المايكروفون في إعدادات التطبيق"
+                      : "ايقاف هذه الخاصيه لن يسمح للتطبيق من تحليل المشاعر",
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: micState is MicrophonePermissionDenied
+                        ? Colors.red
+                        : theme.colorScheme.onSurface.withOpacity(0.7),
+                  ),
+                ),
+                tileColor: theme.colorScheme.surfaceVariant,
+                activeColor: theme.colorScheme.primary,
+                inactiveTrackColor: theme.colorScheme.onSurface.withOpacity(0.3),
+              );
+            },
+          ),
+        ],
+      ),
+    ),
+  ),
+),
 
-                          //           // If we got credentials back, complete the reset password flow
-                          //           if (credential != null) {
-                          //             context.read<ResetPasswordBloc>().add(
-                          //                   ResetPasswordReauthenticationComplete(
-                          //                       credential),
-                          //                 );
-                          //           }
-                          //         },
-                          //       ),
-                          //     ),
-                          //   );
-                        },
-                      ),
+                    const SizedBox(height: 46),
+                    _buildCard(
+                      context: context,
+                      title: "reset password",
+                      theme: theme,
+                      leading: Icons.password_rounded,
+                      onTap: () {
+                        //   Navigator.of(context).push(
+                        //     MaterialPageRoute(
+                        //       builder: (_) => ResetPasswordPage(
+                        //         onReauthenticationRequired: (context) async {
+                        //           // Navigate to sign in page and wait for result
+                        //           final credential = await Navigator.of(context)
+                        //               .push<UserCredential>(
+                        //             MaterialPageRoute(
+                        //                 builder: (_) => SignInPage()),
+                        //           );
+
+                        //           // If we got credentials back, complete the reset password flow
+                        //           if (credential != null) {
+                        //             context.read<ResetPasswordBloc>().add(
+                        //                   ResetPasswordReauthenticationComplete(
+                        //                       credential),
+                        //                 );
+                        //           }
+                        //         },
+                        //       ),
+                        //     ),
+                        //   );
+                      },
                     ),
                     const SizedBox(height: 46),
-                    Card(
-                      clipBehavior: Clip.hardEdge,
-                      child: ListTile(
-                        leading: const Icon(
-                          Icons.logout,
-                          color: Colors.white,
-                          size: 20,
-                        ),
-                        title: const Center(
-                          child: Text(
-                            "تسجيل خروج",
-                            style: TextStyle(color: Colors.white),
-                          ),
-                        ),
-                        tileColor: const Color.fromARGB(255, 48, 48, 48),
-                        trailing: const Icon(
-                          Icons.arrow_forward_ios_rounded,
-                          color: Colors.white,
-                          size: 20,
-                        ),
-                        onTap: () {
-                          // context.read<ProfileBloc>().add(
-                          //       logout(),
-                          //     );
-                        },
-                      ),
+                    _buildCard(
+                      context: context,
+                      title: "تسجيل خروج",
+                      theme: theme,
+                      leading: Icons.logout,
+                      onTap: () {
+                        // context.read<ProfileBloc>().add(
+                        //       logout(),
+                        //     );
+                      },
                     ),
                   ],
                 ),
@@ -356,6 +270,148 @@ class ViewProfileScreen extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildCard({
+    required BuildContext context,
+    required String title,
+    required ThemeData theme,
+    IconData? leading,
+    bool isSelected = false,
+    required VoidCallback onTap,
+  }) {
+    return Card(
+      clipBehavior: Clip.hardEdge,
+      child: ListTile(
+        leading: leading != null
+            ? Icon(
+                leading,
+                color: theme.colorScheme.onSurface,
+                size: 20,
+              )
+            : null,
+        title: Center(
+          child: Text(
+            title,
+            style: theme.textTheme.bodyLarge,
+          ),
+        ),
+        tileColor: isSelected
+            ? theme.colorScheme.secondary
+            : theme.colorScheme.surface,
+        trailing: Icon(
+          isSelected
+              ? Icons.keyboard_arrow_down_rounded
+              : Icons.arrow_forward_ios_rounded,
+          color: theme.colorScheme.onSurface,
+          size: 20,
+        ),
+        onTap: onTap,
+      ),
+    );
+  }
+
+  Widget _buildControlCenter(
+    BuildContext context,
+    ToggleStatesLoaded state,
+    ThemeData theme,
+  ) {
+    return AnimatedSlide(
+      duration: const Duration(milliseconds: 500),
+      curve: Curves.easeInOut,
+      offset: const Offset(0, 0),
+      child: AnimatedOpacity(
+        duration: const Duration(milliseconds: 500),
+        opacity: 1.0,
+        curve: Curves.easeInOut,
+        child: Container(
+          height: 140,
+          child: SingleChildScrollView(
+            child: Column(
+              children: [
+                const SizedBox(height: 8),
+                _buildToggleCard(
+                  title: 'اكتشاف المشاعر',
+                  subtitle:
+                      "ايقاف هذه الخاصيه لن يسمح للتطبيق توفير اقتراحات العلاج",
+                  value: state.emotionDetectionToggle,
+                  onChanged: (value) {
+                    context.read<ProfileBloc>().add(
+                          UpdateToggleState(
+                            toggleName: 'emotionDetectionToggle',
+                            newValue: value,
+                          ),
+                        );
+                  },
+                  theme: theme,
+                ),
+                BlocBuilder<MicrophoneBloc, MicrophoneState>(
+                  builder: (context, micState) {
+                    bool isMicEnabled = micState is MicrophoneEnabled;
+                    return _buildToggleCard(
+                      title: 'المايكروفون',
+                      subtitle: micState is MicrophonePermissionDenied
+                          ? "يرجى السماح بإذن المايكروفون في إعدادات التطبيق"
+                          : "ايقاف هذه الخاصيه لن يسمح للتطبيق من تحليل المشاعر",
+                      value: isMicEnabled,
+                      onChanged: (value) async {
+                        context.read<MicrophoneBloc>().add(ToggleMicrophone());
+                        await Future.delayed(const Duration(milliseconds: 200));
+                        if (context.mounted &&
+                            context.read<MicrophoneBloc>().state
+                                is MicrophoneEnabled) {
+                          context.read<ProfileBloc>().add(UpdateToggleState(
+                                toggleName: 'microphoneToggle',
+                                newValue: value,
+                              ));
+                        }
+                      },
+                      theme: theme,
+                      subtitleColor: micState is MicrophonePermissionDenied
+                          ? Colors.red
+                          : null,
+                    );
+                  },
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildToggleCard({
+    required String title,
+    required String subtitle,
+    required bool value,
+    required Function(bool) onChanged,
+    required ThemeData theme,
+    Color? subtitleColor,
+  }) {
+    return SwitchListTile(
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(25),
+          topRight: Radius.circular(25),
+        ),
+      ),
+      title: Text(
+        title,
+        style: theme.textTheme.bodyLarge,
+      ),
+      subtitle: Text(
+        subtitle,
+        style: theme.textTheme.bodySmall?.copyWith(
+          color: subtitleColor ?? theme.colorScheme.onSurface.withOpacity(0.7),
+        ),
+      ),
+      value: value,
+      onChanged: onChanged,
+      tileColor: theme.colorScheme.surface,
+      activeColor: Colors.green,
+      inactiveTrackColor: theme.colorScheme.onSurface.withOpacity(0.3),
     );
   }
 
