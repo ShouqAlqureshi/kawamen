@@ -14,7 +14,7 @@ class EditProfileScreen extends StatelessWidget {
     required this.onProfileUpdated,
   });
   @override
-Widget build(BuildContext context) {
+  Widget build(BuildContext context) {
     return BlocProvider(
       create: (context) => ProfileBloc(context: context),
       child: BlocListener<ProfileBloc, ProfileState>(
@@ -59,13 +59,12 @@ Widget build(BuildContext context) {
           }
         },
         child: _EditProfileScreenContent(
-        initialUserInfo: initialUserInfo,
-        onProfileUpdated: onProfileUpdated,
-      ),
+          initialUserInfo: initialUserInfo,
+          onProfileUpdated: onProfileUpdated,
+        ),
       ),
     );
   }
-
 }
 
 class _EditProfileScreenContent extends StatelessWidget {
@@ -79,10 +78,12 @@ class _EditProfileScreenContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final nameController = TextEditingController(text: initialUserInfo['fullName']);
+    final nameController =
+        TextEditingController(text: initialUserInfo['fullName'] as String);
     final emailController =
-        TextEditingController(text: initialUserInfo['email']);
-    final ageController = TextEditingController(text: initialUserInfo['age']);
+        TextEditingController(text: initialUserInfo['email'] as String);
+    final ageController =
+        TextEditingController(text: initialUserInfo['age'].toString());
 
     return Scaffold(
       backgroundColor: const Color.fromARGB(255, 32, 32, 32),
@@ -105,6 +106,7 @@ class _EditProfileScreenContent extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            const SizedBox(height: 40),
             TextFormField(
               controller: nameController,
               style: const TextStyle(color: Colors.white),
@@ -192,6 +194,7 @@ class _EditProfileScreenContent extends StatelessWidget {
                 return null;
               },
             ),
+            const SizedBox(height: 40),
             OutlinedButton(
               onPressed: () {
                 context.read<ProfileBloc>().add(UpdateUserInfo(
@@ -203,18 +206,17 @@ class _EditProfileScreenContent extends StatelessWidget {
               },
               child: const Text('حفظ التغييرات'),
             ),
-            ListTile(
-              title: const Center(
-                child: Text(
-                  'حذف الحساب',
-                  style: TextStyle(
-                      fontSize: 16, color: Color.fromARGB(255, 246, 20, 4)),
-                ),
-              ),
-              onTap: () {
+            const SizedBox(height: 180),
+            OutlinedButton(
+              onPressed: () {
                 context.read<ProfileBloc>().add(DeleteAccount());
                 // Navigate to login or register screen after deletion
               },
+              child: const Text(
+                'حذف الحساب',
+                style: TextStyle(
+                    fontSize: 16, color: Color.fromARGB(255, 246, 20, 4)),
+              ),
             ),
           ],
         ),
