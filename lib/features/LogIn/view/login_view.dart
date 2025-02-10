@@ -5,25 +5,27 @@ import '../../registration/screens/registration_screen.dart';
 import '../bloc/login_bloc.dart';
 import '../bloc/login_event.dart';
 import '../bloc/login_state.dart';
+
 class LoginView extends StatelessWidget {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
   @override
-  Widget build(BuildContext context) {
+Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
       body: BlocProvider(
-        create: (context) => LoginBloc(context),
+        create: (context) => LoginBloc(),
         child: BlocConsumer<LoginBloc, LoginState>(
           listener: (context, state) {
-            if (state is LoginSuccess) {
-            // Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const ViewProfileScreen()));
+            if (state is LoginSuccessState) {  // Updated to use LoginSuccessState
+              Navigator.of(context).pop(state.userCredential);
+              Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const ViewProfileScreen()));
             } else if (state is LoginFailure) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text(state.error),
-                  backgroundColor: state.error.contains('reset')
+                  backgroundColor: state.error.contains('reset') 
                     ? Colors.green 
                     : Colors.red,
                 ),
@@ -37,7 +39,7 @@ class LoginView extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const Text(
+                    Text(
                       'تسجيل دخول',
                       style: TextStyle(
                         color: Colors.white,
@@ -74,7 +76,6 @@ class LoginView extends StatelessWidget {
                     ),
                     TextButton(
                       onPressed: () {
-                        // Send the event with the current email value
                         context.read<LoginBloc>().add(
                           LoginButtonPressed(
                             email: _emailController.text,
@@ -83,7 +84,7 @@ class LoginView extends StatelessWidget {
                         );
                         context.read<LoginBloc>().add(ForgotPasswordPressed());
                       },
-                      child: const Text(
+                      child: Text(
                         'نسيت كلمة المرور؟',
                         style: TextStyle(color: Colors.purple),
                       ),
@@ -109,7 +110,7 @@ class LoginView extends StatelessWidget {
                       ),
                       child: state is LoginLoading
                           ? CircularProgressIndicator(color: Colors.white)
-                          : const Text(
+                          : Text(
                               'تسجيل دخول',
                               style: TextStyle(color: Colors.white),
                             ),
@@ -120,14 +121,14 @@ class LoginView extends StatelessWidget {
                       children: [
                         TextButton(
                           onPressed: () {
-                            Navigator.push(context, MaterialPageRoute(builder: (_) => RegistrationScreen()));
+                            // Navigate to signup page
                           },
-                          child: const Text(
+                          child: Text(
                             'قم بإنشاء حساب',
                             style: TextStyle(color: Colors.purple),
                           ),
                         ),
-                        const Text(
+                        Text(
                           'لا تمتلك حساب؟',
                           style: TextStyle(color: Colors.white),
                         ),
