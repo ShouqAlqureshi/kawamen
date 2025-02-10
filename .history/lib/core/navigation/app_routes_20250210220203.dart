@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:kawamen/features/Profile/Screens/view_profile_screen.dart';
+import 'package:your_project/features/home/home_screen.dart';
+import 'package:your_project/features/auth/login_screen.dart';
+import 'package:your_project/features/profile/view_profile_screen.dart'; // Import ViewProfileScreen
 
 class AppRoutes {
   static const String home = '/home';

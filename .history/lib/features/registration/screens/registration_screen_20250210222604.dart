@@ -11,23 +11,13 @@ class RegistrationScreen extends StatefulWidget {
 }
 
 class _RegistrationScreenState extends State<RegistrationScreen> {
-  // Controllers for the input fields
   final TextEditingController nameController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
   final TextEditingController confirmPasswordController =
       TextEditingController();
   final TextEditingController ageController = TextEditingController();
-
-  // Whether the user has agreed to the terms.
   bool agreeToTerms = false;
-
-  // Error messages for each field. If a field is valid, its error remains null.
-  String? _nameError;
-  String? _emailError;
-  String? _ageError;
-  String? _passwordError;
-  String? _confirmPasswordError;
 
   @override
   Widget build(BuildContext context) {
@@ -60,6 +50,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                   backgroundColor: Colors.green,
                 ),
               );
+
               Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(builder: (context) => ViewProfileScreen()),
@@ -76,24 +67,22 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          _buildTextField(nameController, "الاسم الكامل",
-                              errorText: _nameError),
+                          _buildTextField(nameController, "الاسم الكامل"),
                           SizedBox(height: 16),
-                          _buildTextField(emailController, "البريد الإلكتروني",
-                              errorText: _emailError),
+                          _buildTextField(emailController, "البريد الإلكتروني"),
                           SizedBox(height: 16),
                           _buildTextField(ageController, "العمر",
-                              isNumber: true, errorText: _ageError),
+                              isNumber: true),
                           SizedBox(height: 16),
                           _buildTextField(passwordController, "كلمة المرور",
-                              isPassword: true, errorText: _passwordError),
+                              isPassword: true),
                           SizedBox(height: 16),
                           _buildTextField(
                               confirmPasswordController, "تأكيد كلمة المرور",
-                              isPassword: true,
-                              errorText: _confirmPasswordError),
+                              isPassword: true),
                           SizedBox(height: 20),
-                          // Checkbox with terms & conditions
+
+                          // ✅ Checkbox with more padding
                           Padding(
                             padding: const EdgeInsets.only(right: 8.0),
                             child: Row(
@@ -121,7 +110,8 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                       ),
                     ),
                   ),
-                  // Register Button
+
+                  // ✅ Register Button (Centered, slightly elevated, and better spacing)
                   Padding(
                     padding: const EdgeInsets.symmetric(
                         horizontal: 16, vertical: 30),
@@ -132,16 +122,19 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                             ? _registerUser
                             : null,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.purple, // Enabled color
-                          disabledBackgroundColor:
-                              Colors.grey, // Disabled color
+                          backgroundColor: agreeToTerms
+                              ? Colors.purple
+                              : const Color.fromARGB(255, 243, 240,
+                                  240), // ✅ Visible when disabled
                           padding: EdgeInsets.symmetric(vertical: 14),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(8),
                           ),
-                          elevation: 4,
+                          elevation: agreeToTerms
+                              ? 4
+                              : 0, // ✅ Slight elevation only if enabled
                         ),
-                        child: (state is AuthLoading)
+                        child: state is AuthLoading
                             ? CircularProgressIndicator(
                                 valueColor:
                                     AlwaysStoppedAnimation<Color>(Colors.white))
@@ -160,9 +153,9 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     );
   }
 
-  /// Builds a text field with right-to-left alignment and an error message (if provided).
+  /// ✅ **Builds a text field with right alignment and good visibility**
   Widget _buildTextField(TextEditingController controller, String label,
-      {bool isPassword = false, bool isNumber = false, String? errorText}) {
+      {bool isPassword = false, bool isNumber = false}) {
     return TextField(
       controller: controller,
       obscureText: isPassword,
@@ -171,11 +164,9 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
       textAlign: TextAlign.right,
       decoration: InputDecoration(
         labelText: label,
-        errorText: errorText,
-        errorStyle: TextStyle(color: Colors.redAccent),
         labelStyle: TextStyle(color: Colors.white),
         filled: true,
-        fillColor: Colors.grey[800],
+        fillColor: Colors.grey[800], // ✅ Visible input field
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8.0),
         ),
@@ -183,77 +174,34 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     );
   }
 
-  /// Handles user registration by validating inputs first.
+  /// ✅ **Handles user registration**
   void _registerUser() {
-    // Local error holders. They remain null if no error is found.
-    String? localNameError;
-    String? localEmailError;
-    String? localAgeError;
-    String? localPasswordError;
-    String? localConfirmPasswordError;
-
-    bool hasError = false;
-
-    // Validate full name.
-    if (nameController.text.trim().isEmpty) {
-      localNameError = "الرجاء إدخال الاسم الكامل";
-      hasError = true;
-    }
-
-    // Validate email with a simple regex.
-    String email = emailController.text.trim();
-    RegExp emailRegex =
-        RegExp(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$");
-    if (!emailRegex.hasMatch(email)) {
-      localEmailError = "البريد الإلكتروني غير صالح";
-      hasError = true;
-    }
-
-    // Validate age.
-    int? age = int.tryParse(ageController.text.trim());
-    if (age == null || age <= 0) {
-      localAgeError = "يرجى إدخال عمر صالح";
-      hasError = true;
-    }
-
-    // Validate password strength (minimum 6 characters).
-    String password = passwordController.text;
-    if (password.isEmpty || password.length < 6) {
-      localPasswordError = "كلمة المرور ضعيفة، يجب أن تكون على الأقل 6 أحرف";
-      hasError = true;
-    }
-
-    // Validate password confirmation.
-    if (password != confirmPasswordController.text) {
-      localConfirmPasswordError = "كلمة المرور وتأكيدها غير متطابقين";
-      hasError = true;
-    }
-
-    // Update the state to show error messages on the fields.
-    setState(() {
-      _nameError = localNameError;
-      _emailError = localEmailError;
-      _ageError = localAgeError;
-      _passwordError = localPasswordError;
-      _confirmPasswordError = localConfirmPasswordError;
-    });
-
-    if (hasError) {
+    if (passwordController.text != confirmPasswordController.text) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text("يرجى تصحيح الحقول المشار إليها باللون الأحمر"),
+          content: Text("كلمة المرور وتأكيدها غير متطابقين"),
           backgroundColor: Colors.red,
         ),
       );
       return;
     }
 
-    // If no errors, trigger the registration event.
+    int? age = int.tryParse(ageController.text.trim());
+    if (age == null || age <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("يرجى إدخال عمر صالح"),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
     context.read<AuthBloc>().add(RegisterUser(
           fullName: nameController.text.trim(),
-          email: email,
-          password: password,
-          age: age!,
+          email: emailController.text.trim(),
+          password: passwordController.text.trim(),
+          age: age,
         ));
   }
 }
