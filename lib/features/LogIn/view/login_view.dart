@@ -19,7 +19,7 @@ Widget build(BuildContext context) {
         child: BlocConsumer<LoginBloc, LoginState>(
           listener: (context, state) {
             if (state is LoginSuccessState) {  // Updated to use LoginSuccessState
-              Navigator.of(context).pop(state.userCredential);
+              // Navigator.of(context).pop(state.userCredential);
               Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const ViewProfileScreen()));
             } else if (state is LoginFailure) {
               ScaffoldMessenger.of(context).showSnackBar(
