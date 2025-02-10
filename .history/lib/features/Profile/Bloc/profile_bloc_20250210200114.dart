@@ -37,6 +37,7 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
       ));
     }
   }
+  
 
   Future<void> _onFetchToggleStates(
       FetchToggleStates event, Emitter<ProfileState> emit) async {
@@ -48,8 +49,8 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
       final notificationToggle = prefs.getBool('notificationToggle') ?? false;
       final microphoneToggle = prefs.getBool('microphoneToggle') ?? false;
       // Fetch user data from Firestore
-      final String? userId = FirebaseAuth.instance.currentUser?.uid;
-      // final String? userId = "abcDEF789";
+      // final String? userId = FirebaseAuth.instance.currentUser?.uid;
+      final String? userId = "abcDEF789";
       if (userId != null) {
         DocumentSnapshot userDoc = await FirebaseFirestore.instance
             .collection('users')
