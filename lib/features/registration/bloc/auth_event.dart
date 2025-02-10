@@ -11,13 +11,15 @@ class RegisterUser extends AuthEvent {
   final String fullName;
   final String email;
   final String password;
+    final int age; // ✅ Add this missing field
 
-  RegisterUser({required this.fullName, required this.email, required this.password, required int age});
+
+  RegisterUser({required this.fullName, required this.email, required this.password,     required this.age // ✅ Update constructor to include age
+});
 
   @override
-  List<Object> get props => [fullName, email, password];
+  List<Object> get props => [fullName, email, password,age];
 
-  get age => null;
 }
 
 // Event for login
