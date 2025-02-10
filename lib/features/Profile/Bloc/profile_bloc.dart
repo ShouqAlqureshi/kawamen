@@ -37,6 +37,7 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
       ));
     }
   }
+  
 
   Future<void> _onFetchToggleStates(
       FetchToggleStates event, Emitter<ProfileState> emit) async {

@@ -54,8 +54,6 @@ class ToggleStatesLoaded extends ProfileState {
 }
 
 
-
-
 class AccountDeleted extends ProfileState {}
 
 class ProfileError extends ProfileState {
