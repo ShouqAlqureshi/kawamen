@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:kawamen/core/utils/theme/theme.dart';
-import 'package:kawamen/features/Profile/Screens/view_profile_screen.dart';
-import 'package:kawamen/features/registration/screens/registration_screen.dart';
+import 'package:kawamen/core/navigation/app_routes.dart';
+import 'package:kawamen/intro_screen.dart';
 
 class AppView extends StatelessWidget {
   const AppView({super.key});
@@ -11,8 +10,8 @@ class AppView extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Kawamen',
-      theme: AppTheme.darkTheme,
-      home: ViewProfileScreen(), // Force app to start at registration screen
+      theme: ThemeData.dark(),
+      home: EntryScreen(),
     );
   }
 }
