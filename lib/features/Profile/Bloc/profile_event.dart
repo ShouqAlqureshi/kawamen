@@ -27,3 +27,6 @@ class ReauthenticationComplete extends ProfileEvent {
   final UserCredential credential;
   ReauthenticationComplete(this.credential);
 }
+
+class ToggleControlCenter extends ProfileEvent {}  // Add this
+

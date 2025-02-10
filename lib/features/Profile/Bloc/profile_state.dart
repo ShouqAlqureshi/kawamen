@@ -26,14 +26,35 @@ class ToggleStatesLoaded extends ProfileState {
   final bool emotionDetectionToggle;
   final bool notificationToggle;
   final bool microphoneToggle;
+  final bool showControlCenter;
 
   ToggleStatesLoaded({
     required this.userData,
     required this.emotionDetectionToggle,
     required this.notificationToggle,
     required this.microphoneToggle,
+    this.showControlCenter = false,
   });
+
+  ToggleStatesLoaded copyWith({
+    Map<String, dynamic>? userData,
+    bool? emotionDetectionToggle,
+    bool? notificationToggle,
+    bool? microphoneToggle,
+    bool? showControlCenter,
+  }) {
+    return ToggleStatesLoaded(
+      userData: userData ?? this.userData,
+      emotionDetectionToggle: emotionDetectionToggle ?? this.emotionDetectionToggle,
+      notificationToggle: notificationToggle ?? this.notificationToggle,
+      microphoneToggle: microphoneToggle ?? this.microphoneToggle,
+      showControlCenter: showControlCenter ?? this.showControlCenter,
+    );
+  }
 }
+
+
+
 
 class AccountDeleted extends ProfileState {}
 

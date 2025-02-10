@@ -1,4 +1,6 @@
+
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:kawamen/features/Profile/Bloc/microphone_bloc.dart';
 import 'package:kawamen/features/Profile/Screens/edit_profile_screen.dart';
@@ -41,7 +43,15 @@ class ViewProfileScreen extends StatelessWidget {
   Widget _buildProfile(BuildContext context, ToggleStatesLoaded state) {
     String userName = state.userData['fullName'] ?? '';
     String userEmail = state.userData['email'] ?? '';
-    String userAge = state.userData['age'] ?? '';
+    // Debug print
+    if (kDebugMode) {
+      print('Raw age data: ${state.userData['age']}');
+    }
+    if (kDebugMode) {
+      print('Age type: ${state.userData['age'].runtimeType}');
+    }
+    String userAge =
+        state.userData['age'] != null ? state.userData['age'].toString() : '';
     String avatarText = getInitials(userName);
     bool showControlCenter = false;
     return Scaffold(
@@ -137,12 +147,12 @@ class ViewProfileScreen extends StatelessWidget {
                             style: TextStyle(color: Colors.white),
                           ),
                         ),
-                        tileColor: showControlCenter
-                            // ignore: dead_code
+                        tileColor: state
+                                .showControlCenter // Use state instead of local variable
                             ? const Color.fromARGB(255, 94, 94, 94)
                             : const Color.fromARGB(255, 48, 48, 48),
-                        trailing: showControlCenter
-                            // ignore: dead_code
+                        trailing: state
+                                .showControlCenter // Use state instead of local variable
                             ? const Icon(
                                 Icons.keyboard_arrow_down_rounded,
                                 color: Colors.white,
@@ -154,11 +164,25 @@ class ViewProfileScreen extends StatelessWidget {
                                 size: 20,
                               ),
                         onTap: () {
-                          showControlCenter = !showControlCenter;
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => EditProfileScreen(
+                                initialUserInfo: state.userData,
+                                onProfileUpdated: () {
+                                  if (context.mounted) {
+                                    context
+                                        .read<ProfileBloc>()
+                                        .add(FetchUserInfo());
+                                  }
+                                },
+                              ),
+                            ),
+                          );
                         },
                       ),
                     ),
-                    if (showControlCenter) ...[
+                    if (state.showControlCenter) ...[
                       const SizedBox(height: 8),
                       SwitchListTile(
                           shape: const RoundedRectangleBorder(
@@ -197,20 +221,24 @@ class ViewProfileScreen extends StatelessWidget {
                                 style: TextStyle(color: Colors.white),
                               ),
                               value: isMicEnabled,
-                              onChanged: (value) {
-                                // First trigger microphone permission request
+                              onChanged: (value) async {
                                 context
                                     .read<MicrophoneBloc>()
                                     .add(ToggleMicrophone());
 
-                                // Only update the profile toggle if permission was granted
-                                if (micState is MicrophoneEnabled) {
-                                  context.read<ProfileBloc>().add(
-                                        UpdateToggleState(
-                                          toggleName: 'microphoneToggle',
-                                          newValue: value,
-                                        ),
-                                      );
+                                await Future.delayed(Duration(
+                                    milliseconds:
+                                        200)); // Wait for state update
+
+                                if (context.mounted &&
+                                    context.read<MicrophoneBloc>().state
+                                        is MicrophoneEnabled) {
+                                  context
+                                      .read<ProfileBloc>()
+                                      .add(UpdateToggleState(
+                                        toggleName: 'microphoneToggle',
+                                        newValue: value,
+                                      ));
                                 }
                               },
                               subtitle: Text(

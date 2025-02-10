@@ -23,6 +23,20 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
     on<DeleteAccount>(_onDeleteAccount);
     on<FetchToggleStates>(_onFetchToggleStates);
     on<UpdateToggleState>(_onUpdateToggleState);
+    on<ToggleControlCenter>(_onToggleControlCenter);  // Add this
+
+  }
+  // Add this method
+  void _onToggleControlCenter(
+    ToggleControlCenter event,
+    Emitter<ProfileState> emit,
+  ) {
+    if (state is ToggleStatesLoaded) {
+      final currentState = state as ToggleStatesLoaded;
+      emit(currentState.copyWith(
+        showControlCenter: !currentState.showControlCenter,
+      ));
+    }
   }
 
   Future<void> _onFetchToggleStates(
