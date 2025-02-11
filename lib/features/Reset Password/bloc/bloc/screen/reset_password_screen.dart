@@ -32,13 +32,13 @@ class ResetPasswordView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Reset Password')),
+      appBar: AppBar(title: const Text('اعادة تعيين الرقم السري')),
       body: BlocListener<ResetPasswordBloc, ResetPasswordState>(
         listener: (context, state) {
           if (state.status == ResetPasswordStatus.success) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
-                content: Text('Password reset email sent successfully!'),
+                content: Text('تم ارسال بريد الكتروني لاعادة تعييت الرقم السري بنجاح !'),
                 backgroundColor: Colors.green,
               ),
             );
@@ -52,7 +52,7 @@ class ResetPasswordView extends StatelessWidget {
           if (state.status == ResetPasswordStatus.error) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text(state.errorMessage ?? 'An error occurred'),
+                content: Text(state.errorMessage ?? 'حدث خطاء '),
                 backgroundColor: Colors.red,
               ),
             );
@@ -92,7 +92,7 @@ class _ResetPasswordFormState extends State<_ResetPasswordForm> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               const Text(
-                'Enter your email address to reset your password',
+                'ادخل بريدك الالكتروني المستخدم للاعادة تعيين الرقم السري',
                 textAlign: TextAlign.center,
                 style: TextStyle(fontSize: 16),
               ),
@@ -100,21 +100,21 @@ class _ResetPasswordFormState extends State<_ResetPasswordForm> {
               TextFormField(
                 controller: _emailController,
                 decoration: const InputDecoration(
-                  labelText: 'Email',
+                  labelText: 'البريد الالكتروني',
                   border: OutlineInputBorder(),
                 ),
                 keyboardType: TextInputType.emailAddress,
                 autocorrect: false,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Please enter your email';
+                    return 'الرجاد ادخال البريد الالكتروني';
                   }
                   return null;
                 },
               ),
               const SizedBox(height: 10),
               const Text(
-                'Enter your email address that you have signed in before',
+                'ادخل البريد الالكتروني المستخدم في تسجيل الدخول ',
                 textAlign: TextAlign.center,
                 style: TextStyle(fontSize: 16),
               ),
@@ -139,7 +139,7 @@ class _ResetPasswordFormState extends State<_ResetPasswordForm> {
                             strokeWidth: 2,
                           ),
                         )
-                      : const Text('Reset Password'),
+                      : const Text('اعادة تعيين الرقم السري'),
                 ),
               ),
             ],
