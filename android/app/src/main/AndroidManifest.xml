@@ -39,6 +39,12 @@ package="com.kawamen.android">
             <meta-data
     android:name="com.google.firebase.auth.API_KEY"
     android:value="AIzaSyCLQ2_Xjm7brlTCDSONbCJtKaZW6PscZzU" />
+<meta-data
+    android:name="firebase_crashlytics_collection_enabled"
+    android:value="false" />
+<meta-data
+    android:name="debug.firebase.auth"
+    android:value="true"/>
 
     </application>
     <!-- Required to query activities that can process text, see:
