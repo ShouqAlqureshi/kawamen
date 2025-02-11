@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:kawamen/features/registration/screens/registration_screen.dart';
 import '../../Profile/Screens/view_profile_screen.dart';
 import '../../Reset Password/bloc/bloc/screen/reset_password_screen.dart';
 import '../bloc/login_bloc.dart';
@@ -133,7 +134,7 @@ class LoginView extends StatelessWidget {
                               Navigator.pushReplacement(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (_) => ViewProfileScreen(),
+                                  builder: (_) => RegistrationScreen(),
                                 ),
                               );
                             },
