@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:kawamen/core/navigation/app_routes.dart';
 
@@ -207,9 +208,17 @@ class _EntryScreenState extends State<EntryScreen>
                   if (_dragPos > _maxDrag) _dragPos = _maxDrag;
                 });
               },
-              onHorizontalDragEnd: (details) {
+              onHorizontalDragEnd: (details) async {
                 if (_dragPos > _maxDrag * 0.75) {
-                  Navigator.pushReplacementNamed(context, AppRoutes.login);
+                  // Check if the user is logged in
+                  final user = FirebaseAuth.instance.currentUser;
+                  if (user != null) {
+                    // If user is logged in, navigate to the profile view
+                    Navigator.pushReplacementNamed(context, AppRoutes.profile);
+                  } else {
+                    // If user is not logged in, navigate to the login view
+                    Navigator.pushReplacementNamed(context, AppRoutes.login);
+                  }
                 } else {
                   // If not dragged enough, animate back to the start.
                   setState(() {
