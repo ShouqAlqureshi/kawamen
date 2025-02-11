@@ -15,7 +15,7 @@ class LoginView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor, // Use theme background color
       body: BlocProvider(
         create: (context) => LoginBloc(),
         child: BlocConsumer<LoginBloc, LoginState>(
@@ -43,37 +43,38 @@ class LoginView extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      const Text(
+                      Text(
                         'تسجيل دخول',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 24,
-                        ),
+                        style: Theme.of(context).textTheme.headlineMedium, // Use theme text style
                         textAlign: TextAlign.right,
                       ),
                       const SizedBox(height: 32),
+                      // Email Text Field with card-like style
                       TextField(
                         controller: _emailController,
                         decoration: InputDecoration(
                           hintText: 'البريد الالكتروني',
                           filled: true,
-                          fillColor: Colors.white,
+                          fillColor: Theme.of(context).cardColor, // Match the card color
                           border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
+                            borderRadius: BorderRadius.circular(16), // Match the card border radius
+                            borderSide: BorderSide.none,
                           ),
                         ),
                         textAlign: TextAlign.right,
                       ),
                       const SizedBox(height: 16),
+                      // Password Text Field with card-like style
                       TextField(
                         controller: _passwordController,
                         obscureText: true,
                         decoration: InputDecoration(
                           hintText: 'كلمة المرور',
                           filled: true,
-                          fillColor: Colors.white,
+                          fillColor: Theme.of(context).cardColor, // Match the card color
                           border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
+                            borderRadius: BorderRadius.circular(16), // Match the card border radius
+                            borderSide: BorderSide.none,
                           ),
                         ),
                         textAlign: TextAlign.right,
@@ -109,7 +110,7 @@ class LoginView extends StatelessWidget {
                                     );
                               },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.purple,
+                          backgroundColor: Theme.of(context).colorScheme.secondary, // Use theme secondary color
                           padding: const EdgeInsets.symmetric(vertical: 16),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(8),
