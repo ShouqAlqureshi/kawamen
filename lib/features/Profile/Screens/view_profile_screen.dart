@@ -61,6 +61,21 @@ class ViewProfileScreen extends StatelessWidget {
     String avatarText = getInitials(userName);
 
     return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        title:  Text(
+          " الحساب الشخصي",
+          style: Theme.of(context).textTheme.headlineMedium,
+          textAlign: TextAlign.right,
+        ),
+        leading: IconButton(
+          icon: const Icon(
+            Icons.arrow_back,
+            color: Colors.white,
+          ),
+          onPressed: () => Navigator.pop(context),
+        ),
+      ),
       body: Center(
         child: SingleChildScrollView(
           child: Column(
@@ -165,8 +180,9 @@ class ViewProfileScreen extends StatelessWidget {
                       theme: theme,
                       leading: Icons.logout,
                       onTap: () {
-                            context.read<ProfileBloc>().add(Logout()); // Trigger logout event
-
+                        context
+                            .read<ProfileBloc>()
+                            .add(Logout()); // Trigger logout event
                       },
                     ),
                   ],
@@ -224,100 +240,103 @@ class ViewProfileScreen extends StatelessWidget {
     ThemeData theme,
   ) {
     return AnimatedSlide(
-  duration: const Duration(milliseconds: 500),
-  curve: Curves.easeInOut,
-  offset: const Offset(0, 0),
-  child: AnimatedOpacity(
-    duration: const Duration(milliseconds: 500),
-    opacity: 1.0,
-    curve: Curves.easeInOut,
-    child: Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceVariant, // Adjust based on your theme
-        borderRadius: BorderRadius.circular(25),
-      ),
-      child: Column(
-        children: [
-          SwitchListTile(
-            shape: const RoundedRectangleBorder(
-              borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(25),
-                topRight: Radius.circular(25),
-              ),
-            ),
-            title: Text(
-              'اكتشاف المشاعر',
-              style: theme.textTheme.bodyLarge?.copyWith(
-                color: theme.colorScheme.onSurface,
-              ),
-            ),
-            value: state.emotionDetectionToggle,
-            onChanged: (value) {
-              context.read<ProfileBloc>().add(
-                    UpdateToggleState(
-                      toggleName: 'emotionDetectionToggle',
-                      newValue: value,
-                    ),
-                  );
-            },
-            subtitle: Text(
-              "ايقاف هذه الخاصيه لن يسمح للتطبيق توفير اقتراحات العلاج",
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurface.withOpacity(0.7),
-              ),
-            ),
-            tileColor: theme.colorScheme.surfaceVariant,
-            activeColor: theme.colorScheme.primary,
-            inactiveTrackColor: theme.colorScheme.onSurface.withOpacity(0.3),
+      duration: const Duration(milliseconds: 500),
+      curve: Curves.easeInOut,
+      offset: const Offset(0, 0),
+      child: AnimatedOpacity(
+        duration: const Duration(milliseconds: 500),
+        opacity: 1.0,
+        curve: Curves.easeInOut,
+        child: Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color:
+                theme.colorScheme.surfaceVariant, // Adjust based on your theme
+            borderRadius: BorderRadius.circular(25),
           ),
-          const Divider(height: 1, thickness: 1),
-          BlocBuilder<MicrophoneBloc, MicrophoneState>(
-            builder: (context, micState) {
-              bool isMicEnabled = micState is MicrophoneEnabled;
-              return SwitchListTile(
+          child: Column(
+            children: [
+              SwitchListTile(
+                shape: const RoundedRectangleBorder(
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(25),
+                    topRight: Radius.circular(25),
+                  ),
+                ),
                 title: Text(
-                  'المايكروفون',
+                  'اكتشاف المشاعر',
                   style: theme.textTheme.bodyLarge?.copyWith(
                     color: theme.colorScheme.onSurface,
                   ),
                 ),
-                value: isMicEnabled,
-                onChanged: (value) async {
-                  context.read<MicrophoneBloc>().add(ToggleMicrophone());
-                  await Future.delayed(const Duration(milliseconds: 200));
-                  if (context.mounted &&
-                      context.read<MicrophoneBloc>().state is MicrophoneEnabled) {
-                    context.read<ProfileBloc>().add(
-                          UpdateToggleState(
-                            toggleName: 'microphoneToggle',
-                            newValue: value,
-                          ),
-                        );
-                  }
+                value: state.emotionDetectionToggle,
+                onChanged: (value) {
+                  context.read<ProfileBloc>().add(
+                        UpdateToggleState(
+                          toggleName: 'emotionDetectionToggle',
+                          newValue: value,
+                        ),
+                      );
                 },
                 subtitle: Text(
-                  micState is MicrophonePermissionDenied
-                      ? "يرجى السماح بإذن المايكروفون في إعدادات التطبيق"
-                      : "ايقاف هذه الخاصيه لن يسمح للتطبيق من تحليل المشاعر",
+                  "ايقاف هذه الخاصيه لن يسمح للتطبيق توفير اقتراحات العلاج",
                   style: theme.textTheme.bodySmall?.copyWith(
-                    color: micState is MicrophonePermissionDenied
-                        ? Colors.red
-                        : theme.colorScheme.onSurface.withOpacity(0.7),
+                    color: theme.colorScheme.onSurface.withOpacity(0.7),
                   ),
                 ),
                 tileColor: theme.colorScheme.surfaceVariant,
                 activeColor: theme.colorScheme.primary,
-                inactiveTrackColor: theme.colorScheme.onSurface.withOpacity(0.3),
-              );
-            },
+                inactiveTrackColor:
+                    theme.colorScheme.onSurface.withOpacity(0.3),
+              ),
+              const Divider(height: 1, thickness: 1),
+              BlocBuilder<MicrophoneBloc, MicrophoneState>(
+                builder: (context, micState) {
+                  bool isMicEnabled = micState is MicrophoneEnabled;
+                  return SwitchListTile(
+                    title: Text(
+                      'المايكروفون',
+                      style: theme.textTheme.bodyLarge?.copyWith(
+                        color: theme.colorScheme.onSurface,
+                      ),
+                    ),
+                    value: isMicEnabled,
+                    onChanged: (value) async {
+                      context.read<MicrophoneBloc>().add(ToggleMicrophone());
+                      await Future.delayed(const Duration(milliseconds: 200));
+                      if (context.mounted &&
+                          context.read<MicrophoneBloc>().state
+                              is MicrophoneEnabled) {
+                        context.read<ProfileBloc>().add(
+                              UpdateToggleState(
+                                toggleName: 'microphoneToggle',
+                                newValue: value,
+                              ),
+                            );
+                      }
+                    },
+                    subtitle: Text(
+                      micState is MicrophonePermissionDenied
+                          ? "يرجى السماح بإذن المايكروفون في إعدادات التطبيق"
+                          : "ايقاف هذه الخاصيه لن يسمح للتطبيق من تحليل المشاعر",
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: micState is MicrophonePermissionDenied
+                            ? Colors.red
+                            : theme.colorScheme.onSurface.withOpacity(0.7),
+                      ),
+                    ),
+                    tileColor: theme.colorScheme.surfaceVariant,
+                    activeColor: theme.colorScheme.primary,
+                    inactiveTrackColor:
+                        theme.colorScheme.onSurface.withOpacity(0.3),
+                  );
+                },
+              ),
+            ],
           ),
-        ],
+        ),
       ),
-    ),
-  ),
-);
-
+    );
   }
 
   Widget _buildToggleCard({
