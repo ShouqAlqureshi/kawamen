@@ -86,25 +86,29 @@ class _EntryScreenState extends State<EntryScreen>
                       Positioned(
                         top: 0,
                         left: 0,
-                        child: Image.asset("assets/images/green_star.png",
+                        child: Image.asset(
+                            "lib/core/assets/images/green_star.png",
                             width: 20),
                       ),
                       Positioned(
                         top: 0,
                         right: 0,
-                        child: Image.asset("assets/images/green_star.png",
+                        child: Image.asset(
+                            "lib/core/assets/images/green_star.png",
                             width: 15),
                       ),
                       Positioned(
                         bottom: 0,
                         left: 30,
-                        child: Image.asset("assets/images/green_star.png",
+                        child: Image.asset(
+                            "lib/core/assets/images/green_star.png",
                             width: 15),
                       ),
                       Positioned(
                         bottom: 0,
                         right: 30,
-                        child: Image.asset("assets/images/green_star.png",
+                        child: Image.asset(
+                            "lib/core/assets/images/green_star.png",
                             width: 20),
                       ),
                       // Main entry text.
@@ -125,8 +129,10 @@ class _EntryScreenState extends State<EntryScreen>
                   Stack(
                     alignment: Alignment.center,
                     children: [
-                      Image.asset("assets/images/hands.png", width: 280),
-                      Image.asset("assets/images/logo.png", width: 120),
+                      Image.asset("lib/core/assets/images/hands.png",
+                          width: 280),
+                      Image.asset("lib/core/assets/images/logo.png",
+                          width: 120),
                     ],
                   ),
                   const SizedBox(height: 40),
