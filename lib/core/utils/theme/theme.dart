@@ -3,20 +3,20 @@ import 'package:flutter/material.dart';
 class AppTheme {
   static ThemeData darkTheme = ThemeData(
     brightness: Brightness.dark,
-    scaffoldBackgroundColor: const Color(0xFF121212),
-    primaryColor: const Color(0xFF6B4EE6),
+    scaffoldBackgroundColor: const Color(0xFF0A0A0A), // Darker background matching screenshots
+    primaryColor: const Color(0xFF4CAF50), // Green accent from text
     
     // Card & Dialog colors
-    cardColor: const Color(0xFF1E1E1E),
-    dialogBackgroundColor: const Color(0xFF1E1E1E),
+    cardColor: const Color(0xFF1A1A1A),
+    dialogBackgroundColor: const Color(0xFF1A1A1A),
     
     // Custom color scheme
     colorScheme: const ColorScheme.dark(
-      primary: Color(0xFF6B4EE6),      // Purple accent
-      secondary: Color(0xFF4A4458),     // Muted purple
-      surface: Color(0xFF1E1E1E),       // Card background
-      background: Color(0xFF121212),    // App background
-      error: Color(0xFFCF6679),         // Error red
+      primary: Color(0xFF4CAF50),      // Green accent from text
+      secondary: Color(0xFF5D4EE6),     // Purple from breathing exercise button
+      surface: Color(0xFF1A1A1A),       // Card background
+      background: Color(0xFF0A0A0A),    // App background
+      error: Color(0xFFCF6679),         // Keeping error red
       onPrimary: Colors.white,
       onSecondary: Colors.white,
       onSurface: Colors.white,
@@ -26,13 +26,13 @@ class AppTheme {
     
     // AppBar theme
     appBarTheme: const AppBarTheme(
-      backgroundColor: Color(0xFF1E1E1E),
+      backgroundColor: Color(0xFF0A0A0A),
       elevation: 0,
     ),
     
     // Card theme
     cardTheme: CardTheme(
-      color: const Color(0xFF1E1E1E),
+      color: const Color(0xFF1A1A1A),
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
@@ -55,11 +55,52 @@ class AppTheme {
     
     // Navigation bar theme
     navigationBarTheme: NavigationBarThemeData(
-      backgroundColor: const Color(0xFF1E1E1E),
-      indicatorColor: const Color(0xFF6B4EE6).withOpacity(0.2),
+      backgroundColor: const Color(0xFF1A1A1A),
+      indicatorColor: const Color(0xFF5D4EE6).withOpacity(0.2),
       iconTheme: MaterialStateProperty.all(
         const IconThemeData(color: Colors.white70),
       ),
     ),
+
+    // Additional colors for charts and visualizations
+    extensions: [
+      CustomColors(
+        chartColors: [
+          const Color(0xFFFF6B4A),  // Orange from chart
+          const Color(0xFF5D4EE6),  // Purple from chart
+          const Color(0xFF4CAF50),  // Green accent
+          const Color(0xFFE64E4E),  // Red from chart
+        ],
+      ),
+    ],
   );
+}
+
+// Custom extension to handle chart colors
+class CustomColors extends ThemeExtension<CustomColors> {
+  final List<Color> chartColors;
+
+  const CustomColors({
+    required this.chartColors,
+  });
+
+  @override
+  ThemeExtension<CustomColors> copyWith({
+    List<Color>? chartColors,
+  }) {
+    return CustomColors(
+      chartColors: chartColors ?? this.chartColors,
+    );
+  }
+
+  @override
+  ThemeExtension<CustomColors> lerp(
+    ThemeExtension<CustomColors>? other,
+    double t,
+  ) {
+    if (other is! CustomColors) {
+      return this;
+    }
+    return this;
+  }
 }
