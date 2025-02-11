@@ -12,6 +12,8 @@ class AppView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+       initialRoute: AppRoutes.entry,  // Set initial route
+      onGenerateRoute: AppRoutes.generateRoute, 
       debugShowCheckedModeBanner: false,
       title: 'Kawamen',
       theme: AppTheme.darkTheme,
