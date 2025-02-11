@@ -32,23 +32,33 @@ class ResetPasswordView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('اعادة تعيين الرقم السري')),
+      extendBodyBehindAppBar: true,
+      backgroundColor: Colors.transparent,
+      appBar: AppBar(
+          elevation: 0,
+          backgroundColor: Colors.transparent,
+          title: Text(
+            'اعادة تعيين الرقم السري',
+            textAlign: TextAlign.right,
+            style: Theme.of(context).textTheme.headlineMedium,
+          )),
       body: BlocListener<ResetPasswordBloc, ResetPasswordState>(
         listener: (context, state) {
           if (state.status == ResetPasswordStatus.success) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
-                content: Text('تم ارسال بريد الكتروني لاعادة تعييت الرقم السري بنجاح !'),
+                content: Text(
+                    'تم ارسال بريد الكتروني لاعادة تعييت الرقم السري بنجاح !'),
                 backgroundColor: Colors.green,
               ),
             );
             Navigator.of(context).pop();
           }
-
+    
           if (state.status == ResetPasswordStatus.requiresReauth) {
             onReauthenticationRequired(context);
           }
-
+    
           if (state.status == ResetPasswordStatus.error) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
