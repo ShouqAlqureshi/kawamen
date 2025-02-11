@@ -22,9 +22,8 @@ class EditProfileScreen extends StatelessWidget {
         listener: (context, state) async {
           if (state is ProfileNeedsReauth) {
             final credential = await Navigator.of(context).push<UserCredential>(
-              MaterialPageRoute(builder: (_) => LoginPage()),
+              MaterialPageRoute(builder: (_) => const LoginPage()),
             );
-            // Ensure user actually reauthenticated before proceeding
             if (credential != null) {
               if (!context.mounted) return;
               context
@@ -53,7 +52,20 @@ class EditProfileScreen extends StatelessWidget {
               ),
             );
           }
-
+          if (state is AccountDeleted) {
+            if (!context.mounted) return;
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Profile deleted successfully!'),
+                backgroundColor: Colors.green,
+              ),
+            );
+            await Navigator.of(context).pushAndRemoveUntil(
+              MaterialPageRoute(builder: (_) => const LoginPage()),
+              (Route<dynamic> route) =>
+                  false, 
+            );
+          }
           if (state is ProfileUpdated) {
             if (!context.mounted) return;
             ScaffoldMessenger.of(context).showSnackBar(
@@ -62,6 +74,8 @@ class EditProfileScreen extends StatelessWidget {
                 backgroundColor: Colors.green,
               ),
             );
+            onProfileUpdated();
+            Navigator.pop(context); // Return to previous screen
           }
         },
         child: _EditProfileScreenContent(
