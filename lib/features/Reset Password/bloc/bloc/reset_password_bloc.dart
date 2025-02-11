@@ -4,10 +4,11 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 part 'reset_password_event.dart';
 part 'reset_password_state.dart';
+
 class ResetPasswordBloc extends Bloc<ResetPasswordEvent, ResetPasswordState> {
   final FirebaseAuth _firebaseAuth;
 
-  ResetPasswordBloc({FirebaseAuth? firebaseAuth}) 
+  ResetPasswordBloc({FirebaseAuth? firebaseAuth})
       : _firebaseAuth = firebaseAuth ?? FirebaseAuth.instance,
         super(const ResetPasswordState()) {
     on<ResetPasswordSubmitted>(_onResetPasswordSubmitted);
@@ -63,7 +64,8 @@ class ResetPasswordBloc extends Bloc<ResetPasswordEvent, ResetPasswordState> {
     try {
       final user = _firebaseAuth.currentUser;
       if (user != null) {
-        await user.reauthenticateWithCredential(event.credential as AuthCredential);
+        await user
+            .reauthenticateWithCredential(event.credential as AuthCredential);
         await _firebaseAuth.sendPasswordResetEmail(email: state.email);
         emit(state.copyWith(status: ResetPasswordStatus.success));
       } else {
@@ -85,13 +87,13 @@ class ResetPasswordBloc extends Bloc<ResetPasswordEvent, ResetPasswordState> {
   String _getErrorMessage(FirebaseAuthException e) {
     switch (e.code) {
       case 'invalid-email':
-        return 'The email address is invalid';
+        return 'The email address is invalid: $e';
       case 'user-not-found':
-        return 'No user found with this email address';
+        return 'No user found with this email address: $e';
       case 'requires-recent-login':
-        return 'Please sign in again to continue';
+        return 'Please sign in again to continue: $e';
       default:
-        return 'Failed to send reset password email';
+        return 'Failed to send reset password email: $e';
     }
   }
 }
