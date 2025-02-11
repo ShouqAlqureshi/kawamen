@@ -200,23 +200,91 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
     }
   }
 
-  Future<void> _onLogout(
-    Logout event,
-    Emitter<ProfileState> emit,
-  ) async {
-    emit(ProfileLoading());
-    try {
-      await _auth.signOut(); // Sign out from Firebase
+ Future<void> _onLogout(
+  Logout event,
+  Emitter<ProfileState> emit,
+) async {
+  emit(ProfileLoading());
+  try {
+    final user = FirebaseAuth.instance.currentUser;
+
+    // Check if the user is logged in
+    if (user == null) {
+      showErrorDialog(context, "User is not logged in");
+      return;
+    }
+
+    final shouldLogout = await showLogOutDialog(context);
+    if (shouldLogout) {
+      await FirebaseAuth.instance.signOut();
 
       // Optionally, clear shared preferences if needed
       final prefs = await SharedPreferences.getInstance();
       await prefs.clear();
 
       emit(ProfileInitial()); // Reset the profile state to initial
-       Navigator.of(context).pushNamedAndRemoveUntil(AppRoutes.entry, (route) => false);
 
-    } catch (e) {
-      emit(ProfileError('Error logging out: ${e.toString()}'));
+      Navigator.of(context).pushNamedAndRemoveUntil(AppRoutes.entry, (route) => false);
     }
+  } catch (e) {
+    emit(ProfileError('Error logging out: ${e.toString()}'));
+  }
+}
+
+void showErrorDialog(BuildContext context, String message) {
+  showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return AlertDialog(
+        title: const Text('Error'),
+        content: Text(message),
+        actions: [
+          TextButton(
+            child: const Text('OK'),
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+          ),
+        ],
+      );
+    },
+  );
+}
+
+  Future<bool> showLogOutDialog(BuildContext context) async {
+    return showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: Colors.white, // Set dialog background to white
+          title: const Text(
+            'Log Out',
+            style: TextStyle(color: Colors.black), // Set title text color
+          ),
+          content: const Text(
+            'Are you sure you want to log out?',
+            style: TextStyle(color: Colors.black), // Set content text color
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false), // No
+              child: const Text(
+                'Cancel',
+                style: TextStyle(
+                    color: Colors.black), // Customize button color if desired
+              ),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(true), // Yes
+              child: const Text(
+                'Log Out',
+                style: TextStyle(
+                    color: Colors.red), // Set log out button text color
+              ),
+            ),
+          ],
+        );
+      },
+    ).then((value) => value ?? false); // Ensure it returns false if dismissed
   }
 }
