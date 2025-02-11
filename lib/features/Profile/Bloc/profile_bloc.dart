@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:kawamen/core/navigation/app_routes.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 part 'profile_event.dart';
 part 'profile_state.dart';
@@ -212,6 +213,8 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
       await prefs.clear();
 
       emit(ProfileInitial()); // Reset the profile state to initial
+       Navigator.of(context).pushNamedAndRemoveUntil(AppRoutes.entry, (route) => false);
+
     } catch (e) {
       emit(ProfileError('Error logging out: ${e.toString()}'));
     }
