@@ -35,11 +35,11 @@ class _EntryScreenState extends State<EntryScreen>
     _animationController.forward();
 
     // Auto navigate after 5 seconds.
-    Future.delayed(const Duration(seconds: 5), () {
-      if (mounted) {
-        Navigator.pushReplacementNamed(context, AppRoutes.login);
-      }
-    });
+    // Future.delayed(const Duration(seconds: 5), () {
+    // if (mounted) {
+    //  Navigator.pushReplacementNamed(context, AppRoutes.login);
+    // }
+    // });
   }
 
   @override
@@ -80,46 +80,55 @@ class _EntryScreenState extends State<EntryScreen>
                 children: [
                   // Centered text with decorative green stars.
                   Stack(
+                    clipBehavior:
+                        Clip.none, // Allow children to overflow if needed.
                     alignment: Alignment.center,
                     children: [
-                      // Positioned green stars.
+                      // Positioned green stars placed outside the padded text area.
                       Positioned(
-                        top: 0,
-                        left: 0,
+                        top: -20, // Moves the star above the container.
+                        left: -20, // Moves the star to the left.
                         child: Image.asset(
-                            "lib/core/assets/images/green_star.png",
-                            width: 20),
+                          "lib/core/assets/images/green_star.png",
+                          width: 20,
+                        ),
                       ),
                       Positioned(
-                        top: 0,
-                        right: 0,
+                        top: -20,
+                        right: -20,
                         child: Image.asset(
-                            "lib/core/assets/images/green_star.png",
-                            width: 15),
+                          "lib/core/assets/images/green_star.png",
+                          width: 15,
+                        ),
                       ),
                       Positioned(
-                        bottom: 0,
-                        left: 30,
+                        bottom: -20,
+                        left: -20,
                         child: Image.asset(
-                            "lib/core/assets/images/green_star.png",
-                            width: 15),
+                          "lib/core/assets/images/green_star.png",
+                          width: 15,
+                        ),
                       ),
                       Positioned(
-                        bottom: 0,
-                        right: 30,
+                        bottom: -20,
+                        right: -20,
                         child: Image.asset(
-                            "lib/core/assets/images/green_star.png",
-                            width: 20),
+                          "lib/core/assets/images/green_star.png",
+                          width: 20,
+                        ),
                       ),
-                      // Main entry text.
-                      const Text(
-                        "نفهمك لأننا نشعر\nبكوامنك!",
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 28,
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          height: 1.5,
+                      // The text is wrapped in a padded Container to give extra space.
+                      Container(
+                        padding: const EdgeInsets.all(30),
+                        child: const Text(
+                          "نفهمك لأننا نشعر\nبكوامنك!",
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 28,
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            height: 1.5,
+                          ),
                         ),
                       ),
                     ],
@@ -132,7 +141,7 @@ class _EntryScreenState extends State<EntryScreen>
                       Image.asset("lib/core/assets/images/hands.png",
                           width: 280),
                       Image.asset("lib/core/assets/images/logo.png",
-                          width: 120),
+                          width: 280),
                     ],
                   ),
                   const SizedBox(height: 40),
