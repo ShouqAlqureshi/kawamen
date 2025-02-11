@@ -26,6 +26,32 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
     on<UpdateToggleState>(_onUpdateToggleState);
     on<ToggleControlCenter>(_onToggleControlCenter);
     on<Logout>(_onLogout);
+     on<FetchUserInfo>(_onFetchUserInfo);
+  }
+
+   Future<void> _onFetchUserInfo(
+    FetchUserInfo event,
+    Emitter<ProfileState> emit,
+  ) async {
+    emit(ProfileLoading());
+    try {
+      final String? userId = _auth.currentUser?.uid;
+      if (userId != null) {
+        final userDoc = await _firestore.collection('users').doc(userId).get();
+        
+        if (userDoc.exists) {
+          final userData = userDoc.data() as Map<String, dynamic>;
+          if (state is ToggleStatesLoaded) {
+            final currentState = state as ToggleStatesLoaded;
+            emit(currentState.copyWith(userData: userData));
+          } else {
+            add(FetchToggleStates());
+          }
+        }
+      }
+    } catch (e) {
+      emit(ProfileError('Error fetching user info: $e'));
+    }
   }
   // Add this method
   void _onToggleControlCenter(
@@ -111,6 +137,7 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
         emit(ProfileNeedsVerification(event.email));
       } else {
         emit(ProfileUpdated());
+         add(FetchToggleStates());
       }
     } on FirebaseAuthException catch (e) {
       await _handleFirebaseAuthException(e, emit);
