@@ -2,8 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:kawamen/features/Profile/repository/profile_repository.dart';
-import 'package:kawamen/features/login/view/login_view.dart';
+import 'package:kawamen/features/LogIn/view/login_page.dart';
 import '../Bloc/profile_bloc.dart';
 
 class EditProfileScreen extends StatelessWidget {
@@ -23,7 +22,7 @@ class EditProfileScreen extends StatelessWidget {
         listener: (context, state) async {
           if (state is ProfileNeedsReauth) {
             final credential = await Navigator.of(context).push<UserCredential>(
-              MaterialPageRoute(builder: (_) => LoginView()),
+              MaterialPageRoute(builder: (_) => LoginPage()),
             );
             // Ensure user actually reauthenticated before proceeding
             if (credential != null) {
