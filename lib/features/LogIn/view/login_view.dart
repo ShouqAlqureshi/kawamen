@@ -1,22 +1,35 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:kawamen/features/registration/screens/registration_screen.dart';
 import '../../Profile/Screens/view_profile_screen.dart';
 import '../../Reset Password/bloc/bloc/screen/reset_password_screen.dart';
+import '../../registration/screens/registration_screen.dart';
 import '../bloc/login_bloc.dart';
 import '../bloc/login_event.dart';
 import '../bloc/login_state.dart';
 
-class LoginView extends StatelessWidget {
+class LoginView extends StatefulWidget {
+  const LoginView({super.key});
+
+  @override
+  State<LoginView> createState() => _LoginViewState();
+}
+
+class _LoginViewState extends State<LoginView> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  bool _isPasswordVisible = false;
 
-  LoginView({super.key});
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor, // Use theme background color
+      backgroundColor: Colors.black,
       body: BlocProvider(
         create: (context) => LoginBloc(),
         child: BlocConsumer<LoginBloc, LoginState>(
@@ -24,14 +37,15 @@ class LoginView extends StatelessWidget {
             if (state is LoginSuccessState) {
               Navigator.pushReplacement(
                 context,
-                MaterialPageRoute(builder: (_) => ViewProfileScreen()),
+                MaterialPageRoute(builder: (_) => const RegistrationScreen()),
               );
             } else if (state is LoginFailure) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text(state.error),
-                  backgroundColor:
-                      state.error.contains('reset') ? Colors.green : Colors.red,
+                  backgroundColor: state.error.contains('reset')
+                      ? Colors.green
+                      : Colors.red,
                 ),
               );
             }
@@ -44,38 +58,50 @@ class LoginView extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      Text(
+                      const Text(
                         'تسجيل دخول',
-                        style: Theme.of(context).textTheme.headlineMedium, // Use theme text style
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 24,
+                        ),
                         textAlign: TextAlign.right,
                       ),
                       const SizedBox(height: 32),
-                      // Email Text Field with card-like style
                       TextField(
                         controller: _emailController,
                         decoration: InputDecoration(
                           hintText: 'البريد الالكتروني',
                           filled: true,
-                          fillColor: Theme.of(context).cardColor, // Match the card color
+                          fillColor: Colors.white,
                           border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(16), // Match the card border radius
-                            borderSide: BorderSide.none,
+                            borderRadius: BorderRadius.circular(8),
                           ),
                         ),
                         textAlign: TextAlign.right,
                       ),
                       const SizedBox(height: 16),
-                      // Password Text Field with card-like style
                       TextField(
                         controller: _passwordController,
-                        obscureText: true,
+                        obscureText: !_isPasswordVisible,
                         decoration: InputDecoration(
                           hintText: 'كلمة المرور',
                           filled: true,
-                          fillColor: Theme.of(context).cardColor, // Match the card color
+                          fillColor: Colors.white,
                           border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(16), // Match the card border radius
-                            borderSide: BorderSide.none,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              _isPasswordVisible 
+                                ? Icons.visibility_off
+                                : Icons.visibility,
+                              color: Colors.grey,
+                            ),
+                            onPressed: () {
+                              setState(() {
+                                _isPasswordVisible = !_isPasswordVisible;
+                              });
+                            },
                           ),
                         ),
                         textAlign: TextAlign.right,
@@ -111,15 +137,14 @@ class LoginView extends StatelessWidget {
                                     );
                               },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Theme.of(context).colorScheme.secondary, // Use theme secondary color
+                          backgroundColor: Colors.purple,
                           padding: const EdgeInsets.symmetric(vertical: 16),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(8),
                           ),
                         ),
                         child: state is LoginLoading
-                            ? const CircularProgressIndicator(
-                                color: Colors.white)
+                            ? const CircularProgressIndicator(color: Colors.white)
                             : const Text(
                                 'تسجيل دخول',
                                 style: TextStyle(color: Colors.white),
@@ -134,7 +159,7 @@ class LoginView extends StatelessWidget {
                               Navigator.pushReplacement(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (_) => RegistrationScreen(),
+                                  builder: (_) => const RegistrationScreen(),
                                 ),
                               );
                             },
