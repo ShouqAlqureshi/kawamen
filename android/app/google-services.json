@@ -12,7 +12,12 @@
           "package_name": "com.kawamen.android"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "201578437650-871k1938tfj5us3mq9kt7cc4epplacso.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyCLQ2_Xjm7brlTCDSONbCJtKaZW6PscZzU"
@@ -20,7 +25,19 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "201578437650-871k1938tfj5us3mq9kt7cc4epplacso.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "201578437650-rsaadf36hgbeigh302m556pv42i5p8q8.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.kawamen.android"
+              }
+            }
+          ]
         }
       }
     }

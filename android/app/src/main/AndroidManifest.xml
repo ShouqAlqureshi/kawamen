@@ -36,6 +36,10 @@ package="com.kawamen.android">
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+            <meta-data
+    android:name="com.google.firebase.auth.API_KEY"
+    android:value="AIzaSyCLQ2_Xjm7brlTCDSONbCJtKaZW6PscZzU" />
+
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and

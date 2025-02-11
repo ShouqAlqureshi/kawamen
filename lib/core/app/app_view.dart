@@ -17,7 +17,7 @@ class AppView extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'Kawamen',
       theme: AppTheme.darkTheme,
-      home: EntryScreen(),
+      home: RegistrationScreen(),
     );
   }
 }
