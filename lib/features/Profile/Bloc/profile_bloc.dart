@@ -51,7 +51,6 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
       final microphoneToggle = prefs.getBool('microphoneToggle') ?? false;
       // Fetch user data from Firestore
       final String? userId = FirebaseAuth.instance.currentUser?.uid;
-      // final String? userId = "abcDEF789";
       if (userId != null) {
         DocumentSnapshot userDoc = await FirebaseFirestore.instance
             .collection('users')
@@ -124,21 +123,6 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
     await _firestore.collection('users').doc(userId).update({
       'fullName': event.name,
       'age': event.age,
-    });
-  }
-
-// Listen for email verification globally
-  void listenForEmailVerification() {
-    FirebaseAuth.instance.authStateChanges().listen((User? user) async {
-      if (user != null && user.emailVerified) {
-        await FirebaseFirestore.instance
-            .collection('users')
-            .doc(user.uid)
-            .update({
-          'email': user.email,
-        });
-        print('Email updated in Firestore after verification');
-      }
     });
   }
 

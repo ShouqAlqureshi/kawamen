@@ -27,7 +27,13 @@ class ViewProfileScreen extends StatelessWidget {
       ],
       child: Scaffold(
         backgroundColor: theme.colorScheme.background,
-        body: BlocBuilder<ProfileBloc, ProfileState>(
+        body: BlocConsumer<ProfileBloc, ProfileState>(
+          listener: (context, state) {
+            if (state is ProfileUpdated) {
+              // Refresh data when profile is updated
+              context.read<ProfileBloc>().add(FetchToggleStates());
+            }
+          },
           builder: (context, state) {
             if (state is ProfileLoading) {
               return const Center(child: CircularProgressIndicator());
@@ -63,7 +69,7 @@ class ViewProfileScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.transparent,
-        title:  Text(
+        title: Text(
           " الحساب الشخصي",
           style: Theme.of(context).textTheme.headlineMedium,
           textAlign: TextAlign.right,
