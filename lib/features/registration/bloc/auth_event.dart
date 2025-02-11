@@ -11,7 +11,7 @@ class RegisterUser extends AuthEvent {
   final String fullName;
   final String email;
   final String password;
-    final int age; // ✅ Add this missing field
+  final int age; // ✅ Add this missing field
 
 
   RegisterUser({required this.fullName, required this.email, required this.password,     required this.age // ✅ Update constructor to include age
