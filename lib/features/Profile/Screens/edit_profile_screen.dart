@@ -2,6 +2,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:kawamen/features/Profile/repository/profile_repository.dart';
+import 'package:kawamen/features/login/view/login_view.dart';
 import '../Bloc/profile_bloc.dart';
 
 class EditProfileScreen extends StatelessWidget {
@@ -20,12 +22,16 @@ class EditProfileScreen extends StatelessWidget {
       child: BlocListener<ProfileBloc, ProfileState>(
         listener: (context, state) async {
           if (state is ProfileNeedsReauth) {
-            // final credential = await Navigator.of(context).push<UserCredential>(
-            //   MaterialPageRoute(builder: (_) => SignInPage()),
-            // );
-            // if (credential != null) {
-            //   context.read<ProfileBloc>().add(ReauthenticationComplete(credential));
-            // }
+            final credential = await Navigator.of(context).push<UserCredential>(
+              MaterialPageRoute(builder: (_) => LoginView()),
+            );
+            // Ensure user actually reauthenticated before proceeding
+            if (credential != null) {
+              if (!context.mounted) return;
+              context
+                  .read<ProfileBloc>()
+                  .add(ReauthenticationComplete(credential));
+            }
           }
 
           if (state is ProfileNeedsVerification) {
@@ -50,6 +56,7 @@ class EditProfileScreen extends StatelessWidget {
           }
 
           if (state is ProfileUpdated) {
+            if (!context.mounted) return;
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                 content: Text('Profile updated successfully!'),

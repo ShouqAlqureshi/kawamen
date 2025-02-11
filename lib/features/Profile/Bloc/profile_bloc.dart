@@ -23,8 +23,8 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
     on<DeleteAccount>(_onDeleteAccount);
     on<FetchToggleStates>(_onFetchToggleStates);
     on<UpdateToggleState>(_onUpdateToggleState);
-    on<ToggleControlCenter>(_onToggleControlCenter); 
-    on<Logout>(_onLogout);  
+    on<ToggleControlCenter>(_onToggleControlCenter);
+    on<Logout>(_onLogout);
   }
   // Add this method
   void _onToggleControlCenter(
@@ -92,8 +92,7 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
   ) async {
     emit(ProfileLoading());
     final user = _auth.currentUser;
-    // final String? userId = user?.uid;
-    final String? userId = "abcDEF789";
+    final String? userId = user?.uid;
     try {
       if (userId == null || user == null) {
         emit(ProfileError('No user logged in'));
@@ -124,6 +123,21 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
     await _firestore.collection('users').doc(userId).update({
       'fullName': event.name,
       'age': event.age,
+    });
+  }
+
+// Listen for email verification globally
+  void listenForEmailVerification() {
+    FirebaseAuth.instance.authStateChanges().listen((User? user) async {
+      if (user != null && user.emailVerified) {
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .update({
+          'email': user.email,
+        });
+        print('Email updated in Firestore after verification');
+      }
     });
   }
 
@@ -184,22 +198,22 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
       emit(ProfileError('Error deleting account: $e'));
     }
   }
+
   Future<void> _onLogout(
-  Logout event,
-  Emitter<ProfileState> emit,
-) async {
-  emit(ProfileLoading());
-  try {
-    await _auth.signOut();  // Sign out from Firebase
+    Logout event,
+    Emitter<ProfileState> emit,
+  ) async {
+    emit(ProfileLoading());
+    try {
+      await _auth.signOut(); // Sign out from Firebase
 
-    // Optionally, clear shared preferences if needed
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.clear();
+      // Optionally, clear shared preferences if needed
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.clear();
 
-    emit(ProfileInitial()); // Reset the profile state to initial
-  } catch (e) {
-    emit(ProfileError('Error logging out: ${e.toString()}'));
+      emit(ProfileInitial()); // Reset the profile state to initial
+    } catch (e) {
+      emit(ProfileError('Error logging out: ${e.toString()}'));
+    }
   }
-}
-
 }

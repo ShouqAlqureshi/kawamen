@@ -6,7 +6,7 @@ class ResetPasswordPage extends StatelessWidget {
   final Function(BuildContext) onReauthenticationRequired;
 
   const ResetPasswordPage({
-    super.key, 
+    super.key,
     required this.onReauthenticationRequired,
   });
 
@@ -111,6 +111,12 @@ class _ResetPasswordFormState extends State<_ResetPasswordForm> {
                   }
                   return null;
                 },
+              ),
+              const SizedBox(height: 10),
+              const Text(
+                'Enter your email address that you have signed in before',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 16),
               ),
               const SizedBox(height: 24),
               SizedBox(

@@ -2,6 +2,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:kawamen/core/app/app.dart';
+import 'package:kawamen/features/Profile/repository/profile_repository.dart';
 import 'package:kawamen/features/registration/bloc/auth_bloc.dart';
 import 'package:kawamen/features/registration/repository/auth_repository.dart';
 // Import the generated Firebase options file
@@ -12,5 +13,6 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform, // If using Firebase CLI
   );
+    listenForEmailVerification();  // Call this once at app startup
   runApp(App());
 }
