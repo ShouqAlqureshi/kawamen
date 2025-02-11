@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../Profile/Screens/view_profile_screen.dart';
 import '../../Reset Password/bloc/bloc/screen/reset_password_screen.dart';
-import '../../registration/screens/registration_screen.dart';
 import '../bloc/login_bloc.dart';
 import '../bloc/login_event.dart';
 import '../bloc/login_state.dart';
@@ -24,7 +23,7 @@ class LoginView extends StatelessWidget {
             if (state is LoginSuccessState) {
               Navigator.pushReplacement(
                 context,
-                MaterialPageRoute(builder: (_) => RegistrationScreen()),
+                MaterialPageRoute(builder: (_) => ViewProfileScreen()),
               );
             } else if (state is LoginFailure) {
               ScaffoldMessenger.of(context).showSnackBar(
@@ -133,7 +132,7 @@ class LoginView extends StatelessWidget {
                               Navigator.pushReplacement(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (_) => RegistrationScreen(),
+                                  builder: (_) => ViewProfileScreen(),
                                 ),
                               );
                             },
