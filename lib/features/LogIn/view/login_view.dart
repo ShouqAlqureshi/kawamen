@@ -1,24 +1,37 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:kawamen/features/registration/screens/registration_screen.dart';
 import '../../Profile/Screens/view_profile_screen.dart';
-import '../../Profile/Screens/edit_profile_screen.dart';  // Add this import
+import '../../Profile/Screens/edit_profile_screen.dart'; // Add this import
 import '../../Reset Password/bloc/bloc/screen/reset_password_screen.dart';
+import '../../registration/screens/registration_screen.dart';
 import '../bloc/login_bloc.dart';
 import '../bloc/login_event.dart';
 import '../bloc/login_state.dart';
-import '../../Profile/bloc/profile_bloc.dart';  // Add this import
+import '../../Profile/bloc/profile_bloc.dart'; // Add this import
 
-class LoginView extends StatelessWidget {
+class LoginView extends StatefulWidget {
+  const LoginView({super.key});
+
+  @override
+  State<LoginView> createState() => _LoginViewState();
+}
+
+class _LoginViewState extends State<LoginView> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  bool _isPasswordVisible = false;
 
-  LoginView({super.key});
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      backgroundColor: Colors.black,
       body: MultiBlocProvider(
         providers: [
           BlocProvider(
@@ -35,14 +48,16 @@ class LoginView extends StatelessWidget {
                 if (state is LoginSuccessState) {
                   Navigator.pushReplacement(
                     context,
-                    MaterialPageRoute(builder: (_) => const ViewProfileScreen()),
+                    MaterialPageRoute(
+                        builder: (_) =>  RegistrationScreen()),
                   );
                 } else if (state is LoginFailure) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text(state.error),
-                      backgroundColor:
-                          state.error.contains('reset') ? Colors.green : Colors.red,
+                      backgroundColor: state.error.contains('reset')
+                          ? Colors.green
+                          : Colors.red,
                     ),
                   );
                 }
@@ -53,13 +68,15 @@ class LoginView extends StatelessWidget {
                 if (state is ProfileNeedsReauth) {
                   Navigator.pushReplacement(
                     context,
-                    MaterialPageRoute(builder: (_) => EditProfileScreen(
-                              initialUserInfo: const <String, dynamic>{} ,
+                    MaterialPageRoute(
+                        builder: (_) => EditProfileScreen(
+                              initialUserInfo: const <String, dynamic>{},
                               onProfileUpdated: () {
                                 context
                                     .read<ProfileBloc>()
                                     .add(FetchUserInfo());
-                              },)),
+                              },
+                            )),
                   );
                 }
               },
@@ -74,9 +91,12 @@ class LoginView extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        Text(
+                        const Text(
                           'تسجيل دخول',
-                          style: Theme.of(context).textTheme.headlineMedium,
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 24,
+                          ),
                           textAlign: TextAlign.right,
                         ),
                         const SizedBox(height: 32),
@@ -85,10 +105,9 @@ class LoginView extends StatelessWidget {
                           decoration: InputDecoration(
                             hintText: 'البريد الالكتروني',
                             filled: true,
-                            fillColor: Theme.of(context).cardColor,
+                            fillColor: Colors.white,
                             border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(16),
-                              borderSide: BorderSide.none,
+                              borderRadius: BorderRadius.circular(8),
                             ),
                           ),
                           textAlign: TextAlign.right,
@@ -96,14 +115,26 @@ class LoginView extends StatelessWidget {
                         const SizedBox(height: 16),
                         TextField(
                           controller: _passwordController,
-                          obscureText: true,
+                          obscureText: !_isPasswordVisible,
                           decoration: InputDecoration(
                             hintText: 'كلمة المرور',
                             filled: true,
-                            fillColor: Theme.of(context).cardColor,
+                            fillColor: Colors.white,
                             border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(16),
-                              borderSide: BorderSide.none,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            suffixIcon: IconButton(
+                              icon: Icon(
+                                _isPasswordVisible
+                                    ? Icons.visibility_off
+                                    : Icons.visibility,
+                                color: Colors.grey,
+                              ),
+                              onPressed: () {
+                                setState(() {
+                                  _isPasswordVisible = !_isPasswordVisible;
+                                });
+                              },
                             ),
                           ),
                           textAlign: TextAlign.right,
@@ -139,7 +170,8 @@ class LoginView extends StatelessWidget {
                                       );
                                 },
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Theme.of(context).colorScheme.secondary,
+                            backgroundColor:
+                                Theme.of(context).colorScheme.secondary,
                             padding: const EdgeInsets.symmetric(vertical: 16),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(8),
