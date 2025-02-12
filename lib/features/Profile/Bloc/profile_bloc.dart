@@ -26,10 +26,14 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
     on<UpdateToggleState>(_onUpdateToggleState);
     on<ToggleControlCenter>(_onToggleControlCenter);
     on<Logout>(_onLogout);
-     on<FetchUserInfo>(_onFetchUserInfo);
+    on<FetchUserInfo>(_onFetchUserInfo);
   }
-
-   Future<void> _onFetchUserInfo(
+/*
+this function refreshes user data it fetch and send the 
+fetched userinfo from firebase and toggle if not fetched yet 
+otherwise if it already fetche just copy it and send
+*/
+  Future<void> _onFetchUserInfo(
     FetchUserInfo event,
     Emitter<ProfileState> emit,
   ) async {
@@ -38,7 +42,7 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
       final String? userId = _auth.currentUser?.uid;
       if (userId != null) {
         final userDoc = await _firestore.collection('users').doc(userId).get();
-        
+
         if (userDoc.exists) {
           final userData = userDoc.data() as Map<String, dynamic>;
           if (state is ToggleStatesLoaded) {
@@ -53,7 +57,8 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
       emit(ProfileError('Error fetching user info: $e'));
     }
   }
-  // Add this method
+
+  //this is a state handling  to flag if control center is pressed to expand
   void _onToggleControlCenter(
     ToggleControlCenter event,
     Emitter<ProfileState> emit,
@@ -66,6 +71,7 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
     }
   }
 
+//this fetches toggles from cache and firbase info
   Future<void> _onFetchToggleStates(
       FetchToggleStates event, Emitter<ProfileState> emit) async {
     emit(ProfileLoading());
@@ -99,6 +105,7 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
     }
   }
 
+//this updates toggle in cache
   Future<void> _onUpdateToggleState(
       UpdateToggleState event, Emitter<ProfileState> emit) async {
     try {
@@ -137,7 +144,7 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
         emit(ProfileNeedsVerification(event.email));
       } else {
         emit(ProfileUpdated());
-         add(FetchToggleStates());
+        add(FetchToggleStates());
       }
     } on FirebaseAuthException catch (e) {
       await _handleFirebaseAuthException(e, emit);
@@ -199,10 +206,8 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
       if (userId == null) {
         throw Exception("User is not authenticated or UID is null.");
       }
-
-      await FirebaseFirestore.instance.collection('users').doc(userId).delete();
-
       await user?.delete();
+      await FirebaseFirestore.instance.collection('users').doc(userId).delete();
       emit(AccountDeleted());
     } on FirebaseAuthException catch (e) {
       await _handleFirebaseAuthException(e, emit);
@@ -211,56 +216,57 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
     }
   }
 
- Future<void> _onLogout(
-  Logout event,
-  Emitter<ProfileState> emit,
-) async {
-  emit(ProfileLoading());
-  try {
-    final user = FirebaseAuth.instance.currentUser;
+  Future<void> _onLogout(
+    Logout event,
+    Emitter<ProfileState> emit,
+  ) async {
+    emit(ProfileLoading());
+    try {
+      final user = FirebaseAuth.instance.currentUser;
 
-    // Check if the user is logged in
-    if (user == null) {
-      showErrorDialog(context, "User is not logged in");
-      return;
+      // Check if the user is logged in
+      if (user == null) {
+        showErrorDialog(context, "User is not logged in");
+        return;
+      }
+
+      final shouldLogout = await showLogOutDialog(context);
+      if (shouldLogout) {
+        await FirebaseAuth.instance.signOut();
+
+        // Optionally, clear shared preferences if needed
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.clear();
+
+        emit(ProfileInitial()); // Reset the profile state to initial
+
+        Navigator.of(context)
+            .pushNamedAndRemoveUntil(AppRoutes.entry, (route) => false);
+      }
+    } catch (e) {
+      emit(ProfileError('Error logging out: ${e.toString()}'));
     }
-
-    final shouldLogout = await showLogOutDialog(context);
-    if (shouldLogout) {
-      await FirebaseAuth.instance.signOut();
-
-      // Optionally, clear shared preferences if needed
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.clear();
-
-      emit(ProfileInitial()); // Reset the profile state to initial
-
-      Navigator.of(context).pushNamedAndRemoveUntil(AppRoutes.entry, (route) => false);
-    }
-  } catch (e) {
-    emit(ProfileError('Error logging out: ${e.toString()}'));
   }
-}
 
-void showErrorDialog(BuildContext context, String message) {
-  showDialog(
-    context: context,
-    builder: (BuildContext context) {
-      return AlertDialog(
-        title: const Text('Error'),
-        content: Text(message),
-        actions: [
-          TextButton(
-            child: const Text('OK'),
-            onPressed: () {
-              Navigator.of(context).pop();
-            },
-          ),
-        ],
-      );
-    },
-  );
-}
+  void showErrorDialog(BuildContext context, String message) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Error'),
+          content: Text(message),
+          actions: [
+            TextButton(
+              child: const Text('OK'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
 
   Future<bool> showLogOutDialog(BuildContext context) async {
     return showDialog<bool>(

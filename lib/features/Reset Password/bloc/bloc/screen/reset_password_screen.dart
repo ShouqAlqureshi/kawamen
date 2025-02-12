@@ -54,11 +54,11 @@ class ResetPasswordView extends StatelessWidget {
             );
             Navigator.of(context).pop();
           }
-    
+
           if (state.status == ResetPasswordStatus.requiresReauth) {
             onReauthenticationRequired(context);
           }
-    
+
           if (state.status == ResetPasswordStatus.error) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(

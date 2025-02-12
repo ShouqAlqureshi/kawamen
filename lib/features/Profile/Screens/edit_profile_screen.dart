@@ -3,6 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:kawamen/features/LogIn/view/login_page.dart';
+import 'package:kawamen/features/Profile/repository/profile_repository.dart';
+import 'package:kawamen/features/Reset%20Password/bloc/bloc/screen/reset_password_screen.dart';
+import '../../Reset Password/bloc/bloc/reset_password_bloc.dart';
 import '../Bloc/profile_bloc.dart';
 
 class EditProfileScreen extends StatelessWidget {
@@ -21,9 +24,17 @@ class EditProfileScreen extends StatelessWidget {
       child: BlocListener<ProfileBloc, ProfileState>(
         listener: (context, state) async {
           if (state is ProfileNeedsReauth) {
+            if (!context.mounted) return;
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('سوف يعاد توجيهك لاعادة توثيق الدخول لحسابك'),
+                backgroundColor: Colors.green,
+              ),
+            );
             final credential = await Navigator.of(context).push<UserCredential>(
               MaterialPageRoute(builder: (_) => const LoginPage()),
             );
+
             if (credential != null) {
               if (!context.mounted) return;
               context
@@ -36,8 +47,8 @@ class EditProfileScreen extends StatelessWidget {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(
-                  'Please verify your new email address. '
-                  'A verification link has been sent to ${state.email}',
+                  'الرجاء اثبات البريد الالكتروني  '
+                  '${state.email}: من خلال الرابط المرسل للبريد الالكتروني ',
                 ),
                 duration: const Duration(seconds: 5),
               ),
@@ -56,26 +67,25 @@ class EditProfileScreen extends StatelessWidget {
             if (!context.mounted) return;
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
-                content: Text('Profile deleted successfully!'),
+                content: Text('تم حذف الحساب بنجاح'),
                 backgroundColor: Colors.green,
               ),
             );
             await Navigator.of(context).pushAndRemoveUntil(
               MaterialPageRoute(builder: (_) => const LoginPage()),
-              (Route<dynamic> route) =>
-                  false, 
+              (Route<dynamic> route) => false,
             );
           }
           if (state is ProfileUpdated) {
             if (!context.mounted) return;
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
-                content: Text('Profile updated successfully!'),
+                content: Text('تم تحديث معلومات الحساب بنجاح'),
                 backgroundColor: Colors.green,
               ),
             );
             onProfileUpdated();
-            Navigator.pop(context); // Return to previous screen
+            Navigator.pop(context, true);
           }
         },
         child: _EditProfileScreenContent(
@@ -235,16 +245,59 @@ class _EditProfileScreenContent extends StatelessWidget {
                 },
                 child: const Text('حفظ التغييرات'),
               ),
-              const SizedBox(height: 180),
-              OutlinedButton(
-                onPressed: () {
-                  context.read<ProfileBloc>().add(DeleteAccount());
-                  // Navigate to login or register screen after deletion
-                },
-                child: const Text(
-                  'حذف الحساب',
-                  style: TextStyle(
-                      fontSize: 16, color: Color.fromARGB(255, 246, 20, 4)),
+              const SizedBox(height: 100),
+              Center(
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    OutlinedButton(
+                      onPressed: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => ResetPasswordPage(
+                              onReauthenticationRequired: (context) async {
+                                // Navigate to sign in page and wait for result
+                                final credential = await Navigator.of(context)
+                                    .push<UserCredential>(
+                                  MaterialPageRoute(
+                                      builder: (_) => const LoginPage()),
+                                );
+
+                                // If we got credentials back, complete the reset password flow
+                                if (credential != null) {
+                                  context.read<ResetPasswordBloc>().add(
+                                        ResetPasswordReauthenticationComplete(
+                                            credential),
+                                      );
+                                }
+                              },
+                            ),
+                          ),
+                        );
+                      },
+                      child: Text(
+                        " تعيين الرقم السري ",
+                        style: Theme.of(context).textTheme.bodyLarge,
+                        softWrap: true,
+                      ),
+                    ),
+                    const SizedBox(width: 20),
+                    OutlinedButton(
+                      onPressed: () async {
+                        final shouldDelete =
+                            await showdeleteaccountDialog(context);
+                        if (shouldDelete) {
+                          context.read<ProfileBloc>().add(DeleteAccount());
+                        }
+                      },
+                      child: const Text(
+                        'حذف الحساب',
+                        style: TextStyle(
+                            fontSize: 16,
+                            color: Color.fromARGB(255, 246, 20, 4)),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
