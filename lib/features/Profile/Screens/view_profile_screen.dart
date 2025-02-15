@@ -151,7 +151,7 @@ class ViewProfileScreen extends StatelessWidget {
                     const SizedBox(height: 46),
                     _buildCard(
                       context: context,
-                      title: "reset password",
+                      title: "تغيير كلمه المرور",
                       theme: theme,
                       leading: Icons.password_rounded,
                       onTap: () {
