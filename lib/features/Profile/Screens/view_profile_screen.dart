@@ -25,35 +25,38 @@ class ViewProfileScreen extends StatelessWidget {
           create: (context) => MicrophoneBloc(),
         ),
       ],
-      child: Scaffold(
-        backgroundColor: theme.colorScheme.background,
-        body: BlocConsumer<ProfileBloc, ProfileState>(
-          listener: (context, state) {
-            if (state is ProfileUpdated) {
-              // Refresh data when profile is updated
-              context.read<ProfileBloc>().add(FetchToggleStates());
-            }
-          },
-          builder: (context, state) {
-            if (state is ProfileLoading) {
-              return const Center(child: CircularProgressIndicator());
-            } else if (state is ToggleStatesLoaded) {
-              return _buildProfile(context, state, theme);
-            } else if (state is ProfileError) {
+      child: Builder(
+        // Add this Builder widget
+        builder: (context) => Scaffold(
+          // Now this context has access to the providers
+          backgroundColor: theme.colorScheme.background,
+          body: BlocConsumer<ProfileBloc, ProfileState>(
+            listener: (context, state) {
+              if (state is ProfileUpdated) {
+                context.read<ProfileBloc>().add(FetchToggleStates());
+              }
+            },
+            builder: (context, state) {
+              if (state is ProfileLoading) {
+                return const Center(child: CircularProgressIndicator());
+              } else if (state is ToggleStatesLoaded) {
+                return _buildProfile(context, state, theme);
+              } else if (state is ProfileError) {
+                return Center(
+                  child: Text(
+                    state.message,
+                    style: theme.textTheme.bodyLarge,
+                  ),
+                );
+              }
               return Center(
                 child: Text(
-                  state.message,
+                  'Something went wrong',
                   style: theme.textTheme.bodyLarge,
                 ),
               );
-            }
-            return Center(
-              child: Text(
-                'Something went wrong',
-                style: theme.textTheme.bodyLarge,
-              ),
-            );
-          },
+            },
+          ),
         ),
       ),
     );
@@ -121,20 +124,29 @@ class ViewProfileScreen extends StatelessWidget {
                       context: context,
                       title: "تعديل معلومات الحساب",
                       theme: theme,
-                      onTap: () {
-                        Navigator.push(
+                      onTap: () async {
+                        // Make this async
+                        // Navigate and wait for result
+                        final result = await Navigator.push(
                           context,
                           MaterialPageRoute(
                             builder: (context) => EditProfileScreen(
                               initialUserInfo: state.userData,
                               onProfileUpdated: () {
-                                context
-                                    .read<ProfileBloc>()
-                                    .add(FetchUserInfo());
+                                if (context.mounted) {
+                                  context
+                                      .read<ProfileBloc>()
+                                      .add(FetchUserInfo());
+                                }
                               },
                             ),
                           ),
                         );
+
+                        // If returned with a refresh flag, update the data
+                        if (result == true) {
+                          context.read<ProfileBloc>().add(FetchToggleStates());
+                        }
                       },
                     ),
                     _buildCard(
@@ -148,37 +160,6 @@ class ViewProfileScreen extends StatelessWidget {
                     ),
                     if (state.showControlCenter)
                       _buildControlCenter(context, state, theme),
-                    const SizedBox(height: 46),
-                    _buildCard(
-                      context: context,
-                      title: "تغيير كلمه المرور",
-                      theme: theme,
-                      leading: Icons.password_rounded,
-                      onTap: () {
-                        //   Navigator.of(context).push(
-                        //     MaterialPageRoute(
-                        //       builder: (_) => ResetPasswordPage(
-                        //         onReauthenticationRequired: (context) async {
-                        //           // Navigate to sign in page and wait for result
-                        //           final credential = await Navigator.of(context)
-                        //               .push<UserCredential>(
-                        //             MaterialPageRoute(
-                        //                 builder: (_) => SignInPage()),
-                        //           );
-
-                        //           // If we got credentials back, complete the reset password flow
-                        //           if (credential != null) {
-                        //             context.read<ResetPasswordBloc>().add(
-                        //                   ResetPasswordReauthenticationComplete(
-                        //                       credential),
-                        //                 );
-                        //           }
-                        //         },
-                        //       ),
-                        //     ),
-                        //   );
-                      },
-                    ),
                     const SizedBox(height: 46),
                     _buildCard(
                       context: context,
