@@ -31,7 +31,7 @@ class _LoginViewState extends State<LoginView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: MultiBlocProvider(
         providers: [
           BlocProvider(
@@ -48,8 +48,7 @@ class _LoginViewState extends State<LoginView> {
                 if (state is LoginSuccessState) {
                   Navigator.pushReplacement(
                     context,
-                    MaterialPageRoute(
-                        builder: (_) =>  RegistrationScreen()),
+                    MaterialPageRoute(builder: (_) => const ViewProfileScreen()),
                   );
                 } else if (state is LoginFailure) {
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -91,12 +90,9 @@ class _LoginViewState extends State<LoginView> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        const Text(
+                         Text(
                           'تسجيل دخول',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 24,
-                          ),
+                          style: Theme.of(context).textTheme.headlineMedium,
                           textAlign: TextAlign.right,
                         ),
                         const SizedBox(height: 32),
@@ -105,9 +101,10 @@ class _LoginViewState extends State<LoginView> {
                           decoration: InputDecoration(
                             hintText: 'البريد الالكتروني',
                             filled: true,
-                            fillColor: Colors.white,
+                            fillColor: Theme.of(context).cardColor,
                             border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8),
+                              borderRadius: BorderRadius.circular(16),
+                              borderSide: BorderSide.none,
                             ),
                           ),
                           textAlign: TextAlign.right,
@@ -119,9 +116,11 @@ class _LoginViewState extends State<LoginView> {
                           decoration: InputDecoration(
                             hintText: 'كلمة المرور',
                             filled: true,
-                            fillColor: Colors.white,
+                            fillColor: Theme.of(context).cardColor,
                             border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8),
+                              borderRadius: BorderRadius.circular(16),
+                              borderSide: BorderSide.none,
+
                             ),
                             suffixIcon: IconButton(
                               icon: Icon(
