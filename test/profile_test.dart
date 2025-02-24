@@ -67,7 +67,7 @@ void main() async {
     // Setup basic mocks
     when(mockAuth.currentUser).thenReturn(mockUser);
     when(mockUser.uid).thenReturn('test-user-id');
-    when(mockFirestore.collection('users')).thenReturn(mockCollectionRef as CollectionReference<Map<String, dynamic>>);
+    when(mockFirestore.collection('users')).thenReturn(mockCollectionRef);
     when(mockCollectionRef.doc('test-user-id')).thenReturn(mockDocRef);
   });
 
