@@ -79,7 +79,7 @@ class _DeepBreathingViewState extends State<_DeepBreathingView> {
       });
 
       // Prepare and start fading in the countdown
-      Future.delayed(const Duration(milliseconds: 500), () {
+      Future.delayed(const Duration(seconds: 2), () {
         if (!isPlaying) return;
         
         setState(() {
