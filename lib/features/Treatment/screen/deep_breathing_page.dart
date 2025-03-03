@@ -57,7 +57,8 @@ class _DeepBreathingViewState extends State<_DeepBreathingView>
   // Calculate total exercise time (10 repetitions x sum of all instruction durations)
   int get totalExerciseTime {
     // Sum of all instruction durations multiplied by number of repetitions
-    return totalRepetitions * (instructionDurations.reduce((a, b) => a + b)+6);
+    return totalRepetitions *
+        (instructionDurations.reduce((a, b) => a + b) + 8)+3;
   }
 
   @override
@@ -436,7 +437,10 @@ class _DeepBreathingViewState extends State<_DeepBreathingView>
                     size: 80,
                   ),
                   const SizedBox(height: 20),
-
+                  // ElevatedButton(
+                  //   onPressed: _showCongratulationsPopup,
+                  //   child: const Text('Test Popup'),
+                  // ),
                   // Repetition counter
                   Text(
                     '$currentRepetition / $totalRepetitions',
