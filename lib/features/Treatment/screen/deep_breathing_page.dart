@@ -4,6 +4,7 @@ import 'package:kawamen/features/Profile/Screens/view_profile_screen.dart';
 import 'package:kawamen/features/Treatment/bloc/deep_breathing_bloc.dart';
 import 'dart:async';
 import 'dart:math';
+
 class DeepBreathingPage extends StatelessWidget {
   const DeepBreathingPage({Key? key}) : super(key: key);
 
@@ -23,11 +24,12 @@ class _DeepBreathingView extends StatefulWidget {
   State<_DeepBreathingView> createState() => _DeepBreathingViewState();
 }
 
-class _DeepBreathingViewState extends State<_DeepBreathingView> with TickerProviderStateMixin {
+class _DeepBreathingViewState extends State<_DeepBreathingView>
+    with TickerProviderStateMixin {
   final List<String> instructions = [
     'خذ شهيقًا عميقًا لمدة 4 ثوان...',
     'احبس النفس لمدة 4 ثوان...',
-    'ثم أخرج الزفير ببطء لمدة 6 ثوان...',
+    'أخرج الزفير ببطء لمدة 6 ثوان...',
   ];
 
   final List<int> instructionDurations = [4, 4, 6];
@@ -39,7 +41,7 @@ class _DeepBreathingViewState extends State<_DeepBreathingView> with TickerProvi
   double instructionOpacity = 1.0;
   double countdownOpacity = 0.0;
   int countdownSeconds = 0;
-  
+
   // Total repetitions and tracking
   final int totalRepetitions = 10;
   int currentRepetition = 1;
@@ -51,7 +53,7 @@ class _DeepBreathingViewState extends State<_DeepBreathingView> with TickerProvi
   late Animation<double> _scaleAnimation;
   late AnimationController _confettiController;
   late Animation<double> _confettiAnimation;
-  
+
   // Calculate total exercise time (10 repetitions x sum of all instruction durations)
   int get totalExerciseTime {
     // Sum of all instruction durations multiplied by number of repetitions
@@ -61,23 +63,23 @@ class _DeepBreathingViewState extends State<_DeepBreathingView> with TickerProvi
   @override
   void initState() {
     super.initState();
-    
+
     // Initialize animation controllers
     _scaleController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 700),
     );
-    
+
     _scaleAnimation = CurvedAnimation(
       parent: _scaleController,
       curve: Curves.elasticOut,
     );
-    
+
     _confettiController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 2000),
     );
-    
+
     _confettiAnimation = CurvedAnimation(
       parent: _confettiController,
       curve: Curves.easeOut,
@@ -114,7 +116,7 @@ class _DeepBreathingViewState extends State<_DeepBreathingView> with TickerProvi
       if (!isPlaying) {
         return;
       }
-      
+
       setState(() {
         if (totalExerciseSeconds > 0) {
           totalExerciseSeconds--;
@@ -132,13 +134,13 @@ class _DeepBreathingViewState extends State<_DeepBreathingView> with TickerProvi
     // First, fade out both instruction and countdown
     setState(() {
       instructionOpacity = 0.0;
-      
+
       // Start fading out the countdown
       if (countdownOpacity > 0) {
         countdownOpacity = 0.0;
       }
     });
-    
+
     // After allowing time for the fade out animations
     Future.delayed(const Duration(milliseconds: 500), () {
       if (!isPlaying) return;
@@ -150,7 +152,7 @@ class _DeepBreathingViewState extends State<_DeepBreathingView> with TickerProvi
           setState(() {
             isCompleting = true;
           });
-          
+
           // Give a short delay before ending the exercise
           Future.delayed(const Duration(milliseconds: 500), () {
             pauseExercise();
@@ -180,12 +182,12 @@ class _DeepBreathingViewState extends State<_DeepBreathingView> with TickerProvi
       // Prepare and start fading in the countdown
       Future.delayed(const Duration(seconds: 2), () {
         if (!isPlaying) return;
-        
+
         setState(() {
           countdownSeconds = instructionDurations[currentInstructionIndex];
           countdownOpacity = 1.0;
         });
-        
+
         startCountdown();
       });
     });
@@ -204,11 +206,11 @@ class _DeepBreathingViewState extends State<_DeepBreathingView> with TickerProvi
           countdownSeconds--;
         } else {
           countdownTimer?.cancel();
-          
+
           // Instead of immediately showing next instruction,
           // first fade out the countdown smoothly
           countdownOpacity = 0.0;
-          
+
           // Then show next instruction after animation completes
           Future.delayed(const Duration(milliseconds: 500), () {
             if (isPlaying) {
@@ -247,7 +249,7 @@ class _DeepBreathingViewState extends State<_DeepBreathingView> with TickerProvi
         _confettiController.reset();
         _scaleController.forward();
         _confettiController.forward();
-        
+
         return Dialog(
           backgroundColor: Colors.transparent,
           elevation: 0,
@@ -271,7 +273,7 @@ class _DeepBreathingViewState extends State<_DeepBreathingView> with TickerProvi
                     },
                   ),
                 ),
-                
+
                 // Main popup card with scale animation
                 ScaleTransition(
                   scale: _scaleAnimation,
@@ -306,7 +308,7 @@ class _DeepBreathingViewState extends State<_DeepBreathingView> with TickerProvi
                           ),
                         ),
                         const SizedBox(height: 24),
-                        
+
                         // Congratulations text
                         Text(
                           'تهانينا!',
@@ -321,12 +323,15 @@ class _DeepBreathingViewState extends State<_DeepBreathingView> with TickerProvi
                           'لقد أكملت تمرين التنفس العميق بنجاح',
                           textAlign: TextAlign.center,
                           style: TextStyle(
-                            color: Theme.of(context).colorScheme.onBackground.withOpacity(0.8),
+                            color: Theme.of(context)
+                                .colorScheme
+                                .onBackground
+                                .withOpacity(0.8),
                             fontSize: 16,
                           ),
                         ),
                         const SizedBox(height: 30),
-                        
+
                         // Buttons
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -346,27 +351,38 @@ class _DeepBreathingViewState extends State<_DeepBreathingView> with TickerProvi
                               icon: const Icon(Icons.replay_rounded),
                               label: const Text('إعادة'),
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: Theme.of(context).colorScheme.secondary,
-                                foregroundColor: Theme.of(context).colorScheme.onSecondary,
-                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                backgroundColor:
+                                    Theme.of(context).colorScheme.secondary,
+                                foregroundColor:
+                                    Theme.of(context).colorScheme.onSecondary,
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 16, vertical: 12),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                               ),
                             ),
-                            
+
                             // Okay button
                             OutlinedButton(
                               onPressed: () {
-Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(builder: (_) => const ViewProfileScreen()),
-                  );                              },
+                                Navigator.pushReplacement(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (_) =>
+                                          const ViewProfileScreen()),
+                                );
+                              },
                               child: const Text('حسنا'),
                               style: OutlinedButton.styleFrom(
-                                foregroundColor: Theme.of(context).colorScheme.secondary,
-                                side: BorderSide(color: Theme.of(context).colorScheme.secondary),
-                                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                                foregroundColor:
+                                    Theme.of(context).colorScheme.secondary,
+                                side: BorderSide(
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .secondary),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 24, vertical: 12),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12),
                                 ),
@@ -391,7 +407,7 @@ Navigator.pushReplacement(
     // Get theme colors from context
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    
+
     return Scaffold(
       // Use theme's scaffold background color instead of hardcoded black
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -420,7 +436,7 @@ Navigator.pushReplacement(
                     size: 80,
                   ),
                   const SizedBox(height: 20),
-                  
+
                   // Repetition counter
                   Text(
                     '$currentRepetition / $totalRepetitions',
@@ -429,9 +445,9 @@ Navigator.pushReplacement(
                       fontSize: 18,
                     ),
                   ),
-                  
+
                   const SizedBox(height: 20),
-                  
+
                   // Fixed height container for instruction text
                   Container(
                     height: 60, // Fixed height for instruction text
@@ -450,9 +466,9 @@ Navigator.pushReplacement(
                       ),
                     ),
                   ),
-                  
+
                   const SizedBox(height: 20),
-                  
+
                   // Fixed height container for countdown with smooth animations
                   Container(
                     height: 40, // Fixed height for countdown
@@ -463,23 +479,28 @@ Navigator.pushReplacement(
                       child: Text(
                         countdownSeconds.toString(),
                         style: TextStyle(
-                          color: Colors.amber, // Keeping amber for countdown visibility
+                          color: Colors
+                              .amber, // Keeping amber for countdown visibility
                           fontSize: 32,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                     ),
                   ),
-                  
+
                   const SizedBox(height: 40),
                   GestureDetector(
                     onTap: () {
                       if (isPlaying) {
                         pauseExercise();
-                        context.read<DeepBreathingBloc>().add(const DeepBreathingEvent.pause());
+                        context
+                            .read<DeepBreathingBloc>()
+                            .add(const DeepBreathingEvent.pause());
                       } else {
                         startExercise();
-                        context.read<DeepBreathingBloc>().add(const DeepBreathingEvent.play());
+                        context
+                            .read<DeepBreathingBloc>()
+                            .add(const DeepBreathingEvent.play());
                       }
                     },
                     child: Container(
@@ -496,16 +517,18 @@ Navigator.pushReplacement(
                       ),
                     ),
                   ),
-                  
+
                   const SizedBox(height: 24),
-                  
+
                   // Total exercise time countdown display - now below the play/pause button
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 20, vertical: 10),
                     decoration: BoxDecoration(
                       color: theme.scaffoldBackgroundColor.withOpacity(0.5),
                       borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: colorScheme.secondary, width: 1),
+                      border:
+                          Border.all(color: colorScheme.secondary, width: 1),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -541,20 +564,21 @@ Navigator.pushReplacement(
 class ConfettiPainter extends CustomPainter {
   final double progress;
   final Random random = Random();
-  
+
   ConfettiPainter({required this.progress});
-  
+
   @override
-  void paint(Canvas canvas, Size size) {
+  void paint(Canvas canvas, Size canvasSize) {
     // Number of confetti pieces
     final int count = 100;
-    
+
     for (int i = 0; i < count; i++) {
       // Random position and color for each confetti piece
-      final double x = random.nextDouble() * size.width;
+      final double x = random.nextDouble() * canvasSize.width;
       // Initial y position at top, moves down with animation progress
-      final double y = -20 + progress * (size.height + 40) * random.nextDouble();
-      
+      final double y =
+          -20 + progress * (canvasSize.height + 40) * random.nextDouble();
+
       // Random color from a festive palette
       final List<Color> colors = [
         Colors.red,
@@ -565,24 +589,25 @@ class ConfettiPainter extends CustomPainter {
         Colors.orange,
       ];
       final Color color = colors[random.nextInt(colors.length)];
-      
+
       // Random size for each piece
-      final double size = 5 + random.nextDouble() * 10;
-      
+      final double pieceSize = 5 + random.nextDouble() * 10;
+
       // Draw square or circle confetti
       final paint = Paint()..color = color;
-      
+
       if (i % 2 == 0) {
         // Square confetti
         canvas.drawRect(
-          Rect.fromCenter(center: Offset(x, y), width: size, height: size),
+          Rect.fromCenter(
+              center: Offset(x, y), width: pieceSize, height: pieceSize),
           paint,
         );
       } else {
         // Circle confetti
         canvas.drawCircle(
           Offset(x, y),
-          size / 2,
+          pieceSize / 2,
           paint,
         );
       }
@@ -590,5 +615,6 @@ class ConfettiPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(ConfettiPainter oldDelegate) => oldDelegate.progress != progress;
+  bool shouldRepaint(ConfettiPainter oldDelegate) =>
+      oldDelegate.progress != progress;
 }
