@@ -28,12 +28,16 @@ class _DeepBreathingViewState extends State<_DeepBreathingView> {
     'احبس النفس لمدة 4 ثوان...',
     'ثم أخرج الزفير ببطء لمدة 6 ثوان...',
   ];
+  
+  // Duration for each instruction in seconds
+  final List<int> instructionDurations = [4, 4, 6];
 
   int currentInstructionIndex = 0;
   bool isPlaying = false;
   Timer? instructionTimer;
   Timer? countdownTimer;
-  int countdownSeconds = 3;
+  int countdownSeconds = 4; // Start with 4 for first instruction
+  bool showingInstruction = true; // Flag to track whether showing instruction or countdown
   
   @override
   void dispose() {
@@ -48,50 +52,59 @@ class _DeepBreathingViewState extends State<_DeepBreathingView> {
     setState(() {
       isPlaying = true;
       currentInstructionIndex = 0;
-      countdownSeconds = 3;
+      showingInstruction = true; // Start by showing the instruction
     });
     
-    // Start the countdown timer
-    countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+    // Show instruction for 2 seconds, then show countdown
+    Timer(const Duration(seconds: 2), () {
+      if (!isPlaying) return;
+      
       setState(() {
-        if (countdownSeconds > 1) {
-          countdownSeconds--;
-        } else {
-          countdownTimer?.cancel();
-          cycleInstructions();
-        }
+        showingInstruction = false;
+        countdownSeconds = instructionDurations[currentInstructionIndex];
       });
+      
+      // Start the countdown timer
+      startCountdown();
     });
   }
 
-  void cycleInstructions() {
-    // Start cycling through instructions
-    instructionTimer = Timer.periodic(const Duration(seconds: 3), (timer) {
+  void startCountdown() {
+    countdownTimer?.cancel();
+    countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (!isPlaying) {
         timer.cancel();
         return;
       }
       
       setState(() {
-        currentInstructionIndex = (currentInstructionIndex + 1) % instructions.length;
-        countdownSeconds = 3; // Reset countdown for each instruction
+        if (countdownSeconds > 1) {
+          countdownSeconds--;
+        } else {
+          countdownTimer?.cancel();
+          moveToNextInstruction();
+        }
+      });
+    });
+  }
+
+  void moveToNextInstruction() {
+    setState(() {
+      currentInstructionIndex = (currentInstructionIndex + 1) % instructions.length;
+      showingInstruction = true; // Show the new instruction first
+    });
+    
+    // Show the instruction for 2 seconds before starting countdown
+    Timer(const Duration(seconds: 2), () {
+      if (!isPlaying) return;
+      
+      setState(() {
+        showingInstruction = false;
+        countdownSeconds = instructionDurations[currentInstructionIndex];
       });
       
-      // Reset countdown timer for each instruction
-      countdownTimer?.cancel();
-      countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
-        if (!isPlaying) {
-          timer.cancel();
-          return;
-        }
-        setState(() {
-          if (countdownSeconds > 1) {
-            countdownSeconds--;
-          } else {
-            countdownSeconds = 3;
-          }
-        });
-      });
+      // Start countdown for this instruction
+      startCountdown();
     });
   }
 
@@ -134,7 +147,7 @@ class _DeepBreathingViewState extends State<_DeepBreathingView> {
                   const Icon(
                     Icons.air_rounded,
                     color: Color(0xFF8080FF),
-                    size: 40,
+                    size: 80,
                   ),
                   const SizedBox(height: 20),
                   // Exercise title
@@ -149,7 +162,7 @@ class _DeepBreathingViewState extends State<_DeepBreathingView> {
                   ),
                   const SizedBox(height: 30),
                   
-                  // Current instruction
+                  // Current instruction or countdown
                   Container(
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
@@ -158,6 +171,7 @@ class _DeepBreathingViewState extends State<_DeepBreathingView> {
                     ),
                     child: Column(
                       children: [
+                        // Always show the current instruction
                         Text(
                           instructions[currentInstructionIndex],
                           style: const TextStyle(
@@ -168,72 +182,49 @@ class _DeepBreathingViewState extends State<_DeepBreathingView> {
                           textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: 20),
-                        // Countdown circle
-                        Container(
-                          width: 60,
-                          height: 60,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: const Color(0xFF6750A4),
-                          ),
-                          child: Center(
-                            child: Text(
-                              isPlaying ? countdownSeconds.toString() : "3",
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 30,
-                                fontWeight: FontWeight.bold,
+                        
+                        // Show either "Getting Ready" or the countdown
+                        if (isPlaying && showingInstruction)
+                          const Text(
+                            "...",
+                            style: TextStyle(
+                              color: Colors.amber,
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          )
+                        else if (isPlaying)
+                          // Countdown circle
+                          Container(
+                            width: 60,
+                            height: 60,
+                            decoration: const BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Color(0xFF6750A4),
+                            ),
+                            child: Center(
+                              child: Text(
+                                countdownSeconds.toString(),
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 30,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                             ),
+                          )
+                        else
+                          // Default state when not playing
+                          const Text(
+                            "اضغط على زر التشغيل للبدء",
+                            style: TextStyle(
+                              color: Colors.grey,
+                              fontSize: 18,
+                            ),
                           ),
-                        ),
                       ],
                     ),
                   ),
-                  
-                  const SizedBox(height: 40),
-                  
-                  // Total session progress
-                  // SliderTheme(
-                  //   data: SliderThemeData(
-                  //     trackHeight: 4,
-                  //     thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 8),
-                  //     overlayShape: const RoundSliderOverlayShape(overlayRadius: 16),
-                  //     activeTrackColor: Colors.lightBlue,
-                  //     inactiveTrackColor: Colors.grey[800],
-                  //     thumbColor: Colors.lightBlue,
-                  //   ),
-                  //   child: Slider(
-                  //     min: 0,
-                  //     max: state.totalDuration.inSeconds.toDouble(),
-                  //     value: state.currentPosition.inSeconds.toDouble(),
-                  //     onChanged: (value) {
-                  //       context.read<DeepBreathingBloc>().add(
-                  //             DeepBreathingEvent.seekTo(
-                  //               Duration(seconds: value.toInt()),
-                  //             ),
-                  //           );
-                  //     },
-                  //   ),
-                  // ),
-                  
-                  // Duration indicators
-                  // Padding(
-                  //   padding: const EdgeInsets.symmetric(horizontal: 25),
-                  //   child: Row(
-                  //     mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  //     children: [
-                  //       Text(
-                  //         formatDuration(state.currentPosition),
-                  //         style: const TextStyle(color: Colors.white, fontSize: 12),
-                  //       ),
-                  //       Text(
-                  //         formatDuration(state.totalDuration),
-                  //         style: const TextStyle(color: Colors.white, fontSize: 12),
-                  //       ),
-                  //     ],
-                  //   ),
-                  // ),
                   
                   const SizedBox(height: 30),
                   
