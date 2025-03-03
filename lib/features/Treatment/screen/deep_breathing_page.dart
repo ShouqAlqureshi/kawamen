@@ -141,30 +141,44 @@ class _DeepBreathingViewState extends State<_DeepBreathingView> {
                   ),
                   const SizedBox(height: 20),
                   
-                  AnimatedOpacity(
-                    duration: const Duration(seconds: 1),
-                    opacity: opacity,
-                    child: Text(
-                      instructions[currentInstructionIndex],
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
+                  // Fixed height container for instruction text
+                  Container(
+                    height: 60, // Fixed height for instruction text
+                    alignment: Alignment.center,
+                    child: AnimatedOpacity(
+                      duration: const Duration(seconds: 1),
+                      opacity: opacity,
+                      child: Text(
+                        instructions[currentInstructionIndex],
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        textAlign: TextAlign.center,
                       ),
-                      textAlign: TextAlign.center,
                     ),
                   ),
                   
                   const SizedBox(height: 20),
-                  if (showingCountdown)
-                    Text(
-                      countdownSeconds.toString(),
-                      style: const TextStyle(
-                        color: Colors.amber,
-                        fontSize: 32,
-                        fontWeight: FontWeight.bold,
+                  
+                  // Fixed height container for countdown
+                  Container(
+                    height: 40, // Fixed height for countdown
+                    alignment: Alignment.center,
+                    child: AnimatedOpacity(
+                      opacity: showingCountdown ? 1.0 : 0.0,
+                      duration: const Duration(milliseconds: 300),
+                      child: Text(
+                        showingCountdown ? countdownSeconds.toString() : "",
+                        style: const TextStyle(
+                          color: Colors.amber,
+                          fontSize: 32,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
+                  ),
                   
                   const SizedBox(height: 40),
                   GestureDetector(
