@@ -28,17 +28,16 @@ class _DeepBreathingViewState extends State<_DeepBreathingView> {
     'احبس النفس لمدة 4 ثوان...',
     'ثم أخرج الزفير ببطء لمدة 6 ثوان...',
   ];
-  
-  // Duration for each instruction in seconds
-  final List<int> instructionDurations = [4, 4, 6];
 
+  final List<int> instructionDurations = [4, 4, 6];
   int currentInstructionIndex = 0;
   bool isPlaying = false;
   Timer? instructionTimer;
   Timer? countdownTimer;
-  int countdownSeconds = 4; // Start with 4 for first instruction
-  bool showingInstruction = true; // Flag to track whether showing instruction or countdown
-  
+  double opacity = 1.0;
+  int countdownSeconds = 0;
+  bool showingCountdown = false;
+
   @override
   void dispose() {
     instructionTimer?.cancel();
@@ -48,23 +47,37 @@ class _DeepBreathingViewState extends State<_DeepBreathingView> {
 
   void startExercise() {
     if (isPlaying) return;
-    
     setState(() {
       isPlaying = true;
       currentInstructionIndex = 0;
-      showingInstruction = true; // Start by showing the instruction
+      showingCountdown = false;
+    });
+    showNextInstruction();
+  }
+
+  void showNextInstruction() {
+    if (!isPlaying) return;
+
+    setState(() {
+      opacity = 0.0;
+      showingCountdown = false;
     });
     
-    // Show instruction for 2 seconds, then show countdown
-    Timer(const Duration(seconds: 2), () {
+    Future.delayed(const Duration(seconds: 1), () {
       if (!isPlaying) return;
-      
+
       setState(() {
-        showingInstruction = false;
-        countdownSeconds = instructionDurations[currentInstructionIndex];
+        currentInstructionIndex = (currentInstructionIndex + 1) % instructions.length;
+        opacity = 1.0;
       });
-      
-      // Start the countdown timer
+    });
+
+    Future.delayed(const Duration(seconds: 2), () {
+      if (!isPlaying) return;
+      setState(() {
+        countdownSeconds = instructionDurations[currentInstructionIndex];
+        showingCountdown = true;
+      });
       startCountdown();
     });
   }
@@ -76,42 +89,20 @@ class _DeepBreathingViewState extends State<_DeepBreathingView> {
         timer.cancel();
         return;
       }
-      
+
       setState(() {
         if (countdownSeconds > 1) {
           countdownSeconds--;
         } else {
           countdownTimer?.cancel();
-          moveToNextInstruction();
+          showNextInstruction();
         }
       });
     });
   }
 
-  void moveToNextInstruction() {
-    setState(() {
-      currentInstructionIndex = (currentInstructionIndex + 1) % instructions.length;
-      showingInstruction = true; // Show the new instruction first
-    });
-    
-    // Show the instruction for 2 seconds before starting countdown
-    Timer(const Duration(seconds: 2), () {
-      if (!isPlaying) return;
-      
-      setState(() {
-        showingInstruction = false;
-        countdownSeconds = instructionDurations[currentInstructionIndex];
-      });
-      
-      // Start countdown for this instruction
-      startCountdown();
-    });
-  }
-
   void pauseExercise() {
-    setState(() {
-      isPlaying = false;
-    });
+    setState(() => isPlaying = false);
     instructionTimer?.cancel();
     countdownTimer?.cancel();
   }
@@ -141,94 +132,41 @@ class _DeepBreathingViewState extends State<_DeepBreathingView> {
             child: Padding(
               padding: const EdgeInsets.all(20.0),
               child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const SizedBox(height: 20),
-                  // Breathing icon
                   const Icon(
                     Icons.air_rounded,
                     color: Color(0xFF8080FF),
                     size: 80,
                   ),
                   const SizedBox(height: 20),
-                  // Exercise title
-                  const Text(
-                    'التنفس العميق',
-                    style: TextStyle(
-                      color: Color(0xFF4CAF50),
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 30),
                   
-                  // Current instruction or countdown
-                  Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: Colors.grey[900],
-                      borderRadius: BorderRadius.circular(15),
-                    ),
-                    child: Column(
-                      children: [
-                        // Always show the current instruction
-                        Text(
-                          instructions[currentInstructionIndex],
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: 20),
-                        
-                        // Show either "Getting Ready" or the countdown
-                        if (isPlaying && showingInstruction)
-                          const Text(
-                            "...",
-                            style: TextStyle(
-                              color: Colors.amber,
-                              fontSize: 24,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          )
-                        else if (isPlaying)
-                          // Countdown circle
-                          Container(
-                            width: 60,
-                            height: 60,
-                            decoration: const BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: Color(0xFF6750A4),
-                            ),
-                            child: Center(
-                              child: Text(
-                                countdownSeconds.toString(),
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 30,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                          )
-                        else
-                          // Default state when not playing
-                          const Text(
-                            "اضغط على زر التشغيل للبدء",
-                            style: TextStyle(
-                              color: Colors.grey,
-                              fontSize: 18,
-                            ),
-                          ),
-                      ],
+                  AnimatedOpacity(
+                    duration: const Duration(seconds: 1),
+                    opacity: opacity,
+                    child: Text(
+                      instructions[currentInstructionIndex],
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      textAlign: TextAlign.center,
                     ),
                   ),
                   
-                  const SizedBox(height: 30),
+                  const SizedBox(height: 20),
+                  if (showingCountdown)
+                    Text(
+                      countdownSeconds.toString(),
+                      style: const TextStyle(
+                        color: Colors.amber,
+                        fontSize: 32,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   
-                  // Play/Pause button
+                  const SizedBox(height: 40),
                   GestureDetector(
                     onTap: () {
                       if (isPlaying) {
@@ -254,9 +192,7 @@ class _DeepBreathingViewState extends State<_DeepBreathingView> {
                     ),
                   ),
                   
-                  const Spacer(),
-                  
-                  // Exit button
+                  const SizedBox(height: 40),
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
@@ -277,27 +213,6 @@ class _DeepBreathingViewState extends State<_DeepBreathingView> {
                       ),
                     ),
                   ),
-                  
-                  const SizedBox(height: 20),
-                  
-                  // Bottom navigation icons
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.home_outlined, color: Colors.white),
-                        onPressed: () {},
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.mic_outlined, color: Colors.white),
-                        onPressed: () {},
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.analytics_outlined, color: Colors.white),
-                        onPressed: () {},
-                      ),
-                    ],
-                  ),
                 ],
               ),
             ),
@@ -305,12 +220,5 @@ class _DeepBreathingViewState extends State<_DeepBreathingView> {
         },
       ),
     );
-  }
-
-  String formatDuration(Duration duration) {
-    String twoDigits(int n) => n.toString().padLeft(2, '0');
-    final minutes = twoDigits(duration.inMinutes.remainder(60));
-    final seconds = twoDigits(duration.inSeconds.remainder(60));
-    return "$minutes:$seconds";
   }
 }
