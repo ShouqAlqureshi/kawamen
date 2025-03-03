@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:kawamen/features/Profile/Screens/view_profile_screen.dart';
 import 'package:kawamen/features/Treatment/bloc/deep_breathing_bloc.dart';
 import 'dart:async';
-
+import 'dart:math';
 class DeepBreathingPage extends StatelessWidget {
   const DeepBreathingPage({Key? key}) : super(key: key);
 
@@ -22,7 +23,7 @@ class _DeepBreathingView extends StatefulWidget {
   State<_DeepBreathingView> createState() => _DeepBreathingViewState();
 }
 
-class _DeepBreathingViewState extends State<_DeepBreathingView> {
+class _DeepBreathingViewState extends State<_DeepBreathingView> with TickerProviderStateMixin {
   final List<String> instructions = [
     'خذ شهيقًا عميقًا لمدة 4 ثوان...',
     'احبس النفس لمدة 4 ثوان...',
@@ -44,6 +45,12 @@ class _DeepBreathingViewState extends State<_DeepBreathingView> {
   int currentRepetition = 1;
   int totalExerciseSeconds = 0;
   bool isCompleting = false;
+
+  // Animation controllers for congratulations popup
+  late AnimationController _scaleController;
+  late Animation<double> _scaleAnimation;
+  late AnimationController _confettiController;
+  late Animation<double> _confettiAnimation;
   
   // Calculate total exercise time (10 repetitions x sum of all instruction durations)
   int get totalExerciseTime {
@@ -52,10 +59,38 @@ class _DeepBreathingViewState extends State<_DeepBreathingView> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    
+    // Initialize animation controllers
+    _scaleController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 700),
+    );
+    
+    _scaleAnimation = CurvedAnimation(
+      parent: _scaleController,
+      curve: Curves.elasticOut,
+    );
+    
+    _confettiController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 2000),
+    );
+    
+    _confettiAnimation = CurvedAnimation(
+      parent: _confettiController,
+      curve: Curves.easeOut,
+    );
+  }
+
+  @override
   void dispose() {
     instructionTimer?.cancel();
     countdownTimer?.cancel();
     totalExerciseTimer?.cancel();
+    _scaleController.dispose();
+    _confettiController.dispose();
     super.dispose();
   }
 
@@ -119,6 +154,8 @@ class _DeepBreathingViewState extends State<_DeepBreathingView> {
           // Give a short delay before ending the exercise
           Future.delayed(const Duration(milliseconds: 500), () {
             pauseExercise();
+            // Show congratulations popup
+            _showCongratulationsPopup();
           });
           return;
         } else {
@@ -199,20 +236,171 @@ class _DeepBreathingViewState extends State<_DeepBreathingView> {
     return '$minutes:${remainingSeconds.toString().padLeft(2, '0')}';
   }
 
+  // Show congratulations popup with animation
+  void _showCongratulationsPopup() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        // Reset and start animations
+        _scaleController.reset();
+        _confettiController.reset();
+        _scaleController.forward();
+        _confettiController.forward();
+        
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          child: Directionality(
+            textDirection: TextDirection.rtl,
+            child: Stack(
+              clipBehavior: Clip.none,
+              alignment: Alignment.center,
+              children: [
+                // Confetti animation overlay
+                Positioned.fill(
+                  child: AnimatedBuilder(
+                    animation: _confettiAnimation,
+                    builder: (context, child) {
+                      return CustomPaint(
+                        painter: ConfettiPainter(
+                          progress: _confettiAnimation.value,
+                        ),
+                        size: Size.infinite,
+                      );
+                    },
+                  ),
+                ),
+                
+                // Main popup card with scale animation
+                ScaleTransition(
+                  scale: _scaleAnimation,
+                  child: Container(
+                    width: 300,
+                    padding: const EdgeInsets.all(24),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).cardColor,
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.2),
+                          blurRadius: 10,
+                          offset: const Offset(0, 5),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Trophy icon with glow effect
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.amber.withOpacity(0.2),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.emoji_events_rounded,
+                            color: Colors.amber,
+                            size: 60,
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                        
+                        // Congratulations text
+                        Text(
+                          'تهانينا!',
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.onBackground,
+                            fontSize: 28,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          'لقد أكملت تمرين التنفس العميق بنجاح',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.onBackground.withOpacity(0.8),
+                            fontSize: 16,
+                          ),
+                        ),
+                        const SizedBox(height: 30),
+                        
+                        // Buttons
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            // Repeat button
+                            ElevatedButton.icon(
+                              onPressed: () {
+                                Navigator.of(context).pop();
+                                // Reset exercise state
+                                setState(() {
+                                  currentRepetition = 1;
+                                  currentInstructionIndex = 0;
+                                  isCompleting = false;
+                                });
+                                startExercise();
+                              },
+                              icon: const Icon(Icons.replay_rounded),
+                              label: const Text('إعادة'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Theme.of(context).colorScheme.secondary,
+                                foregroundColor: Theme.of(context).colorScheme.onSecondary,
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                            ),
+                            
+                            // Okay button
+                            OutlinedButton(
+                              onPressed: () {
+Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (_) => const ViewProfileScreen()),
+                  );                              },
+                              child: const Text('حسنا'),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: Theme.of(context).colorScheme.secondary,
+                                side: BorderSide(color: Theme.of(context).colorScheme.secondary),
+                                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    // Get theme colors from context
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    
     return Scaffold(
-      backgroundColor: Colors.black,
+      // Use theme's scaffold background color instead of hardcoded black
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: const Text(
+        title: Text(
           'جلسة التنفس العميق',
-          style: TextStyle(color: Colors.white),
+          style: TextStyle(color: theme.colorScheme.onBackground),
           textDirection: TextDirection.rtl,
         ),
         centerTitle: true,
@@ -226,9 +414,9 @@ class _DeepBreathingViewState extends State<_DeepBreathingView> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(
+                  Icon(
                     Icons.air_rounded,
-                    color: Color(0xFF8080FF),
+                    color: colorScheme.secondary,
                     size: 80,
                   ),
                   const SizedBox(height: 20),
@@ -236,8 +424,8 @@ class _DeepBreathingViewState extends State<_DeepBreathingView> {
                   // Repetition counter
                   Text(
                     '$currentRepetition / $totalRepetitions',
-                    style: const TextStyle(
-                      color: Colors.white70,
+                    style: TextStyle(
+                      color: theme.colorScheme.onBackground.withOpacity(0.7),
                       fontSize: 18,
                     ),
                   ),
@@ -253,8 +441,8 @@ class _DeepBreathingViewState extends State<_DeepBreathingView> {
                       opacity: instructionOpacity,
                       child: Text(
                         instructions[currentInstructionIndex],
-                        style: const TextStyle(
-                          color: Colors.white,
+                        style: TextStyle(
+                          color: theme.colorScheme.onBackground,
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
                         ),
@@ -274,8 +462,8 @@ class _DeepBreathingViewState extends State<_DeepBreathingView> {
                       duration: const Duration(milliseconds: 500),
                       child: Text(
                         countdownSeconds.toString(),
-                        style: const TextStyle(
-                          color: Colors.amber,
+                        style: TextStyle(
+                          color: Colors.amber, // Keeping amber for countdown visibility
                           fontSize: 32,
                           fontWeight: FontWeight.bold,
                         ),
@@ -298,12 +486,12 @@ class _DeepBreathingViewState extends State<_DeepBreathingView> {
                       width: 64,
                       height: 64,
                       decoration: BoxDecoration(
-                        color: const Color(0xFF6750A4),
+                        color: colorScheme.secondary,
                         borderRadius: BorderRadius.circular(32),
                       ),
                       child: Icon(
                         isPlaying ? Icons.pause : Icons.play_arrow,
-                        color: Colors.white,
+                        color: colorScheme.onSecondary,
                         size: 32,
                       ),
                     ),
@@ -315,23 +503,23 @@ class _DeepBreathingViewState extends State<_DeepBreathingView> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                     decoration: BoxDecoration(
-                      color: Colors.black45,
+                      color: theme.scaffoldBackgroundColor.withOpacity(0.5),
                       borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: const Color(0xFF6750A4), width: 1),
+                      border: Border.all(color: colorScheme.secondary, width: 1),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(
+                        Icon(
                           Icons.timer,
-                          color: Color(0xFF6750A4),
+                          color: colorScheme.secondary,
                           size: 24,
                         ),
                         const SizedBox(width: 10),
                         Text(
                           formatTime(totalExerciseSeconds),
-                          style: const TextStyle(
-                            color: Colors.white,
+                          style: TextStyle(
+                            color: theme.colorScheme.onBackground,
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
                           ),
@@ -347,4 +535,60 @@ class _DeepBreathingViewState extends State<_DeepBreathingView> {
       ),
     );
   }
+}
+
+// Custom painter for confetti animation
+class ConfettiPainter extends CustomPainter {
+  final double progress;
+  final Random random = Random();
+  
+  ConfettiPainter({required this.progress});
+  
+  @override
+  void paint(Canvas canvas, Size size) {
+    // Number of confetti pieces
+    final int count = 100;
+    
+    for (int i = 0; i < count; i++) {
+      // Random position and color for each confetti piece
+      final double x = random.nextDouble() * size.width;
+      // Initial y position at top, moves down with animation progress
+      final double y = -20 + progress * (size.height + 40) * random.nextDouble();
+      
+      // Random color from a festive palette
+      final List<Color> colors = [
+        Colors.red,
+        Colors.blue,
+        Colors.green,
+        Colors.yellow,
+        Colors.purple,
+        Colors.orange,
+      ];
+      final Color color = colors[random.nextInt(colors.length)];
+      
+      // Random size for each piece
+      final double size = 5 + random.nextDouble() * 10;
+      
+      // Draw square or circle confetti
+      final paint = Paint()..color = color;
+      
+      if (i % 2 == 0) {
+        // Square confetti
+        canvas.drawRect(
+          Rect.fromCenter(center: Offset(x, y), width: size, height: size),
+          paint,
+        );
+      } else {
+        // Circle confetti
+        canvas.drawCircle(
+          Offset(x, y),
+          size / 2,
+          paint,
+        );
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(ConfettiPainter oldDelegate) => oldDelegate.progress != progress;
 }
