@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:kawamen/features/Treatment/bloc/deep_breathing_bloc.dart';
+import 'dart:async';
 
 class DeepBreathingPage extends StatelessWidget {
   const DeepBreathingPage({Key? key}) : super(key: key);
@@ -14,8 +15,93 @@ class DeepBreathingPage extends StatelessWidget {
   }
 }
 
-class _DeepBreathingView extends StatelessWidget {
+class _DeepBreathingView extends StatefulWidget {
   const _DeepBreathingView();
+
+  @override
+  State<_DeepBreathingView> createState() => _DeepBreathingViewState();
+}
+
+class _DeepBreathingViewState extends State<_DeepBreathingView> {
+  final List<String> instructions = [
+    'خذ شهيقًا عميقًا لمدة 4 ثوان...',
+    'احبس النفس لمدة 4 ثوان...',
+    'ثم أخرج الزفير ببطء لمدة 6 ثوان...',
+  ];
+
+  int currentInstructionIndex = 0;
+  bool isPlaying = false;
+  Timer? instructionTimer;
+  Timer? countdownTimer;
+  int countdownSeconds = 3;
+  
+  @override
+  void dispose() {
+    instructionTimer?.cancel();
+    countdownTimer?.cancel();
+    super.dispose();
+  }
+
+  void startExercise() {
+    if (isPlaying) return;
+    
+    setState(() {
+      isPlaying = true;
+      currentInstructionIndex = 0;
+      countdownSeconds = 3;
+    });
+    
+    // Start the countdown timer
+    countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      setState(() {
+        if (countdownSeconds > 1) {
+          countdownSeconds--;
+        } else {
+          countdownTimer?.cancel();
+          cycleInstructions();
+        }
+      });
+    });
+  }
+
+  void cycleInstructions() {
+    // Start cycling through instructions
+    instructionTimer = Timer.periodic(const Duration(seconds: 3), (timer) {
+      if (!isPlaying) {
+        timer.cancel();
+        return;
+      }
+      
+      setState(() {
+        currentInstructionIndex = (currentInstructionIndex + 1) % instructions.length;
+        countdownSeconds = 3; // Reset countdown for each instruction
+      });
+      
+      // Reset countdown timer for each instruction
+      countdownTimer?.cancel();
+      countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+        if (!isPlaying) {
+          timer.cancel();
+          return;
+        }
+        setState(() {
+          if (countdownSeconds > 1) {
+            countdownSeconds--;
+          } else {
+            countdownSeconds = 3;
+          }
+        });
+      });
+    });
+  }
+
+  void pauseExercise() {
+    setState(() {
+      isPlaying = false;
+    });
+    instructionTimer?.cancel();
+    countdownTimer?.cancel();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -61,74 +147,104 @@ class _DeepBreathingView extends StatelessWidget {
                     ),
                     textAlign: TextAlign.center,
                   ),
-                  const SizedBox(height: 10),
-                  // Current time
-                  Text(
-                    formatDuration(state.currentPosition),
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 18,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
                   const SizedBox(height: 30),
-                  // Instructions
-                  const Text(
-                    'خذ شهيقًا عميقًا لمدة 4 ثوان...\nاحبس النفس لمدة 4 ثوان...\nثم أخرج الزفير ببطء لمدة 6 ثوان...\nكرر هذه الخطوات حتى ينتهي المؤقت',
-                    style: TextStyle(
-                      color: Colors.grey,
-                      fontSize: 16,
+                  
+                  // Current instruction
+                  Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: Colors.grey[900],
+                      borderRadius: BorderRadius.circular(15),
                     ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 40),
-                  // Progress bar
-                  SliderTheme(
-                    data: SliderThemeData(
-                      trackHeight: 4,
-                      thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 8),
-                      overlayShape: const RoundSliderOverlayShape(overlayRadius: 16),
-                      activeTrackColor: Colors.lightBlue,
-                      inactiveTrackColor: Colors.grey[800],
-                      thumbColor: Colors.lightBlue,
-                    ),
-                    child: Slider(
-                      min: 0,
-                      max: state.totalDuration.inSeconds.toDouble(),
-                      value: state.currentPosition.inSeconds.toDouble(),
-                      onChanged: (value) {
-                        context.read<DeepBreathingBloc>().add(
-                              DeepBreathingEvent.seekTo(
-                                Duration(seconds: value.toInt()),
-                              ),
-                            );
-                      },
-                    ),
-                  ),
-                  // Duration indicators
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 25),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    child: Column(
                       children: [
                         Text(
-                          formatDuration(state.currentPosition),
-                          style: const TextStyle(color: Colors.white, fontSize: 12),
+                          instructions[currentInstructionIndex],
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          textAlign: TextAlign.center,
                         ),
-                        Text(
-                          formatDuration(state.totalDuration),
-                          style: const TextStyle(color: Colors.white, fontSize: 12),
+                        const SizedBox(height: 20),
+                        // Countdown circle
+                        Container(
+                          width: 60,
+                          height: 60,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: const Color(0xFF6750A4),
+                          ),
+                          child: Center(
+                            child: Text(
+                              isPlaying ? countdownSeconds.toString() : "3",
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 30,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
                         ),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 20),
+                  
+                  const SizedBox(height: 40),
+                  
+                  // Total session progress
+                  // SliderTheme(
+                  //   data: SliderThemeData(
+                  //     trackHeight: 4,
+                  //     thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 8),
+                  //     overlayShape: const RoundSliderOverlayShape(overlayRadius: 16),
+                  //     activeTrackColor: Colors.lightBlue,
+                  //     inactiveTrackColor: Colors.grey[800],
+                  //     thumbColor: Colors.lightBlue,
+                  //   ),
+                  //   child: Slider(
+                  //     min: 0,
+                  //     max: state.totalDuration.inSeconds.toDouble(),
+                  //     value: state.currentPosition.inSeconds.toDouble(),
+                  //     onChanged: (value) {
+                  //       context.read<DeepBreathingBloc>().add(
+                  //             DeepBreathingEvent.seekTo(
+                  //               Duration(seconds: value.toInt()),
+                  //             ),
+                  //           );
+                  //     },
+                  //   ),
+                  // ),
+                  
+                  // Duration indicators
+                  // Padding(
+                  //   padding: const EdgeInsets.symmetric(horizontal: 25),
+                  //   child: Row(
+                  //     mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  //     children: [
+                  //       Text(
+                  //         formatDuration(state.currentPosition),
+                  //         style: const TextStyle(color: Colors.white, fontSize: 12),
+                  //       ),
+                  //       Text(
+                  //         formatDuration(state.totalDuration),
+                  //         style: const TextStyle(color: Colors.white, fontSize: 12),
+                  //       ),
+                  //     ],
+                  //   ),
+                  // ),
+                  
+                  const SizedBox(height: 30),
+                  
                   // Play/Pause button
                   GestureDetector(
                     onTap: () {
-                      if (state.isPlaying) {
+                      if (isPlaying) {
+                        pauseExercise();
                         context.read<DeepBreathingBloc>().add(const DeepBreathingEvent.pause());
                       } else {
+                        startExercise();
                         context.read<DeepBreathingBloc>().add(const DeepBreathingEvent.play());
                       }
                     },
@@ -140,13 +256,15 @@ class _DeepBreathingView extends StatelessWidget {
                         borderRadius: BorderRadius.circular(32),
                       ),
                       child: Icon(
-                        state.isPlaying ? Icons.pause : Icons.play_arrow,
+                        isPlaying ? Icons.pause : Icons.play_arrow,
                         color: Colors.white,
                         size: 32,
                       ),
                     ),
                   ),
+                  
                   const Spacer(),
+                  
                   // Exit button
                   SizedBox(
                     width: double.infinity,
@@ -168,7 +286,9 @@ class _DeepBreathingView extends StatelessWidget {
                       ),
                     ),
                   ),
+                  
                   const SizedBox(height: 20),
+                  
                   // Bottom navigation icons
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
