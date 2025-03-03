@@ -26,7 +26,7 @@ class App extends StatelessWidget {
       child: MaterialApp(
         theme: AppTheme.darkTheme,
         debugShowCheckedModeBanner: false,
-        initialRoute: AppRoutes.entry, // Ensure the initial route is set
+        // initialRoute: AppRoutes.entry, // Ensure the initial route is set
         onGenerateRoute:
             AppRoutes.generateRoute, // Use AppRoutes for navigation
       ),

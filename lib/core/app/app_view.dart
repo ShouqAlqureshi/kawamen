@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:kawamen/core/navigation/app_routes.dart';
 import 'package:kawamen/core/utils/theme/theme.dart';
 import 'package:kawamen/features/Profile/Screens/view_profile_screen.dart';
+import 'package:kawamen/features/Treatment/screen/deep_breathing_page.dart';
 import 'package:kawamen/features/login/view/login_page.dart';
 import 'package:kawamen/features/registration/screens/registration_screen.dart';
 import 'package:kawamen/intro_screen.dart';
@@ -12,7 +13,7 @@ class AppView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-       initialRoute: AppRoutes.entry,  // Set initial route
+      //  initialRoute: AppRoutes.entry,  // Set initial route
       onGenerateRoute: AppRoutes.generateRoute, 
       debugShowCheckedModeBanner: false,
       title: 'Kawamen',

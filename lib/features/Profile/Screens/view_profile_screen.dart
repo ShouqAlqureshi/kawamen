@@ -6,6 +6,7 @@ import 'package:kawamen/features/Profile/Screens/edit_profile_screen.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:kawamen/features/Reset%20Password/bloc/bloc/reset_password_bloc.dart';
 import 'package:kawamen/features/Reset%20Password/bloc/bloc/screen/reset_password_screen.dart';
+import 'package:kawamen/features/Treatment/screen/deep_breathing_page.dart';
 import '../Bloc/profile_bloc.dart';
 
 class ViewProfileScreen extends StatelessWidget {
@@ -82,7 +83,15 @@ class ViewProfileScreen extends StatelessWidget {
             Icons.arrow_back,
             color: Colors.white,
           ),
-          onPressed: () => Navigator.pop(context),
+          onPressed: (){
+            // Instead of simply popping, navigate to DeepBreathingPage
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const DeepBreathingPage(),
+              ),
+            );
+          },
         ),
       ),
       body: Center(
