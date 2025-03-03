@@ -34,9 +34,9 @@ class _DeepBreathingViewState extends State<_DeepBreathingView> {
   bool isPlaying = false;
   Timer? instructionTimer;
   Timer? countdownTimer;
-  double opacity = 1.0;
+  double instructionOpacity = 1.0;
+  double countdownOpacity = 0.0;
   int countdownSeconds = 0;
-  bool showingCountdown = false;
 
   @override
   void dispose() {
@@ -50,7 +50,7 @@ class _DeepBreathingViewState extends State<_DeepBreathingView> {
     setState(() {
       isPlaying = true;
       currentInstructionIndex = 0;
-      showingCountdown = false;
+      countdownOpacity = 0.0;
     });
     showNextInstruction();
   }
@@ -58,27 +58,37 @@ class _DeepBreathingViewState extends State<_DeepBreathingView> {
   void showNextInstruction() {
     if (!isPlaying) return;
 
+    // First, fade out both instruction and countdown
     setState(() {
-      opacity = 0.0;
-      showingCountdown = false;
+      instructionOpacity = 0.0;
+      
+      // Start fading out the countdown - this is the key change
+      if (countdownOpacity > 0) {
+        countdownOpacity = 0.0;
+      }
     });
     
-    Future.delayed(const Duration(seconds: 1), () {
+    // After allowing time for the fade out animations
+    Future.delayed(const Duration(milliseconds: 500), () {
       if (!isPlaying) return;
 
+      // Update the instruction and fade it in
       setState(() {
         currentInstructionIndex = (currentInstructionIndex + 1) % instructions.length;
-        opacity = 1.0;
+        instructionOpacity = 1.0;
       });
-    });
 
-    Future.delayed(const Duration(seconds: 2), () {
-      if (!isPlaying) return;
-      setState(() {
-        countdownSeconds = instructionDurations[currentInstructionIndex];
-        showingCountdown = true;
+      // Prepare and start fading in the countdown
+      Future.delayed(const Duration(milliseconds: 500), () {
+        if (!isPlaying) return;
+        
+        setState(() {
+          countdownSeconds = instructionDurations[currentInstructionIndex];
+          countdownOpacity = 1.0;
+        });
+        
+        startCountdown();
       });
-      startCountdown();
     });
   }
 
@@ -95,7 +105,17 @@ class _DeepBreathingViewState extends State<_DeepBreathingView> {
           countdownSeconds--;
         } else {
           countdownTimer?.cancel();
-          showNextInstruction();
+          
+          // Instead of immediately showing next instruction,
+          // first fade out the countdown smoothly
+          countdownOpacity = 0.0;
+          
+          // Then show next instruction after animation completes
+          Future.delayed(const Duration(milliseconds: 500), () {
+            if (isPlaying) {
+              showNextInstruction();
+            }
+          });
         }
       });
     });
@@ -146,8 +166,8 @@ class _DeepBreathingViewState extends State<_DeepBreathingView> {
                     height: 60, // Fixed height for instruction text
                     alignment: Alignment.center,
                     child: AnimatedOpacity(
-                      duration: const Duration(seconds: 1),
-                      opacity: opacity,
+                      duration: const Duration(milliseconds: 500),
+                      opacity: instructionOpacity,
                       child: Text(
                         instructions[currentInstructionIndex],
                         style: const TextStyle(
@@ -162,15 +182,15 @@ class _DeepBreathingViewState extends State<_DeepBreathingView> {
                   
                   const SizedBox(height: 20),
                   
-                  // Fixed height container for countdown
+                  // Fixed height container for countdown with smooth animations
                   Container(
                     height: 40, // Fixed height for countdown
                     alignment: Alignment.center,
                     child: AnimatedOpacity(
-                      opacity: showingCountdown ? 1.0 : 0.0,
-                      duration: const Duration(milliseconds: 300),
+                      opacity: countdownOpacity,
+                      duration: const Duration(milliseconds: 500),
                       child: Text(
-                        showingCountdown ? countdownSeconds.toString() : "",
+                        countdownSeconds.toString(),
                         style: const TextStyle(
                           color: Colors.amber,
                           fontSize: 32,
