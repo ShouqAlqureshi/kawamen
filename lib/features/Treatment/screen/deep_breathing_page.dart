@@ -34,14 +34,28 @@ class _DeepBreathingViewState extends State<_DeepBreathingView> {
   bool isPlaying = false;
   Timer? instructionTimer;
   Timer? countdownTimer;
+  Timer? totalExerciseTimer;
   double instructionOpacity = 1.0;
   double countdownOpacity = 0.0;
   int countdownSeconds = 0;
+  
+  // Total repetitions and tracking
+  final int totalRepetitions = 10;
+  int currentRepetition = 1;
+  int totalExerciseSeconds = 0;
+  bool isCompleting = false;
+  
+  // Calculate total exercise time (10 repetitions x sum of all instruction durations)
+  int get totalExerciseTime {
+    // Sum of all instruction durations multiplied by number of repetitions
+    return totalRepetitions * instructionDurations.reduce((a, b) => a + b);
+  }
 
   @override
   void dispose() {
     instructionTimer?.cancel();
     countdownTimer?.cancel();
+    totalExerciseTimer?.cancel();
     super.dispose();
   }
 
@@ -49,20 +63,42 @@ class _DeepBreathingViewState extends State<_DeepBreathingView> {
     if (isPlaying) return;
     setState(() {
       isPlaying = true;
+      isCompleting = false;
       currentInstructionIndex = 0;
       countdownOpacity = 0.0;
+      currentRepetition = 1;
+      totalExerciseSeconds = totalExerciseTime;
     });
     showNextInstruction();
+    startTotalExerciseTimer();
+  }
+
+  void startTotalExerciseTimer() {
+    totalExerciseTimer?.cancel();
+    totalExerciseTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!isPlaying) {
+        return;
+      }
+      
+      setState(() {
+        if (totalExerciseSeconds > 0) {
+          totalExerciseSeconds--;
+        } else {
+          pauseExercise();
+          timer.cancel();
+        }
+      });
+    });
   }
 
   void showNextInstruction() {
-    if (!isPlaying) return;
+    if (!isPlaying || isCompleting) return;
 
     // First, fade out both instruction and countdown
     setState(() {
       instructionOpacity = 0.0;
       
-      // Start fading out the countdown - this is the key change
+      // Start fading out the countdown
       if (countdownOpacity > 0) {
         countdownOpacity = 0.0;
       }
@@ -72,9 +108,35 @@ class _DeepBreathingViewState extends State<_DeepBreathingView> {
     Future.delayed(const Duration(milliseconds: 500), () {
       if (!isPlaying) return;
 
+      // Check if we need to move to the next repetition
+      if (currentInstructionIndex >= instructions.length - 1) {
+        if (currentRepetition >= totalRepetitions) {
+          // End of exercise - Important fix here!
+          setState(() {
+            isCompleting = true;
+          });
+          
+          // Give a short delay before ending the exercise
+          Future.delayed(const Duration(milliseconds: 500), () {
+            pauseExercise();
+          });
+          return;
+        } else {
+          // Move to next repetition
+          setState(() {
+            currentRepetition++;
+            currentInstructionIndex = 0;
+          });
+        }
+      } else {
+        // Move to next instruction in the current repetition
+        setState(() {
+          currentInstructionIndex++;
+        });
+      }
+
       // Update the instruction and fade it in
       setState(() {
-        currentInstructionIndex = (currentInstructionIndex + 1) % instructions.length;
         instructionOpacity = 1.0;
       });
 
@@ -122,9 +184,19 @@ class _DeepBreathingViewState extends State<_DeepBreathingView> {
   }
 
   void pauseExercise() {
-    setState(() => isPlaying = false);
+    setState(() {
+      isPlaying = false;
+      isCompleting = false;
+    });
     instructionTimer?.cancel();
     countdownTimer?.cancel();
+    totalExerciseTimer?.cancel();
+  }
+
+  String formatTime(int seconds) {
+    int minutes = seconds ~/ 60;
+    int remainingSeconds = seconds % 60;
+    return '$minutes:${remainingSeconds.toString().padLeft(2, '0')}';
   }
 
   @override
@@ -159,6 +231,17 @@ class _DeepBreathingViewState extends State<_DeepBreathingView> {
                     color: Color(0xFF8080FF),
                     size: 80,
                   ),
+                  const SizedBox(height: 20),
+                  
+                  // Repetition counter
+                  Text(
+                    '$currentRepetition / $totalRepetitions',
+                    style: const TextStyle(
+                      color: Colors.white70,
+                      fontSize: 18,
+                    ),
+                  ),
+                  
                   const SizedBox(height: 20),
                   
                   // Fixed height container for instruction text
@@ -226,25 +309,34 @@ class _DeepBreathingViewState extends State<_DeepBreathingView> {
                     ),
                   ),
                   
-                  const SizedBox(height: 40),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () => Navigator.pop(context),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF6750A4),
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(30),
+                  const SizedBox(height: 24),
+                  
+                  // Total exercise time countdown display - now below the play/pause button
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: Colors.black45,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: const Color(0xFF6750A4), width: 1),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Icons.timer,
+                          color: Color(0xFF6750A4),
+                          size: 24,
                         ),
-                      ),
-                      child: const Text(
-                        'خروج',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
+                        const SizedBox(width: 10),
+                        Text(
+                          formatTime(totalExerciseSeconds),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
-                      ),
+                      ],
                     ),
                   ),
                 ],
