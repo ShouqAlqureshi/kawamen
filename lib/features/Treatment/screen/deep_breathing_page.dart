@@ -48,6 +48,10 @@ class _DeepBreathingViewState extends State<_DeepBreathingView>
   int totalExerciseSeconds = 0;
   bool isCompleting = false;
 
+  // Track remaining timers for precise resuming
+  int remainingCountdownSeconds = 0;
+  int remainingTotalExerciseSeconds = 0;
+
   // Animation controllers for congratulations popup
   late AnimationController _scaleController;
   late Animation<double> _scaleAnimation;
@@ -56,7 +60,6 @@ class _DeepBreathingViewState extends State<_DeepBreathingView>
 
   // Calculate total exercise time (10 repetitions x sum of all instruction durations)
   int get totalExerciseTime {
-    // Sum of all instruction durations multiplied by number of repetitions
     return totalRepetitions *
         (instructionDurations.reduce((a, b) => a + b) + 8)+3;
   }
@@ -102,12 +105,41 @@ class _DeepBreathingViewState extends State<_DeepBreathingView>
     setState(() {
       isPlaying = true;
       isCompleting = false;
-      currentInstructionIndex = 0;
-      countdownOpacity = 0.0;
-      currentRepetition = 1;
-      totalExerciseSeconds = totalExerciseTime;
+      
+      // Use stored or initial values
+      if (remainingTotalExerciseSeconds > 0) {
+        totalExerciseSeconds = remainingTotalExerciseSeconds;
+      } else {
+        totalExerciseSeconds = totalExerciseTime;
+      }
+
+      // Set initial instruction and countdown state
+      if (remainingCountdownSeconds > 0) {
+        countdownSeconds = remainingCountdownSeconds;
+        countdownOpacity = 1.0;
+      } else {
+        currentInstructionIndex = 0;
+        currentRepetition = 1;
+        countdownSeconds = instructionDurations[currentInstructionIndex];
+        countdownOpacity = 0.0;
+        instructionOpacity = 1.0;
+      }
     });
-    showNextInstruction();
+
+    // Restart timers based on remaining time
+    if (remainingCountdownSeconds > 0) {
+      startCountdown();
+    } else {
+      // Delay to show instruction before starting countdown
+      Future.delayed(const Duration(seconds: 2), () {
+        setState(() {
+          countdownOpacity = 1.0;
+          countdownSeconds = instructionDurations[currentInstructionIndex];
+        });
+        startCountdown();
+      });
+    }
+
     startTotalExerciseTimer();
   }
 
@@ -121,6 +153,7 @@ class _DeepBreathingViewState extends State<_DeepBreathingView>
       setState(() {
         if (totalExerciseSeconds > 0) {
           totalExerciseSeconds--;
+          remainingTotalExerciseSeconds = totalExerciseSeconds;
         } else {
           pauseExercise();
           timer.cancel();
@@ -149,7 +182,7 @@ class _DeepBreathingViewState extends State<_DeepBreathingView>
       // Check if we need to move to the next repetition
       if (currentInstructionIndex >= instructions.length - 1) {
         if (currentRepetition >= totalRepetitions) {
-          // End of exercise - Important fix here!
+          // End of exercise
           setState(() {
             isCompleting = true;
           });
@@ -194,40 +227,58 @@ class _DeepBreathingViewState extends State<_DeepBreathingView>
     });
   }
 
-  void startCountdown() {
-    countdownTimer?.cancel();
-    countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (!isPlaying) {
-        timer.cancel();
-        return;
+void startCountdown() {
+  countdownTimer?.cancel();
+  
+  // Use remaining countdown seconds or reset to instruction duration
+  int currentCountdown = remainingCountdownSeconds > 0 
+      ? remainingCountdownSeconds 
+      : instructionDurations[currentInstructionIndex];
+
+  setState(() {
+    countdownSeconds = currentCountdown;
+  });
+
+  countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+    if (!isPlaying) {
+      timer.cancel();
+      return;
+    }
+
+    setState(() {
+      if (countdownSeconds > 1) {
+        countdownSeconds--;
+        remainingCountdownSeconds = countdownSeconds;
+      } else {
+        countdownTimer?.cancel();
+        remainingCountdownSeconds = 0;
+
+        // Instead of immediately showing next instruction,
+        // first fade out the countdown smoothly
+        countdownOpacity = 0.0;
+
+        // Then show next instruction after animation completes
+        Future.delayed(const Duration(milliseconds: 500), () {
+          if (isPlaying) {
+            showNextInstruction();
+          }
+        });
       }
-
-      setState(() {
-        if (countdownSeconds > 1) {
-          countdownSeconds--;
-        } else {
-          countdownTimer?.cancel();
-
-          // Instead of immediately showing next instruction,
-          // first fade out the countdown smoothly
-          countdownOpacity = 0.0;
-
-          // Then show next instruction after animation completes
-          Future.delayed(const Duration(milliseconds: 500), () {
-            if (isPlaying) {
-              showNextInstruction();
-            }
-          });
-        }
-      });
     });
-  }
+  });
+}
 
   void pauseExercise() {
     setState(() {
       isPlaying = false;
-      isCompleting = false;
+      // Store the current state for potential resuming
+      // Keep track of remaining times
+      remainingTotalExerciseSeconds = totalExerciseSeconds;
+      // If countdown is active, store its remaining time
+      remainingCountdownSeconds = countdownSeconds;
     });
+    
+    // Cancel all timers
     instructionTimer?.cancel();
     countdownTimer?.cancel();
     totalExerciseTimer?.cancel();
