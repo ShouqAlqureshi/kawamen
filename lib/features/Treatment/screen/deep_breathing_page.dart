@@ -57,6 +57,13 @@ class _DeepBreathingViewState extends State<_DeepBreathingView>
   late Animation<double> _scaleAnimation;
   late AnimationController _confettiController;
   late Animation<double> _confettiAnimation;
+   // New animation controller for breathing animation
+  late AnimationController _breathingAnimationController;
+  late Animation<double> _breathingAnimation;
+
+  // New animation controller for glow effect
+  late AnimationController _glowAnimationController;
+  late Animation<double> _glowAnimation;
 
   // Calculate total exercise time (10 repetitions x sum of all instruction durations)
   int get totalExerciseTime {
@@ -67,7 +74,31 @@ class _DeepBreathingViewState extends State<_DeepBreathingView>
   @override
   void initState() {
     super.initState();
+// Initialize breathing animation controller
+    _breathingAnimationController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 4), // Match inhale duration
+    );
 
+    _breathingAnimation = Tween<double>(begin: 0.5, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _breathingAnimationController,
+        curve: Curves.easeInOut,
+      ),
+    );
+
+    // Initialize glow animation controller
+    _glowAnimationController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 4),
+    );
+
+    _glowAnimation = Tween<double>(begin: 0.3, end: 0.7).animate(
+      CurvedAnimation(
+        parent: _glowAnimationController,
+        curve: Curves.easeInOut,
+      ),
+    );
     // Initialize animation controllers
     _scaleController = AnimationController(
       vsync: this,
@@ -92,6 +123,9 @@ class _DeepBreathingViewState extends State<_DeepBreathingView>
 
   @override
   void dispose() {
+    // Add new controllers to dispose
+    _breathingAnimationController.dispose();
+    _glowAnimationController.dispose();
     instructionTimer?.cancel();
     countdownTimer?.cancel();
     totalExerciseTimer?.cancel();
@@ -235,7 +269,17 @@ class _DeepBreathingViewState extends State<_DeepBreathingView>
 
 void startCountdown() {
   countdownTimer?.cancel();
-  
+  // Update breathing and glow animations based on instruction
+    if (currentInstructionIndex == 0) { // Inhale
+      _breathingAnimationController.forward();
+      _glowAnimationController.forward();
+    } else if (currentInstructionIndex == 1) { // Hold
+      _breathingAnimationController.stop();
+      _glowAnimationController.stop();
+    } else if (currentInstructionIndex == 2) { // Exhale
+      _breathingAnimationController.reverse();
+      _glowAnimationController.reverse();
+    }
   // Use remaining countdown seconds or reset to instruction duration
   int currentCountdown = remainingCountdownSeconds > 0 
       ? remainingCountdownSeconds 
@@ -461,164 +505,207 @@ void startCountdown() {
   }
 
   @override
-  Widget build(BuildContext context) {
-    // Get theme colors from context
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+Widget build(BuildContext context) {
+  // Get theme colors from context
+  final theme = Theme.of(context);
+  final colorScheme = theme.colorScheme;
 
-    return Scaffold(
-      // Use theme's scaffold background color instead of hardcoded black
-      backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        title: Text(
-          'جلسة التنفس العميق',
-          style: TextStyle(color: theme.colorScheme.onBackground),
-          textDirection: TextDirection.rtl,
-        ),
-        centerTitle: true,
-      ),
-      body: BlocBuilder<DeepBreathingBloc, DeepBreathingState>(
-        builder: (context, state) {
-          return Directionality(
-            textDirection: TextDirection.rtl,
-            child: Padding(
-              padding: const EdgeInsets.all(20.0),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.air_rounded,
-                    color: colorScheme.secondary,
-                    size: 80,
-                  ),
-                  const SizedBox(height: 20),
-                  // ElevatedButton(
-                  //   onPressed: _showCongratulationsPopup,
-                  //   child: const Text('Test Popup'),
-                  // ),
-                  // Repetition counter
-                  Text(
-                    '$currentRepetition / $totalRepetitions',
-                    style: TextStyle(
-                      color: theme.colorScheme.onBackground.withOpacity(0.7),
-                      fontSize: 18,
-                    ),
-                  ),
-
-                  const SizedBox(height: 20),
-
-                  // Fixed height container for instruction text
-                  Container(
-                    height: 60, // Fixed height for instruction text
-                    alignment: Alignment.center,
-                    child: AnimatedOpacity(
-                      duration: const Duration(milliseconds: 500),
-                      opacity: instructionOpacity,
-                      child: Text(
-                        instructions[currentInstructionIndex],
-                        style: TextStyle(
-                          color: theme.colorScheme.onBackground,
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 20),
-
-                  // Fixed height container for countdown with smooth animations
-                  Container(
-                    height: 40, // Fixed height for countdown
-                    alignment: Alignment.center,
-                    child: AnimatedOpacity(
-                      opacity: countdownOpacity,
-                      duration: const Duration(milliseconds: 500),
-                      child: Text(
-                        countdownSeconds.toString(),
-                        style: TextStyle(
-                          color: Colors
-                              .amber, // Keeping amber for countdown visibility
-                          fontSize: 32,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 40),
-                  GestureDetector(
-                    onTap: () {
-                      if (isPlaying) {
-                        pauseExercise();
-                        context
-                            .read<DeepBreathingBloc>()
-                            .add(const DeepBreathingEvent.pause());
-                      } else {
-                        startExercise();
-                        context
-                            .read<DeepBreathingBloc>()
-                            .add(const DeepBreathingEvent.play());
-                      }
-                    },
-                    child: Container(
-                      width: 64,
-                      height: 64,
-                      decoration: BoxDecoration(
-                        color: colorScheme.secondary,
-                        borderRadius: BorderRadius.circular(32),
-                      ),
-                      child: Icon(
-                        isPlaying ? Icons.pause : Icons.play_arrow,
-                        color: colorScheme.onSecondary,
-                        size: 32,
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 24),
-
-                  // Total exercise time countdown display - now below the play/pause button
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 20, vertical: 10),
+  return Scaffold(
+    backgroundColor: theme.scaffoldBackgroundColor,
+    body: Stack(
+      children: [
+        // Breathing Background Animation
+        Center(
+          child: AnimatedBuilder(
+            animation: _breathingAnimation,
+            builder: (context, child) {
+              return AnimatedBuilder(
+                animation: _glowAnimation,
+                builder: (context, child) {
+                  return Container(
+                    width: 300 * _breathingAnimation.value,
+                    height: 300 * _breathingAnimation.value,
                     decoration: BoxDecoration(
-                      color: theme.scaffoldBackgroundColor.withOpacity(0.5),
-                      borderRadius: BorderRadius.circular(20),
-                      border:
-                          Border.all(color: colorScheme.secondary, width: 1),
+                      shape: BoxShape.circle,
+                      gradient: RadialGradient(
+                        colors: [
+                          colorScheme.secondary.withOpacity(_glowAnimation.value),
+                          colorScheme.secondary.withOpacity(_glowAnimation.value * 0.3),
+                          Colors.transparent,
+                        ],
+                        stops: const [0.0, 0.5, 1.0],
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: colorScheme.secondary.withOpacity(_glowAnimation.value * 0.5),
+                          blurRadius: 50,
+                          spreadRadius: 20,
+                        ),
+                      ],
                     ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
+                  );
+                },
+              );
+            },
+          ),
+        ),
+
+        // Existing page content (with slight opacity adjustment)
+        Opacity(
+          opacity: 0.9,
+          child: BlocBuilder<DeepBreathingBloc, DeepBreathingState>(
+            builder: (context, state) {
+              return Directionality(
+                textDirection: TextDirection.rtl,
+                child: Scaffold(
+                  appBar: AppBar(
+                    backgroundColor: Colors.transparent,
+                    elevation: 0,
+                    title: Text(
+                      'جلسة التنفس العميق',
+                      style: TextStyle(color: theme.colorScheme.onBackground),
+                      textDirection: TextDirection.rtl,
+                    ),
+                    centerTitle: true,
+                  ),
+                  backgroundColor: Colors.transparent,
+                  body: Padding(
+                    padding: const EdgeInsets.all(20.0),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Icon(
-                          Icons.timer,
-                          color: colorScheme.secondary,
-                          size: 24,
+                          Icons.air_rounded,
+                          color: colorScheme.primary,
+                          size: 80,
                         ),
-                        const SizedBox(width: 10),
+                        const SizedBox(height: 20),
+                        
+                        // Repetition counter
                         Text(
-                          formatTime(totalExerciseSeconds),
+                          '$currentRepetition / $totalRepetitions',
                           style: TextStyle(
-                            color: theme.colorScheme.onBackground,
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
+                            color: theme.colorScheme.onBackground.withOpacity(0.7),
+                            fontSize: 18,
+                          ),
+                        ),
+
+                        const SizedBox(height: 20),
+
+                        // Fixed height container for instruction text
+                        Container(
+                          height: 60, // Fixed height for instruction text
+                          alignment: Alignment.center,
+                          child: AnimatedOpacity(
+                            duration: const Duration(milliseconds: 500),
+                            opacity: instructionOpacity,
+                            child: Text(
+                              instructions[currentInstructionIndex],
+                              style: TextStyle(
+                                color: theme.colorScheme.onBackground,
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                        ),
+
+                        const SizedBox(height: 20),
+
+                        // Fixed height container for countdown with smooth animations
+                        Container(
+                          height: 40, // Fixed height for countdown
+                          alignment: Alignment.center,
+                          child: AnimatedOpacity(
+                            opacity: countdownOpacity,
+                            duration: const Duration(milliseconds: 500),
+                            child: Text(
+                              countdownSeconds.toString(),
+                              style: TextStyle(
+                                color: Colors.amber, // Keeping amber for countdown visibility
+                                fontSize: 32,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+
+                        const SizedBox(height: 40),
+                        
+                        // Play/Pause Button
+                        GestureDetector(
+                          onTap: () {
+                            if (isPlaying) {
+                              pauseExercise();
+                              context
+                                  .read<DeepBreathingBloc>()
+                                  .add(const DeepBreathingEvent.pause());
+                            } else {
+                              startExercise();
+                              context
+                                  .read<DeepBreathingBloc>()
+                                  .add(const DeepBreathingEvent.play());
+                            }
+                          },
+                          child: Container(
+                            width: 64,
+                            height: 64,
+                            decoration: BoxDecoration(
+                              color: colorScheme.secondary,
+                              borderRadius: BorderRadius.circular(32),
+                            ),
+                            child: Icon(
+                              isPlaying ? Icons.pause : Icons.play_arrow,
+                              color: colorScheme.onSecondary,
+                              size: 32,
+                            ),
+                          ),
+                        ),
+
+                        const SizedBox(height: 24),
+
+                        // Total exercise time countdown display
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 20, vertical: 10),
+                          decoration: BoxDecoration(
+                            color: theme.scaffoldBackgroundColor.withOpacity(0.5),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(color: colorScheme.secondary, width: 1),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.timer,
+                                color: colorScheme.secondary,
+                                size: 24,
+                              ),
+                              const SizedBox(width: 10),
+                              Text(
+                                formatTime(totalExerciseSeconds),
+                                style: TextStyle(
+                                  color: theme.colorScheme.onBackground,
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ],
                     ),
                   ),
-                ],
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
+                ),
+              );
+            },
+          ),
+        ),
+      ],
+    ),
+  );
+}
 }
 
 // Custom painter for confetti animation
