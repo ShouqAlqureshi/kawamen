@@ -61,7 +61,7 @@ class _DeepBreathingViewState extends State<_DeepBreathingView>
   // Calculate total exercise time (10 repetitions x sum of all instruction durations)
   int get totalExerciseTime {
     return totalRepetitions *
-        (instructionDurations.reduce((a, b) => a + b) + 8)+3;
+        (instructionDurations.reduce((a, b) => a + b) + 8)+3+6;
   }
 
   @override
@@ -147,6 +147,7 @@ class _DeepBreathingViewState extends State<_DeepBreathingView>
     totalExerciseTimer?.cancel();
     totalExerciseTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (!isPlaying) {
+        timer.cancel();
         return;
       }
 
@@ -155,12 +156,21 @@ class _DeepBreathingViewState extends State<_DeepBreathingView>
           totalExerciseSeconds--;
           remainingTotalExerciseSeconds = totalExerciseSeconds;
         } else {
+          // Explicitly handle exercise completion
           pauseExercise();
           timer.cancel();
+          
+          // Ensure popup is shown when timer reaches zero
+          Future.delayed(const Duration(milliseconds: 100), () {
+            if (mounted) {
+              _showCongratulationsPopup();
+            }
+          });
         }
       });
     });
   }
+
 
   void showNextInstruction() {
     if (!isPlaying || isCompleting) return;
@@ -168,8 +178,6 @@ class _DeepBreathingViewState extends State<_DeepBreathingView>
     // First, fade out both instruction and countdown
     setState(() {
       instructionOpacity = 0.0;
-
-      // Start fading out the countdown
       if (countdownOpacity > 0) {
         countdownOpacity = 0.0;
       }
@@ -179,28 +187,26 @@ class _DeepBreathingViewState extends State<_DeepBreathingView>
     Future.delayed(const Duration(milliseconds: 500), () {
       if (!isPlaying) return;
 
+      // Explicitly check for exercise completion
+      if (currentRepetition >= totalRepetitions && 
+          currentInstructionIndex >= instructions.length - 1) {
+        // Definitely end of exercise
+        setState(() {
+          isCompleting = true;
+          isPlaying = false;
+        });
+
+        // Immediate popup show
+        _showCongratulationsPopup();
+        return;
+      }
+
       // Check if we need to move to the next repetition
       if (currentInstructionIndex >= instructions.length - 1) {
-        if (currentRepetition >= totalRepetitions) {
-          // End of exercise
-          setState(() {
-            isCompleting = true;
-          });
-
-          // Give a short delay before ending the exercise
-          Future.delayed(const Duration(milliseconds: 500), () {
-            pauseExercise();
-            // Show congratulations popup
-            _showCongratulationsPopup();
-          });
-          return;
-        } else {
-          // Move to next repetition
-          setState(() {
-            currentRepetition++;
-            currentInstructionIndex = 0;
-          });
-        }
+        setState(() {
+          currentRepetition++;
+          currentInstructionIndex = 0;
+        });
       } else {
         // Move to next instruction in the current repetition
         setState(() {
