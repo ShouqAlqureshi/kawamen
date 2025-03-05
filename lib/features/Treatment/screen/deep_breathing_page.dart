@@ -269,17 +269,23 @@ class _DeepBreathingViewState extends State<_DeepBreathingView>
 
 void startCountdown() {
   countdownTimer?.cancel();
+  
   // Update breathing and glow animations based on instruction
-    if (currentInstructionIndex == 0) { // Inhale
-      _breathingAnimationController.forward();
-      _glowAnimationController.forward();
-    } else if (currentInstructionIndex == 1) { // Hold
-      _breathingAnimationController.stop();
-      _glowAnimationController.stop();
-    } else if (currentInstructionIndex == 2) { // Exhale
-      _breathingAnimationController.reverse();
-      _glowAnimationController.reverse();
-    }
+  if (currentInstructionIndex == 0) { // Inhale
+    _breathingAnimationController.forward();
+    _glowAnimationController.forward();
+  } else if (currentInstructionIndex == 1) { // Hold
+    _breathingAnimationController.stop();
+    _glowAnimationController.stop();
+  } else if (currentInstructionIndex == 2) { // Exhale
+    // Create a new animation that takes the full exhale duration
+    _breathingAnimationController.animateTo(
+      0.5, // Contract back to original size
+      duration: const Duration(seconds: 6), // Match full exhale duration
+      curve: Curves.easeOut
+    );
+    _glowAnimationController.reverse();
+  }
   // Use remaining countdown seconds or reset to instruction duration
   int currentCountdown = remainingCountdownSeconds > 0 
       ? remainingCountdownSeconds 
@@ -303,11 +309,10 @@ void startCountdown() {
         countdownTimer?.cancel();
         remainingCountdownSeconds = 0;
 
-        // Instead of immediately showing next instruction,
-        // first fade out the countdown smoothly
+        // Fade out countdown smoothly
         countdownOpacity = 0.0;
 
-        // Then show next instruction after animation completes
+        // Show next instruction after animation
         Future.delayed(const Duration(milliseconds: 500), () {
           if (isPlaying) {
             showNextInstruction();
