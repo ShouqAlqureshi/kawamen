@@ -119,7 +119,7 @@ class DeepBreathingState extends Equatable {
     
     // Calculate total exercise time
     final int totalExerciseTime = totalRepetitions * 
-        (instructionDurations.reduce((a, b) => a + b) + 8) + 3 + 6;
+        (instructionDurations.reduce((a, b) => a + b) +6);
 
     return DeepBreathingState(
       isPlaying: false,
