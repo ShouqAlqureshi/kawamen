@@ -61,7 +61,6 @@ class ResetExerciseEvent extends DeepBreathingEvent {
   const ResetExerciseEvent();
 }
 
-// Add a new event specifically for showing the countdown
 class ShowCountdownEvent extends DeepBreathingEvent {
   const ShowCountdownEvent();
 }
@@ -73,6 +72,7 @@ class FadeInNextInstructionEvent extends DeepBreathingEvent {
 class ShowCountdownForNextInstructionEvent extends DeepBreathingEvent {
   const ShowCountdownForNextInstructionEvent();
 }
+
 // State
 class DeepBreathingState extends Equatable {
   final bool isPlaying;
@@ -88,6 +88,7 @@ class DeepBreathingState extends Equatable {
   final List<int> instructionDurations;
   final int totalExerciseTime;
   final InstructionPhase currentPhase;
+  final bool isAnimating; // New field to control animation
 
   const DeepBreathingState({
     required this.isPlaying,
@@ -103,6 +104,7 @@ class DeepBreathingState extends Equatable {
     required this.instructionDurations,
     required this.totalExerciseTime,
     required this.currentPhase,
+    required this.isAnimating, // Include in constructor
   });
 
   // Initial state factory
@@ -133,6 +135,7 @@ class DeepBreathingState extends Equatable {
       instructionDurations: instructionDurations,
       totalExerciseTime: totalExerciseTime,
       currentPhase: InstructionPhase.inhale,
+      isAnimating: false, // Initially not animating
     );
   }
 
@@ -151,6 +154,7 @@ class DeepBreathingState extends Equatable {
     List<int>? instructionDurations,
     int? totalExerciseTime,
     InstructionPhase? currentPhase,
+    bool? isAnimating, // Include in copyWith
   }) {
     return DeepBreathingState(
       isPlaying: isPlaying ?? this.isPlaying,
@@ -166,6 +170,7 @@ class DeepBreathingState extends Equatable {
       instructionDurations: instructionDurations ?? this.instructionDurations,
       totalExerciseTime: totalExerciseTime ?? this.totalExerciseTime,
       currentPhase: currentPhase ?? this.currentPhase,
+      isAnimating: isAnimating ?? this.isAnimating, // Include in return
     );
   }
 
@@ -184,6 +189,7 @@ class DeepBreathingState extends Equatable {
     instructionDurations,
     totalExerciseTime,
     currentPhase,
+    isAnimating, // Include in props
   ];
 }
 
@@ -206,12 +212,10 @@ class DeepBreathingBloc extends Bloc<DeepBreathingEvent, DeepBreathingState> {
     on<CompleteExerciseEvent>(_onCompleteExercise);
     on<ResetExerciseEvent>(_onResetExercise);
     on<ShowCountdownEvent>(_onShowCountdown);
-    // New event handlers for the timer callbacks
     on<FadeInNextInstructionEvent>(_onFadeInNextInstruction);
     on<ShowCountdownForNextInstructionEvent>(_onShowCountdownForNextInstruction);
   }
   
-  // Add these new events
   void _onFadeInNextInstruction(FadeInNextInstructionEvent event, Emitter<DeepBreathingState> emit) {
     if (!state.isPlaying) return;
     
@@ -254,6 +258,7 @@ class DeepBreathingBloc extends Bloc<DeepBreathingEvent, DeepBreathingState> {
       countdownOpacity: 0.0, // Ensure countdown is invisible initially
       countdownSeconds: state.instructionDurations[nextInstructionIndex],
       currentPhase: nextPhase,
+      isAnimating: false, // Stop animation when showing new instruction
     ));
     
     developer.log('New instruction set: ${state.instructions[nextInstructionIndex]}, opacity: 1.0');
@@ -281,6 +286,7 @@ class DeepBreathingBloc extends Bloc<DeepBreathingEvent, DeepBreathingState> {
       isPlaying: true,
       instructionOpacity: 1.0,
       countdownOpacity: 0.0, // Start with instruction visible first
+      isAnimating: false, // Start with animation off
     );
     
     emit(initialState);
@@ -305,6 +311,7 @@ class DeepBreathingBloc extends Bloc<DeepBreathingEvent, DeepBreathingState> {
     emit(state.copyWith(
       countdownSeconds: currentDuration,
       countdownOpacity: 1.0,
+      isAnimating: true, // Start the animation when countdown starts
     ));
     
     // Start countdown timer after confirming the countdown is visible
@@ -314,13 +321,19 @@ class DeepBreathingBloc extends Bloc<DeepBreathingEvent, DeepBreathingState> {
   void _onPauseExercise(PauseExerciseEvent event, Emitter<DeepBreathingState> emit) {
     developer.log('Pausing exercise');
     _cancelTimers();
-    emit(state.copyWith(isPlaying: false));
+    emit(state.copyWith(
+      isPlaying: false,
+      isAnimating: false, // Stop animation when paused
+    ));
   }
 
   void _onResumeExercise(ResumeExerciseEvent event, Emitter<DeepBreathingState> emit) {
     developer.log('Resuming exercise');
     // Cancel any existing timers
     _cancelTimers();
+    
+    // Determine if we should be animating
+    bool shouldAnimate = event.remainingCountdownSeconds > 0;
     
     // Update state with provided values
     emit(state.copyWith(
@@ -331,6 +344,7 @@ class DeepBreathingBloc extends Bloc<DeepBreathingEvent, DeepBreathingState> {
       currentRepetition: event.currentRepetition,
       countdownOpacity: event.remainingCountdownSeconds > 0 ? 1.0 : 0.0,
       currentPhase: InstructionPhase.values[event.currentInstructionIndex],
+      isAnimating: shouldAnimate, // Only animate if countdown is active
     ));
     
     // Restart timers
@@ -342,19 +356,23 @@ class DeepBreathingBloc extends Bloc<DeepBreathingEvent, DeepBreathingState> {
 
   void _onCountdownTick(CountdownTickEvent event, Emitter<DeepBreathingState> emit) {
     developer.log('Countdown tick: ${state.countdownSeconds - 1}');
-    if (state.countdownSeconds > 1) {
+    if (state.countdownSeconds > 2) { // Change from > 1 to > 2
       emit(state.copyWith(
         countdownSeconds: state.countdownSeconds - 1,
       ));
-    } else {
+    } else if (state.countdownSeconds == 2) { // New condition to stop at 1
+      emit(state.copyWith(
+        countdownSeconds: 1, // Stop at 1 instead of going to 0
+      ));
+      
       // Countdown is complete, cancel timer and fade out countdown
       developer.log('Countdown complete');
       _countdownTimer?.cancel();
       _countdownTimer = null;
       
       emit(state.copyWith(
-        countdownSeconds: 0,
         countdownOpacity: 0.0,
+        isAnimating: false, // Stop animation when countdown ends
       ));
       
       // After animation delay, move to next instruction
@@ -364,7 +382,7 @@ class DeepBreathingBloc extends Bloc<DeepBreathingEvent, DeepBreathingState> {
     }
   }
 
-  void _onTotalTimerTick(TotalTimerTickEvent event, Emitter<DeepBreathingState> emit) {
+ void _onTotalTimerTick(TotalTimerTickEvent event, Emitter<DeepBreathingState> emit) {
     if (state.totalExerciseSeconds > 1) {
       emit(state.copyWith(
         totalExerciseSeconds: state.totalExerciseSeconds - 1,
@@ -387,6 +405,7 @@ class DeepBreathingBloc extends Bloc<DeepBreathingEvent, DeepBreathingState> {
     // Fade out current instruction
     emit(state.copyWith(
       instructionOpacity: 0.0,
+      isAnimating: false, // Ensure animation is stopped
     ));
     
     // After fade out animation completes, dispatch a new event
@@ -401,6 +420,7 @@ class DeepBreathingBloc extends Bloc<DeepBreathingEvent, DeepBreathingState> {
     emit(state.copyWith(
       isPlaying: false,
       isCompleting: true,
+      isAnimating: false, // Stop animation when exercise completes
     ));
   }
 

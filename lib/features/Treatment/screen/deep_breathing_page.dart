@@ -85,6 +85,8 @@ class _DeepBreathingViewState extends State<_DeepBreathingView>
       parent: _confettiController,
       curve: Curves.easeOut,
     );
+    _breathingAnimationController.value = 0.5;
+  _glowAnimationController.value = 0.3;
   }
 
   @override
@@ -97,28 +99,34 @@ class _DeepBreathingViewState extends State<_DeepBreathingView>
   }
 
   // Handle animation based on the current instruction phase
-  void _updateAnimations(DeepBreathingState state) {
-    if (!state.isPlaying) return;
-    
-    switch (state.currentPhase) {
-      case InstructionPhase.inhale:
-        _breathingAnimationController.forward();
-        _glowAnimationController.forward();
-        break;
-      case InstructionPhase.hold:
-        _breathingAnimationController.stop();
-        _glowAnimationController.stop();
-        break;
-      case InstructionPhase.exhale:
-        _breathingAnimationController.animateTo(
-          0.5,
-          duration: const Duration(seconds: 6),
-          curve: Curves.easeOut
-        );
-        _glowAnimationController.reverse();
-        break;
-    }
+void _updateAnimations(DeepBreathingState state) {
+  // Only animate when both playing and the countdown is active
+  if (!state.isPlaying || !state.isAnimating) {
+    // Stop all animations when not in active countdown
+    _breathingAnimationController.stop();
+    _glowAnimationController.stop();
+    return;
   }
+  
+  switch (state.currentPhase) {
+    case InstructionPhase.inhale:
+      _breathingAnimationController.forward();
+      _glowAnimationController.forward();
+      break;
+    case InstructionPhase.hold:
+      _breathingAnimationController.stop();
+      _glowAnimationController.stop();
+      break;
+    case InstructionPhase.exhale:
+      _breathingAnimationController.animateTo(
+        0.5,
+        duration: const Duration(seconds: 6),
+        curve: Curves.easeOut
+      );
+      _glowAnimationController.reverse();
+      break;
+  }
+}
 
   String formatTime(int seconds) {
     int minutes = seconds ~/ 60;
