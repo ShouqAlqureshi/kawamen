@@ -134,165 +134,166 @@ void _updateAnimations(DeepBreathingState state) {
     return '$minutes:${remainingSeconds.toString().padLeft(2, '0')}';
   }
 
-  void _showCongratulationsPopup(BuildContext context) {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (BuildContext context) {
-        // Reset and start animations
-        _scaleController.reset();
-        _confettiController.reset();
-        _scaleController.forward();
-        _confettiController.forward();
+void _showCongratulationsPopup(BuildContext context) {
+  // Get reference to the bloc before showing the dialog
+  final deepBreathingBloc = context.read<DeepBreathingBloc>();
+  
+  showDialog(
+    context: context,
+    barrierDismissible: false,
+    builder: (BuildContext dialogContext) {
+      // Reset and start animations
+      _scaleController.reset();
+      _confettiController.reset();
+      _scaleController.forward();
+      _confettiController.forward();
 
-        return Dialog(
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          child: Directionality(
-            textDirection: TextDirection.rtl,
-            child: Stack(
-              clipBehavior: Clip.none,
-              alignment: Alignment.center,
-              children: [
-                // Confetti animation overlay
-                Positioned.fill(
-                  child: AnimatedBuilder(
-                    animation: _confettiAnimation,
-                    builder: (context, child) {
-                      return CustomPaint(
-                        painter: ConfettiPainter(
-                          progress: _confettiAnimation.value,
-                        ),
-                        size: Size.infinite,
-                      );
-                    },
-                  ),
+      return Dialog(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        child: Directionality(
+          textDirection: TextDirection.rtl,
+          child: Stack(
+            clipBehavior: Clip.none,
+            alignment: Alignment.center,
+            children: [
+              // Confetti animation overlay
+              Positioned.fill(
+                child: AnimatedBuilder(
+                  animation: _confettiAnimation,
+                  builder: (context, child) {
+                    return CustomPaint(
+                      painter: ConfettiPainter(
+                        progress: _confettiAnimation.value,
+                      ),
+                      size: Size.infinite,
+                    );
+                  },
                 ),
+              ),
 
-                // Main popup card with scale animation
-                ScaleTransition(
-                  scale: _scaleAnimation,
-                  child: Container(
-                    width: 300,
-                    padding: const EdgeInsets.all(24),
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).cardColor,
-                      borderRadius: BorderRadius.circular(20),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.2),
-                          blurRadius: 10,
-                          offset: const Offset(0, 5),
+              // Main popup card with scale animation
+              ScaleTransition(
+                scale: _scaleAnimation,
+                child: Container(
+                  width: 300,
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    color: Theme.of(dialogContext).cardColor,
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.2),
+                        blurRadius: 10,
+                        offset: const Offset(0, 5),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Trophy icon with glow effect
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.amber.withOpacity(0.2),
+                          shape: BoxShape.circle,
                         ),
-                      ],
-                    ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        // Trophy icon with glow effect
-                        Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: Colors.amber.withOpacity(0.2),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            Icons.emoji_events_rounded,
-                            color: Colors.amber,
-                            size: 60,
-                          ),
+                        child: const Icon(
+                          Icons.emoji_events_rounded,
+                          color: Colors.amber,
+                          size: 60,
                         ),
-                        const SizedBox(height: 24),
+                      ),
+                      const SizedBox(height: 24),
 
-                        // Congratulations text
-                        Text(
-                          'تهانينا!',
-                          style: TextStyle(
-                            color: Theme.of(context).colorScheme.onBackground,
-                            fontSize: 28,
-                            fontWeight: FontWeight.bold,
-                          ),
+                      // Congratulations text
+                      Text(
+                        'تهانينا!',
+                        style: TextStyle(
+                          color: Theme.of(dialogContext).colorScheme.onBackground,
+                          fontSize: 28,
+                          fontWeight: FontWeight.bold,
                         ),
-                        const SizedBox(height: 12),
-                        Text(
-                          'لقد أكملت تمرين التنفس العميق بنجاح',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            color: Theme.of(context)
-                                .colorScheme
-                                .onBackground
-                                .withOpacity(0.8),
-                            fontSize: 16,
-                          ),
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        'لقد أكملت تمرين التنفس العميق بنجاح',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: Theme.of(dialogContext)
+                              .colorScheme
+                              .onBackground
+                              .withOpacity(0.8),
+                          fontSize: 16,
                         ),
-                        const SizedBox(height: 30),
+                      ),
+                      const SizedBox(height: 30),
 
-                        // Buttons
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                          children: [
-                            // Repeat button
-                            ElevatedButton.icon(
-                              onPressed: () {
-                                Navigator.of(context).pop();
-                                context.read<DeepBreathingBloc>()
-                                  .add(const ResetExerciseEvent());
-                                context.read<DeepBreathingBloc>()
-                                  .add(const StartExerciseEvent());
-                              },
-                              icon: const Icon(Icons.replay_rounded),
-                              label: const Text('إعادة'),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor:
-                                    Theme.of(context).colorScheme.secondary,
-                                foregroundColor:
-                                    Theme.of(context).colorScheme.onSecondary,
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 16, vertical: 12),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
+                      // Buttons
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          // Repeat button - Use the captured bloc reference
+                          ElevatedButton.icon(
+                            onPressed: () {
+                              Navigator.of(dialogContext).pop();
+                              deepBreathingBloc.add(const ResetExerciseEvent());
+                              deepBreathingBloc.add(const StartExerciseEvent());
+                            },
+                            icon: const Icon(Icons.replay_rounded),
+                            label: const Text('إعادة'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor:
+                                  Theme.of(dialogContext).colorScheme.secondary,
+                              foregroundColor:
+                                  Theme.of(dialogContext).colorScheme.onSecondary,
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 16, vertical: 12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
                               ),
                             ),
+                          ),
 
-                            // Okay button
-                            OutlinedButton(
-                              onPressed: () {
-                                Navigator.pushReplacement(
-                                  context,
-                                  MaterialPageRoute(
-                                      builder: (_) =>
-                                          const ViewProfileScreen()),
-                                );
-                              },
-                              child: const Text('حسنا'),
-                              style: OutlinedButton.styleFrom(
-                                foregroundColor:
-                                    Theme.of(context).colorScheme.secondary,
-                                side: BorderSide(
-                                    color: Theme.of(context)
-                                        .colorScheme
-                                        .secondary),
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 24, vertical: 12),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
+                          // Okay button
+                          OutlinedButton(
+                            onPressed: () {
+                              Navigator.pushReplacement(
+                                dialogContext,
+                                MaterialPageRoute(
+                                    builder: (_) =>
+                                        const ViewProfileScreen()),
+                              );
+                            },
+                            child: const Text('حسنا'),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor:
+                                  Theme.of(dialogContext).colorScheme.secondary,
+                              side: BorderSide(
+                                  color: Theme.of(dialogContext)
+                                      .colorScheme
+                                      .secondary),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 24, vertical: 12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
                               ),
                             ),
-                          ],
-                        ),
-                      ],
-                    ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-        );
-      },
-    );
-  }
+        ),
+      );
+    },
+  );
+}
 
   @override
   Widget build(BuildContext context) {
