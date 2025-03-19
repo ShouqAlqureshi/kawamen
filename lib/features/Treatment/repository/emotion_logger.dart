@@ -7,7 +7,7 @@ class EmotionLogger {
   
   EmotionLogger({this.maxLogSize = 100});
   
-  void logEmotion(String emotion, double intensity, DateTime timestamp) {
+  void logEmotion(String emotion, double intensity, DateTime timestamp) {//adding method 
     if (_logs.length >= maxLogSize) {
       _logs.removeAt(0); // Remove oldest log when max size reached
     }

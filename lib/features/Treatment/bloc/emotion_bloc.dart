@@ -1,13 +1,18 @@
+import 'dart:developer';
+
 import 'package:bloc/bloc.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:equatable/equatable.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:kawamen/features/Treatment/repository/emotion_histroy.dart';
+import 'package:kawamen/features/Treatment/repository/emotion_logger.dart';
 part 'emotion_event.dart';
 part 'emotion_state.dart';
 
 class EmotionBloc extends Bloc<EmotionEvent, EmotionState> {
-  final EmotionHistoryQueue historyQueue = EmotionHistoryQueue();
+  final EmotionHistoryQueue historyQueue =
+      EmotionHistoryQueue(); //for filtering treatment
+  final EmotionLogger logger = EmotionLogger(); // for logging
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   EmotionBloc() : super(EmotionInitial()) {
@@ -85,6 +90,7 @@ class EmotionBloc extends Bloc<EmotionEvent, EmotionState> {
           historyQueue.queue
               .removeWhere((item) => item['emotion'] == dominantEmotion);
         }
+        logger.logEmotion(dominantEmotion, highestValue, timestamp);
 
         historyQueue.addEmotion(emotionData);
 
@@ -112,43 +118,30 @@ class EmotionBloc extends Bloc<EmotionEvent, EmotionState> {
     try {
       final user = FirebaseAuth.instance.currentUser;
       if (user == null) throw Exception('User not logged in');
-      final userEmotionsRef1 = _firestore
-          .collection('users')
-          .doc(user.uid)
-          .get() as Map<String, dynamic>;
 
-      final userEmotionsRef = _firestore
-          .collection('users')
-          .doc(user.uid)
-          .collection('emotionalData');
-      final emotionDocRef1 = userEmotionsRef1["emotionalData"];
-      
+      final userDocRef = _firestore.collection('users').doc(user.uid);
 
-      // Get the current document to check if it exists and to update the emotion tracker
+      final userDoc = await userDocRef.get();
 
+      final emotionData = {
+        'date': FieldValue.serverTimestamp(),
+        'emotion': emotion,
+        'emotionId': emotionId,
+        'intensity': intensity,
+      };
 
-      if (emotionDocRef1.exists) {
-        // Update existing emotion entry
-        // final int currentTracker = data['emotionTracker'] ?? 0;
-
-        await emotionDocRef1.update({
-          'date': FieldValue.serverTimestamp(),
-          'emotionTracker': FieldValue.increment(1),
-          'emotionId': emotionId,
-          'intensity': intensity
+      if (userDoc.exists) {
+        await userDocRef.update({
+          'emotionalData': FieldValue.arrayUnion([emotionData])
         });
       } else {
-        // Create new emotion entry
-        await emotionDocRef1.set({
-          'date': FieldValue.serverTimestamp(),
-          'emotionTracker': FieldValue.increment(1),
-          'emotionId': emotionId,
-          'intensity': intensity
+        await userDocRef.set({
+          'emotionalData': [emotionData]
         });
       }
     } catch (e) {
-      print('Error saving emotion to Firestore: ${e.toString()}');
-      throw e;
+      log('Error saving emotion to Firestore: ${e.toString()}');
+      rethrow;
     }
   }
 }
