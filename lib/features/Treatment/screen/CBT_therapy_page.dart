@@ -34,7 +34,7 @@ class _CBTTherapyViewState extends State<_CBTTherapyView>
   late Animation<double> _scaleAnimation;
   late AnimationController _confettiController;
   late Animation<double> _confettiAnimation;
-  
+
   // Text controllers for user inputs
   final TextEditingController _thoughtController = TextEditingController();
   final TextEditingController _alternativeController = TextEditingController();
@@ -42,7 +42,7 @@ class _CBTTherapyViewState extends State<_CBTTherapyView>
   @override
   void initState() {
     super.initState();
-    
+
     // Initialize pulse animation controller (for the thought bubble)
     _pulseAnimationController = AnimationController(
       vsync: this,
@@ -68,7 +68,7 @@ class _CBTTherapyViewState extends State<_CBTTherapyView>
         curve: Curves.easeInOut,
       ),
     );
-    
+
     // Initialize congratulations popup animation controllers
     _scaleController = AnimationController(
       vsync: this,
@@ -129,7 +129,8 @@ class _CBTTherapyViewState extends State<_CBTTherapyView>
   void _showCongratulationsPopup(BuildContext context) {
     // Get reference to the bloc before showing the dialog
     final cbtTherapyBloc = context.read<CBTTherapyBloc>();
-    
+    final theme = Theme.of(context);
+
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -171,12 +172,12 @@ class _CBTTherapyViewState extends State<_CBTTherapyView>
                     width: 300,
                     padding: const EdgeInsets.all(24),
                     decoration: BoxDecoration(
-                      color: Theme.of(dialogContext).cardColor,
+                      color: theme.cardColor,
                       borderRadius: BorderRadius.circular(20),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.2),
-                          blurRadius: 10,
+                          color: Colors.black.withOpacity(0.3),
+                          blurRadius: 15,
                           offset: const Offset(0, 5),
                         ),
                       ],
@@ -203,7 +204,7 @@ class _CBTTherapyViewState extends State<_CBTTherapyView>
                         Text(
                           'تهانينا!',
                           style: TextStyle(
-                            color: Theme.of(dialogContext).colorScheme.onBackground,
+                            color: theme.colorScheme.onSurface,
                             fontSize: 28,
                             fontWeight: FontWeight.bold,
                           ),
@@ -213,10 +214,7 @@ class _CBTTherapyViewState extends State<_CBTTherapyView>
                           'لقد أكملت جلسة العلاج المعرفي السلوكي بنجاح',
                           textAlign: TextAlign.center,
                           style: TextStyle(
-                            color: Theme.of(dialogContext)
-                                .colorScheme
-                                .onBackground
-                                .withOpacity(0.8),
+                            color: theme.colorScheme.onSurface.withOpacity(0.8),
                             fontSize: 16,
                           ),
                         ),
@@ -236,10 +234,8 @@ class _CBTTherapyViewState extends State<_CBTTherapyView>
                               icon: const Icon(Icons.replay_rounded),
                               label: const Text('إعادة'),
                               style: ElevatedButton.styleFrom(
-                                backgroundColor:
-                                    Theme.of(dialogContext).colorScheme.secondary,
-                                foregroundColor:
-                                    Theme.of(dialogContext).colorScheme.onSecondary,
+                                backgroundColor: theme.colorScheme.secondary,
+                                foregroundColor: theme.colorScheme.onSecondary,
                                 padding: const EdgeInsets.symmetric(
                                     horizontal: 16, vertical: 12),
                                 shape: RoundedRectangleBorder(
@@ -260,12 +256,9 @@ class _CBTTherapyViewState extends State<_CBTTherapyView>
                               },
                               child: const Text('حسنا'),
                               style: OutlinedButton.styleFrom(
-                                foregroundColor:
-                                    Theme.of(dialogContext).colorScheme.secondary,
+                                foregroundColor: theme.colorScheme.secondary,
                                 side: BorderSide(
-                                    color: Theme.of(dialogContext)
-                                        .colorScheme
-                                        .secondary),
+                                    color: theme.colorScheme.secondary),
                                 padding: const EdgeInsets.symmetric(
                                     horizontal: 24, vertical: 12),
                                 shape: RoundedRectangleBorder(
@@ -293,7 +286,7 @@ class _CBTTherapyViewState extends State<_CBTTherapyView>
       listener: (context, state) {
         // Update animations based on state
         _updateAnimations(state);
-        
+
         // Show completion popup when exercise is completed
         if (state.isCompleting) {
           _showCongratulationsPopup(context);
@@ -320,16 +313,19 @@ class _CBTTherapyViewState extends State<_CBTTherapyView>
                         shape: BoxShape.circle,
                         gradient: RadialGradient(
                           colors: [
-                            colorScheme.primary.withOpacity(_glowAnimation.value),
-                            colorScheme.primary.withOpacity(_glowAnimation.value * 0.3),
+                            colorScheme.primary
+                                .withOpacity(_glowAnimation.value * 0.6),
+                            colorScheme.primary
+                                .withOpacity(_glowAnimation.value * 0.2),
                             Colors.transparent,
                           ],
                           stops: const [0.0, 0.5, 1.0],
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color: colorScheme.primary.withOpacity(_glowAnimation.value * 0.5),
-                            blurRadius: 50,
+                            color: colorScheme.primary
+                                .withOpacity(_glowAnimation.value * 0.3),
+                            blurRadius: 60,
                             spreadRadius: 20,
                           ),
                         ],
@@ -341,7 +337,7 @@ class _CBTTherapyViewState extends State<_CBTTherapyView>
 
               // Main UI content
               Opacity(
-                opacity: 0.9,
+                opacity: 0.95,
                 child: Directionality(
                   textDirection: TextDirection.rtl,
                   child: Scaffold(
@@ -350,13 +346,16 @@ class _CBTTherapyViewState extends State<_CBTTherapyView>
                       elevation: 0,
                       title: Text(
                         'جلسة العلاج المعرفي السلوكي',
-                        style: TextStyle(color: theme.colorScheme.onBackground),
+                        style: TextStyle(
+                          color: theme.colorScheme.onBackground,
+                          fontWeight: FontWeight.bold,
+                        ),
                         textDirection: TextDirection.rtl,
                       ),
                       centerTitle: true,
                     ),
                     backgroundColor: Colors.transparent,
-                    body: SingleChildScrollView( // Make scrollable for text inputs
+                    body: SingleChildScrollView(
                       child: Padding(
                         padding: const EdgeInsets.all(20.0),
                         child: Column(
@@ -368,12 +367,13 @@ class _CBTTherapyViewState extends State<_CBTTherapyView>
                               size: 70,
                             ),
                             const SizedBox(height: 20),
-                            
+
                             // Step counter
                             Text(
                               '${state.currentStep} / ${state.totalSteps}',
                               style: TextStyle(
-                                color: theme.colorScheme.onBackground.withOpacity(0.7),
+                                color: theme.colorScheme.onBackground
+                                    .withOpacity(0.7),
                                 fontSize: 18,
                               ),
                             ),
@@ -388,7 +388,8 @@ class _CBTTherapyViewState extends State<_CBTTherapyView>
                                 duration: const Duration(milliseconds: 500),
                                 opacity: state.instructionOpacity,
                                 child: Text(
-                                  state.instructions[state.currentInstructionIndex],
+                                  state.instructions[
+                                      state.currentInstructionIndex],
                                   style: TextStyle(
                                     color: theme.colorScheme.onBackground,
                                     fontSize: 22,
@@ -404,11 +405,12 @@ class _CBTTherapyViewState extends State<_CBTTherapyView>
                             // Content based on current step
                             AnimatedSwitcher(
                               duration: const Duration(milliseconds: 500),
-                              child: _buildCurrentStepContent(context, state, colorScheme),
+                              child: _buildCurrentStepContent(
+                                  context, state, colorScheme),
                             ),
 
                             const SizedBox(height: 30),
-                            
+
                             // Next/Prev Button Row
                             Row(
                               mainAxisAlignment: MainAxisAlignment.center,
@@ -419,35 +421,49 @@ class _CBTTherapyViewState extends State<_CBTTherapyView>
                                     padding: const EdgeInsets.only(left: 16.0),
                                     child: OutlinedButton.icon(
                                       onPressed: () {
-                                        context.read<CBTTherapyBloc>().add(PreviousCBTStepEvent());
+                                        context
+                                            .read<CBTTherapyBloc>()
+                                            .add(PreviousCBTStepEvent());
                                       },
                                       icon: const Icon(Icons.arrow_back),
                                       label: const Text('السابق'),
                                       style: OutlinedButton.styleFrom(
                                         foregroundColor: colorScheme.primary,
-                                        side: BorderSide(color: colorScheme.primary),
-                                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                        side: BorderSide(
+                                            color: colorScheme.primary),
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 16, vertical: 12),
                                         shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(12),
+                                          borderRadius:
+                                              BorderRadius.circular(12),
                                         ),
                                       ),
                                     ),
                                   ),
-                                
+
                                 // Play/Pause/Next Button
                                 GestureDetector(
                                   onTap: () {
                                     if (!state.isPlaying) {
-                                      context.read<CBTTherapyBloc>().add(StartCBTExerciseEvent());
-                                    } else if (state.currentStep == state.totalSteps) {
+                                      context
+                                          .read<CBTTherapyBloc>()
+                                          .add(StartCBTExerciseEvent());
+                                    } else if (state.currentStep ==
+                                        state.totalSteps) {
                                       // If on the last step, complete the exercise
-                                      context.read<CBTTherapyBloc>().add(CompleteCBTExerciseEvent());
+                                      context
+                                          .read<CBTTherapyBloc>()
+                                          .add(CompleteCBTExerciseEvent());
                                     } else {
                                       // Otherwise, move to the next step
-                                      context.read<CBTTherapyBloc>().add(NextCBTStepEvent(
-                                        userThought: _thoughtController.text,
-                                        alternativeThought: _alternativeController.text,
-                                      ));
+                                      context
+                                          .read<CBTTherapyBloc>()
+                                          .add(NextCBTStepEvent(
+                                            userThought:
+                                                _thoughtController.text,
+                                            alternativeThought:
+                                                _alternativeController.text,
+                                          ));
                                     }
                                   },
                                   child: Container(
@@ -456,13 +472,22 @@ class _CBTTherapyViewState extends State<_CBTTherapyView>
                                     decoration: BoxDecoration(
                                       color: colorScheme.primary,
                                       borderRadius: BorderRadius.circular(32),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: colorScheme.primary
+                                              .withOpacity(0.4),
+                                          blurRadius: 12,
+                                          offset: const Offset(0, 4),
+                                        ),
+                                      ],
                                     ),
                                     child: Icon(
-                                      !state.isPlaying 
-                                        ? Icons.play_arrow 
-                                        : (state.currentStep == state.totalSteps 
-                                            ? Icons.check 
-                                            : Icons.arrow_forward),
+                                      !state.isPlaying
+                                          ? Icons.play_arrow
+                                          : (state.currentStep ==
+                                                  state.totalSteps
+                                              ? Icons.check
+                                              : Icons.arrow_forward),
                                       color: colorScheme.onPrimary,
                                       size: 32,
                                     ),
@@ -473,36 +498,7 @@ class _CBTTherapyViewState extends State<_CBTTherapyView>
 
                             const SizedBox(height: 24),
 
-                            // Total time elapsed display
-                            if (state.isPlaying)
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 20, vertical: 10),
-                                decoration: BoxDecoration(
-                                  color: theme.scaffoldBackgroundColor.withOpacity(0.5),
-                                  borderRadius: BorderRadius.circular(20),
-                                  border: Border.all(color: colorScheme.primary, width: 1),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(
-                                      Icons.timer,
-                                      color: colorScheme.primary,
-                                      size: 24,
-                                    ),
-                                    const SizedBox(width: 10),
-                                    Text(
-                                      formatTime(state.elapsedTimeSeconds),
-                                      style: TextStyle(
-                                        color: theme.colorScheme.onBackground,
-                                        fontSize: 20,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
+                            
                           ],
                         ),
                       ),
@@ -517,8 +513,11 @@ class _CBTTherapyViewState extends State<_CBTTherapyView>
     );
   }
 
-  // Build the current step's specific content
-  Widget _buildCurrentStepContent(BuildContext context, CBTTherapyState state, ColorScheme colorScheme) {
+// Build the current step's specific content
+  Widget _buildCurrentStepContent(
+      BuildContext context, CBTTherapyState state, ColorScheme colorScheme) {
+    final theme = Theme.of(context);
+
     // If not playing, show start screen
     if (!state.isPlaying) {
       return Column(
@@ -531,13 +530,20 @@ class _CBTTherapyViewState extends State<_CBTTherapyView>
                 child: Container(
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
-                    color: colorScheme.primaryContainer,
+                    color: const Color(0xFF1A1A1A),
                     borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFF4CAF50).withOpacity(0.2),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
                   ),
-                  child: Text(
+                  child: const Text(
                     'اضغط على زر البدء للشروع في جلسة العلاج المعرفي السلوكي',
                     style: TextStyle(
-                      color: colorScheme.onPrimaryContainer,
+                      color: Colors.white,
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
                     ),
@@ -550,7 +556,6 @@ class _CBTTherapyViewState extends State<_CBTTherapyView>
         ],
       );
     }
-
     // Otherwise, show step-specific content
     switch (state.currentStep) {
       case 1: // Identify negative thought
@@ -559,13 +564,13 @@ class _CBTTherapyViewState extends State<_CBTTherapyView>
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: colorScheme.secondaryContainer.withOpacity(0.7),
+                color: const Color(0xFF5D4EE6).withOpacity(0.2),
                 borderRadius: BorderRadius.circular(15),
               ),
-              child: Text(
-                'فكر في موقف سبب لك التوتر أو القلق مؤخراً، ثم اكتب الأفكار السلبية التي راودتك',
+              child: const Text(
+                'فكر في الموقف، ثم اكتب الأفكار السلبية التي راودتك',
                 style: TextStyle(
-                  color: colorScheme.onSecondaryContainer,
+                  color: Colors.white,
                   fontSize: 16,
                 ),
                 textAlign: TextAlign.center,
@@ -577,8 +582,9 @@ class _CBTTherapyViewState extends State<_CBTTherapyView>
               maxLines: 4,
               decoration: InputDecoration(
                 hintText: 'اكتب فكرتك السلبية هنا...',
+                hintStyle: TextStyle(color: Colors.white60),
                 filled: true,
-                fillColor: Colors.white.withOpacity(0.9),
+                fillColor: const Color(0xFF1A1A1A),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                   borderSide: BorderSide.none,
@@ -586,33 +592,34 @@ class _CBTTherapyViewState extends State<_CBTTherapyView>
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                   borderSide: BorderSide(
-                    color: colorScheme.primary.withOpacity(0.3),
+                    color: const Color(0xFF4CAF50).withOpacity(0.3),
                   ),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(
-                    color: colorScheme.primary,
+                  borderSide: const BorderSide(
+                    color: Color(0xFF4CAF50),
                     width: 2,
                   ),
                 ),
               ),
+              style: const TextStyle(color: Colors.white),
               textAlign: TextAlign.right,
               textDirection: TextDirection.rtl,
             ),
           ],
         );
-      
+
       case 2: // Identify thought distortions
         return Container(
           width: double.infinity,
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.9),
+            color: const Color(0xFF1A1A1A),
             borderRadius: BorderRadius.circular(15),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.1),
+                color: Colors.black.withOpacity(0.2),
                 blurRadius: 10,
                 spreadRadius: 1,
               ),
@@ -623,10 +630,10 @@ class _CBTTherapyViewState extends State<_CBTTherapyView>
             children: [
               Text(
                 'فكرتك: "${state.userThought}"',
-                style: TextStyle(
+                style: const TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 16,
-                  color: colorScheme.onSurface,
+                  color: Colors.white,
                 ),
                 textAlign: TextAlign.right,
                 textDirection: TextDirection.rtl,
@@ -637,7 +644,7 @@ class _CBTTherapyViewState extends State<_CBTTherapyView>
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 16,
-                  color: colorScheme.primary,
+                  color: const Color(0xFF4CAF50),
                 ),
                 textAlign: TextAlign.right,
                 textDirection: TextDirection.rtl,
@@ -647,17 +654,17 @@ class _CBTTherapyViewState extends State<_CBTTherapyView>
             ],
           ),
         );
-      
+
       case 3: // Challenge the thought
         return Container(
           width: double.infinity,
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.9),
+            color: const Color(0xFF1A1A1A),
             borderRadius: BorderRadius.circular(15),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.1),
+                color: Colors.black.withOpacity(0.2),
                 blurRadius: 10,
                 spreadRadius: 1,
               ),
@@ -668,10 +675,10 @@ class _CBTTherapyViewState extends State<_CBTTherapyView>
             children: [
               Text(
                 'فكرتك: "${state.userThought}"',
-                style: TextStyle(
+                style: const TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 16,
-                  color: colorScheme.onSurface,
+                  color: Colors.white,
                 ),
                 textAlign: TextAlign.right,
                 textDirection: TextDirection.rtl,
@@ -682,7 +689,7 @@ class _CBTTherapyViewState extends State<_CBTTherapyView>
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 16,
-                  color: colorScheme.primary,
+                  color: const Color(0xFF4CAF50),
                 ),
                 textAlign: TextAlign.right,
                 textDirection: TextDirection.rtl,
@@ -694,7 +701,7 @@ class _CBTTherapyViewState extends State<_CBTTherapyView>
                     child: Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: Colors.red.withOpacity(0.1),
+                        color: const Color(0xFFE64E4E).withOpacity(0.15),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Column(
@@ -703,13 +710,14 @@ class _CBTTherapyViewState extends State<_CBTTherapyView>
                             "مع",
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
-                              color: Colors.red[700],
+                              color: Colors.red[400],
                             ),
                           ),
                           const SizedBox(height: 5),
                           const Text(
                             "...",
                             textAlign: TextAlign.center,
+                            style: TextStyle(color: Colors.white70),
                           ),
                         ],
                       ),
@@ -720,7 +728,7 @@ class _CBTTherapyViewState extends State<_CBTTherapyView>
                     child: Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: Colors.green.withOpacity(0.1),
+                        color: const Color(0xFF4CAF50).withOpacity(0.15),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Column(
@@ -729,13 +737,14 @@ class _CBTTherapyViewState extends State<_CBTTherapyView>
                             "ضد",
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
-                              color: Colors.green[700],
+                              color: Colors.green[400],
                             ),
                           ),
                           const SizedBox(height: 5),
                           const Text(
                             "...",
                             textAlign: TextAlign.center,
+                            style: TextStyle(color: Colors.white70),
                           ),
                         ],
                       ),
@@ -746,20 +755,20 @@ class _CBTTherapyViewState extends State<_CBTTherapyView>
             ],
           ),
         );
-      
+
       case 4: // Create alternative thought
         return Column(
           children: [
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: colorScheme.secondaryContainer.withOpacity(0.7),
+                color: const Color(0xFF5D4EE6).withOpacity(0.2),
                 borderRadius: BorderRadius.circular(15),
               ),
-              child: Text(
+              child: const Text(
                 'اكتب فكرة بديلة أكثر توازناً وواقعية:',
                 style: TextStyle(
-                  color: colorScheme.onSecondaryContainer,
+                  color: Colors.white,
                   fontSize: 16,
                 ),
                 textAlign: TextAlign.center,
@@ -771,8 +780,9 @@ class _CBTTherapyViewState extends State<_CBTTherapyView>
               maxLines: 4,
               decoration: InputDecoration(
                 hintText: 'اكتب الفكرة البديلة هنا...',
+                hintStyle: TextStyle(color: Colors.white60),
                 filled: true,
-                fillColor: Colors.white.withOpacity(0.9),
+                fillColor: const Color(0xFF1A1A1A),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                   borderSide: BorderSide.none,
@@ -780,33 +790,34 @@ class _CBTTherapyViewState extends State<_CBTTherapyView>
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                   borderSide: BorderSide(
-                    color: colorScheme.primary.withOpacity(0.3),
+                    color: const Color(0xFF4CAF50).withOpacity(0.3),
                   ),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(
-                    color: colorScheme.primary,
+                  borderSide: const BorderSide(
+                    color: Color(0xFF4CAF50),
                     width: 2,
                   ),
                 ),
               ),
+              style: const TextStyle(color: Colors.white),
               textAlign: TextAlign.right,
               textDirection: TextDirection.rtl,
             ),
           ],
         );
-      
+
       case 5: // Review and reflect
         return Container(
           width: double.infinity,
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.9),
+            color: const Color(0xFF1A1A1A),
             borderRadius: BorderRadius.circular(15),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.1),
+                color: Colors.black.withOpacity(0.2),
                 blurRadius: 10,
                 spreadRadius: 1,
               ),
@@ -820,45 +831,45 @@ class _CBTTherapyViewState extends State<_CBTTherapyView>
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 18,
-                  color: colorScheme.primary,
+                  color: const Color(0xFF4CAF50),
                 ),
                 textAlign: TextAlign.right,
                 textDirection: TextDirection.rtl,
               ),
               const SizedBox(height: 15),
-              
+
               // Original thought
               _buildComparisonItem(
                 "الفكرة الأصلية:",
                 state.userThought,
-                Colors.red.shade50,
+                const Color(0xFFE64E4E).withOpacity(0.15),
                 colorScheme,
               ),
               const SizedBox(height: 10),
-              
+
               // Alternative thought
               _buildComparisonItem(
                 "الفكرة البديلة:",
                 state.alternativeThought,
-                Colors.green.shade50,
+                const Color(0xFF4CAF50).withOpacity(0.15),
                 colorScheme,
               ),
-              
+
               const SizedBox(height: 20),
-              
+
               // Reflection question
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: colorScheme.primaryContainer.withOpacity(0.5),
+                  color: const Color(0xFF5D4EE6).withOpacity(0.2),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: Text(
+                child: const Text(
                   'كيف يشعر جسمك الآن بعد استبدال الفكرة السلبية بفكرة أكثر توازناً؟',
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
-                    color: colorScheme.onPrimaryContainer,
+                    color: Colors.white,
                   ),
                   textAlign: TextAlign.center,
                 ),
@@ -866,14 +877,15 @@ class _CBTTherapyViewState extends State<_CBTTherapyView>
             ],
           ),
         );
-        
+
       default:
         return const SizedBox.shrink();
     }
   }
 
-  // Helper to build distortion checkboxes
-  Widget _buildDistortionCheckboxes(BuildContext context, CBTTherapyState state) {
+// Helper to build distortion checkboxes
+  Widget _buildDistortionCheckboxes(
+      BuildContext context, CBTTherapyState state) {
     return Column(
       children: [
         for (var distortion in state.cognitiveDistortions.entries)
@@ -881,23 +893,26 @@ class _CBTTherapyViewState extends State<_CBTTherapyView>
             title: Text(
               distortion.key,
               textDirection: TextDirection.rtl,
+              style: const TextStyle(color: Colors.white),
             ),
             value: distortion.value,
             onChanged: (bool? value) {
-              context.read<CBTTherapyBloc>().add(
-                ToggleDistortionEvent(distortion: distortion.key)
-              );
+              context
+                  .read<CBTTherapyBloc>()
+                  .add(ToggleDistortionEvent(distortion: distortion.key));
             },
             controlAffinity: ListTileControlAffinity.leading,
-            activeColor: Theme.of(context).colorScheme.primary,
+            activeColor: const Color(0xFF4CAF50),
+            checkColor: Colors.black,
             contentPadding: EdgeInsets.zero,
           ),
       ],
     );
   }
-  
-  // Helper to build comparison items in the review screen
-  Widget _buildComparisonItem(String title, String content, Color bgColor, ColorScheme colorScheme) {
+
+// Helper to build comparison items in the review screen
+  Widget _buildComparisonItem(
+      String title, String content, Color bgColor, ColorScheme colorScheme) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(12),
@@ -905,9 +920,9 @@ class _CBTTherapyViewState extends State<_CBTTherapyView>
         color: bgColor,
         borderRadius: BorderRadius.circular(10),
         border: Border.all(
-          color: bgColor == Colors.red.shade50 
-              ? Colors.red.shade200 
-              : Colors.green.shade200,
+          color: bgColor == const Color(0xFFE64E4E).withOpacity(0.15)
+              ? const Color(0xFFE64E4E).withOpacity(0.3)
+              : const Color(0xFF4CAF50).withOpacity(0.3),
         ),
       ),
       child: Column(
@@ -915,17 +930,9 @@ class _CBTTherapyViewState extends State<_CBTTherapyView>
         children: [
           Text(
             title,
-            style: TextStyle(
+            style: const TextStyle(
               fontWeight: FontWeight.bold,
-              color: colorScheme.onSurface,
-            ),
-            textAlign: TextAlign.right,
-            textDirection: TextDirection.rtl,
-          ),Text(
-            title,
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              color: colorScheme.onSurface,
+              color: Colors.white,
             ),
             textAlign: TextAlign.right,
             textDirection: TextDirection.rtl,
@@ -933,8 +940,8 @@ class _CBTTherapyViewState extends State<_CBTTherapyView>
           const SizedBox(height: 8),
           Text(
             content,
-            style: TextStyle(
-              color: colorScheme.onSurface,
+            style: const TextStyle(
+              color: Colors.white70,
             ),
             textAlign: TextAlign.right,
             textDirection: TextDirection.rtl,
@@ -970,14 +977,12 @@ class ConfettiPainter extends CustomPainter {
       // Random rotation for each confetti piece
       final rotation = random.nextDouble() * 2 * pi;
 
-      // Random color for each confetti piece
+      // Random color for each confetti piece - using theme colors
       final colors = [
-        Colors.red,
-        Colors.blue,
-        Colors.green,
-        Colors.yellow,
-        Colors.purple,
-        Colors.orange,
+        const Color(0xFFFF6B4A), // Orange from chart
+        const Color(0xFF5D4EE6), // Purple from chart
+        const Color(0xFF4CAF50), // Green accent
+        const Color(0xFFE64E4E), // Red from chart
       ];
       paint.color = colors[random.nextInt(colors.length)];
 
@@ -1008,6 +1013,6 @@ class ConfettiPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(ConfettiPainter oldDelegate) => 
+  bool shouldRepaint(ConfettiPainter oldDelegate) =>
       oldDelegate.progress != progress;
 }
