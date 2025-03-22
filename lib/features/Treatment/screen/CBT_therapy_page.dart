@@ -89,7 +89,14 @@ class _CBTTherapyViewState extends State<_CBTTherapyView>
       parent: _confettiController,
       curve: Curves.easeOut,
     );
+    // Add listeners to the text controllers to trigger validation on text changes
+    _thoughtController.addListener(() {
+      setState(() {}); // This will rebuild the UI to show/hide error messages
+    });
 
+    _alternativeController.addListener(() {
+      setState(() {}); // This will rebuild the UI to show/hide error messages
+    });
     // Start the continuous animations
     _pulseAnimationController.repeat(reverse: true);
     _glowAnimationController.repeat(reverse: true);
@@ -104,6 +111,11 @@ class _CBTTherapyViewState extends State<_CBTTherapyView>
     _thoughtController.dispose();
     _alternativeController.dispose();
     super.dispose();
+  }
+
+  bool _validateInput(String text) {
+    // Check if the text is empty or only contains whitespace
+    return text.trim().isNotEmpty;
   }
 
   // Update animations based on the current state
@@ -455,6 +467,42 @@ class _CBTTherapyViewState extends State<_CBTTherapyView>
                                           .read<CBTTherapyBloc>()
                                           .add(CompleteCBTExerciseEvent());
                                     } else {
+                                      // For step 1, validate the negative thought input
+                                      if (state.currentStep == 1 &&
+                                          !_validateInput(
+                                              _thoughtController.text)) {
+                                        // Show a snackbar or toast message
+                                        ScaffoldMessenger.of(context)
+                                            .showSnackBar(
+                                          const SnackBar(
+                                            content: Text(
+                                                'الرجاء إدخال فكرتك قبل المتابعة',
+                                                textDirection:
+                                                    TextDirection.rtl),
+                                            backgroundColor: Colors.red,
+                                          ),
+                                        );
+                                        return; // Don't proceed if validation fails
+                                      }
+
+                                      // For step 4, validate the alternative thought input
+                                      if (state.currentStep == 4 &&
+                                          !_validateInput(
+                                              _alternativeController.text)) {
+                                        // Show a snackbar or toast message
+                                        ScaffoldMessenger.of(context)
+                                            .showSnackBar(
+                                          const SnackBar(
+                                            content: Text(
+                                                'الرجاء إدخال الفكرة البديلة قبل المتابعة',
+                                                textDirection:
+                                                    TextDirection.rtl),
+                                            backgroundColor: Colors.red,
+                                          ),
+                                        );
+                                        return; // Don't proceed if validation fails
+                                      }
+
                                       // Otherwise, move to the next step
                                       context
                                           .read<CBTTherapyBloc>()
@@ -497,8 +545,6 @@ class _CBTTherapyViewState extends State<_CBTTherapyView>
                             ),
 
                             const SizedBox(height: 24),
-
-                            
                           ],
                         ),
                       ),
@@ -582,7 +628,7 @@ class _CBTTherapyViewState extends State<_CBTTherapyView>
               maxLines: 4,
               decoration: InputDecoration(
                 hintText: 'اكتب فكرتك السلبية هنا...',
-                hintStyle: TextStyle(color: Colors.white60),
+                hintStyle: const TextStyle(color: Colors.white60),
                 filled: true,
                 fillColor: const Color(0xFF1A1A1A),
                 border: OutlineInputBorder(
@@ -602,10 +648,26 @@ class _CBTTherapyViewState extends State<_CBTTherapyView>
                     width: 2,
                   ),
                 ),
+                errorBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(
+                    color: Colors.red,
+                    width: 2,
+                  ),
+                ),
+                // Add error text that appears when validation fails
+                errorText: _thoughtController.text.isEmpty
+                    ? null
+                    : _validateInput(_thoughtController.text)
+                        ? null
+                        : 'لا يمكن أن يكون الحقل فارغًا',
               ),
               style: const TextStyle(color: Colors.white),
               textAlign: TextAlign.right,
               textDirection: TextDirection.rtl,
+              // Enable Arabic text input explicitly
+              keyboardType: TextInputType.text,
+              textInputAction: TextInputAction.done,
             ),
           ],
         );
@@ -780,7 +842,7 @@ class _CBTTherapyViewState extends State<_CBTTherapyView>
               maxLines: 4,
               decoration: InputDecoration(
                 hintText: 'اكتب الفكرة البديلة هنا...',
-                hintStyle: TextStyle(color: Colors.white60),
+                hintStyle: const TextStyle(color: Colors.white60),
                 filled: true,
                 fillColor: const Color(0xFF1A1A1A),
                 border: OutlineInputBorder(
@@ -800,10 +862,26 @@ class _CBTTherapyViewState extends State<_CBTTherapyView>
                     width: 2,
                   ),
                 ),
+                errorBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(
+                    color: Colors.red,
+                    width: 2,
+                  ),
+                ),
+                // Add error text that appears when validation fails
+                errorText: _alternativeController.text.isEmpty
+                    ? null
+                    : _validateInput(_alternativeController.text)
+                        ? null
+                        : 'لا يمكن أن يكون الحقل فارغًا',
               ),
               style: const TextStyle(color: Colors.white),
               textAlign: TextAlign.right,
               textDirection: TextDirection.rtl,
+              // Enable Arabic text input explicitly
+              keyboardType: TextInputType.text,
+              textInputAction: TextInputAction.done,
             ),
           ],
         );
