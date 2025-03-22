@@ -34,8 +34,10 @@ class _CBTTherapyViewState extends State<_CBTTherapyView>
   late Animation<double> _scaleAnimation;
   late AnimationController _confettiController;
   late Animation<double> _confettiAnimation;
-
-  // Text controllers for user inputs
+  final TextEditingController _supportingEvidenceController =
+      TextEditingController();
+  final TextEditingController _contradictingEvidenceController =
+      TextEditingController();
   final TextEditingController _thoughtController = TextEditingController();
   final TextEditingController _alternativeController = TextEditingController();
 
@@ -97,6 +99,13 @@ class _CBTTherapyViewState extends State<_CBTTherapyView>
     _alternativeController.addListener(() {
       setState(() {}); // This will rebuild the UI to show/hide error messages
     });
+    _supportingEvidenceController.addListener(() {
+      setState(() {}); // This will rebuild the UI when text changes
+    });
+
+    _contradictingEvidenceController.addListener(() {
+      setState(() {}); // This will rebuild the UI when text changes
+    });
     // Start the continuous animations
     _pulseAnimationController.repeat(reverse: true);
     _glowAnimationController.repeat(reverse: true);
@@ -110,6 +119,8 @@ class _CBTTherapyViewState extends State<_CBTTherapyView>
     _confettiController.dispose();
     _thoughtController.dispose();
     _alternativeController.dispose();
+    _supportingEvidenceController.dispose();
+    _contradictingEvidenceController.dispose();
     super.dispose();
   }
 
@@ -717,6 +728,8 @@ class _CBTTherapyViewState extends State<_CBTTherapyView>
           ),
         );
 
+      // This code replaces the existing case 3 in the _buildCurrentStepContent method
+
       case 3: // Challenge the thought
         return Container(
           width: double.infinity,
@@ -759,6 +772,7 @@ class _CBTTherapyViewState extends State<_CBTTherapyView>
               const SizedBox(height: 10),
               Row(
                 children: [
+                  // Supporting Evidence Column
                   Expanded(
                     child: Container(
                       padding: const EdgeInsets.all(12),
@@ -776,16 +790,27 @@ class _CBTTherapyViewState extends State<_CBTTherapyView>
                             ),
                           ),
                           const SizedBox(height: 5),
-                          const Text(
-                            "...",
-                            textAlign: TextAlign.center,
-                            style: TextStyle(color: Colors.white70),
+                          TextField(
+                            controller:
+                                _supportingEvidenceController, // Add this controller to the class
+                            maxLines: 6,
+                            decoration: InputDecoration(
+                              hintText: 'اكتب الدليل الذي يدعم الفكرة...',
+                              hintStyle: TextStyle(color: Colors.white60),
+                              border: InputBorder.none,
+                              contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 8),
+                            ),
+                            style: const TextStyle(color: Colors.white),
+                            textAlign: TextAlign.right,
+                            textDirection: TextDirection.rtl,
                           ),
                         ],
                       ),
                     ),
                   ),
                   const SizedBox(width: 10),
+                  // Contradicting Evidence Column
                   Expanded(
                     child: Container(
                       padding: const EdgeInsets.all(12),
@@ -803,10 +828,20 @@ class _CBTTherapyViewState extends State<_CBTTherapyView>
                             ),
                           ),
                           const SizedBox(height: 5),
-                          const Text(
-                            "...",
-                            textAlign: TextAlign.center,
-                            style: TextStyle(color: Colors.white70),
+                          TextField(
+                            controller:
+                                _contradictingEvidenceController, // Add this controller to the class
+                            maxLines: 6,
+                            decoration: InputDecoration(
+                              hintText: 'اكتب الدليل الذي يعارض الفكرة...',
+                              hintStyle: TextStyle(color: Colors.white60),
+                              border: InputBorder.none,
+                              contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 8),
+                            ),
+                            style: const TextStyle(color: Colors.white),
+                            textAlign: TextAlign.right,
+                            textDirection: TextDirection.rtl,
                           ),
                         ],
                       ),
@@ -817,7 +852,6 @@ class _CBTTherapyViewState extends State<_CBTTherapyView>
             ],
           ),
         );
-
       case 4: // Create alternative thought
         return Column(
           children: [
