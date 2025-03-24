@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:kawamen/features/Dashboard/screen/dashboard_screen.dart';
 import 'package:kawamen/features/Profile/Bloc/microphone_bloc.dart';
 import 'package:kawamen/features/Profile/Screens/edit_profile_screen.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -84,7 +85,7 @@ class ViewProfileScreen extends StatelessWidget {
             Icons.arrow_back,
             color: Colors.white,
           ),
-          onPressed: (){
+          onPressed: () {
             // Instead of simply popping, navigate to DeepBreathingPage
             Navigator.pushReplacement(
               context,
@@ -180,6 +181,20 @@ class ViewProfileScreen extends StatelessWidget {
                         context
                             .read<ProfileBloc>()
                             .add(Logout()); // Trigger logout event
+                      },
+                    ),
+                    IconButton(
+                      icon: Icon(
+                        Icons.analytics,
+                        color: Colors.white.withValues(alpha: 1.0),
+                      ),
+                      onPressed: () async {
+                        await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const DashboardScreen(),
+                          ),
+                        );
                       },
                     ),
                   ],
