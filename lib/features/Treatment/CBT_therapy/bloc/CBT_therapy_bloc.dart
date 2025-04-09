@@ -218,6 +218,7 @@ void debugCognitiveDistortions() {
   print('Are any distortions selected: ${state.cognitiveDistortions.containsValue(true)}');
   print('--------------------------------------------------------------');
 }
+//test
  Future<void> _onStartTrackingTreatment(
       StartTrackingCBTTreatmentEvent event,
       Emitter<CBTTherapyState> emit) async {
