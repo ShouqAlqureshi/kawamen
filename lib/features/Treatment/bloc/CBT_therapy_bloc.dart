@@ -102,33 +102,108 @@ class CBTRepository {
 }
 
   // Fetch cognitive distortions
-  Future<Map<String, bool>> fetchCognitiveDistortions() async {
-    try {
-      final distortionsSnapshot = await _firestore
-          .collection('cognitiveDistortions')
-          .orderBy('order')
-          .get();
-
-      final distortions = <String, bool>{};
-      for (var doc in distortionsSnapshot.docs) {
-        distortions[doc.data()['name'] as String] = false;
-      }
-      return distortions;
-    } catch (e) {
-      // Fallback to default distortions in case of error
-      return {
-        'التفكير الثنائي (كل شيء أو لا شيء)': false,
-        'التعميم المفرط': false,
-        'التصفية العقلية (التركيز على السلبيات)': false,
-        'القفز إلى الاستنتاجات': false,
-        'التهويل أو التقليل': false,
-        'الاستدلال العاطفي': false,
-        'العبارات الإلزامية (يجب، ينبغي)': false,
-        'التسمية الخاطئة': false,
-        'لوم الذات أو الآخرين': false,
-      };
+ // Direct method to fetch cognitive distortions from the specified path
+Future<Map<String, bool>> fetchCognitiveDistortions() async {
+  try {
+    print('Attempting to fetch cognitive distortions directly from the specified path');
+    
+    // Also try with space
+    final treatmentsSpaceSnapshot = await _firestore.collection('treatments ').get();
+    print('Found ${treatmentsSpaceSnapshot.docs.length} treatments (with space)');
+    
+    for (var doc in treatmentsSpaceSnapshot.docs) {
+      print('Found treatment (with space): ${doc.id}');
     }
+    
+    // Try to get the CBTtherapy document specifically
+    final therapyDoc = await _firestore.collection('treatments ').doc('CBTtherapy').get();
+    print('CBTtherapy document exists: ${therapyDoc.exists}');
+    
+    if (therapyDoc.exists) {
+      // Check if cognitive distortions are stored as a field rather than a subcollection
+      final therapyData = therapyDoc.data() as Map<String, dynamic>?;
+      
+      if (therapyData != null && therapyData.containsKey('cognitiveDistortions')) {
+        print('Found cognitive distortions as a field in CBTtherapy document');
+        
+        // Handle different possible formats
+        final distortions = <String, bool>{};
+        final distortionsData = therapyData['cognitiveDistortions'];
+        
+        if (distortionsData is List) {
+          // If it's a list of strings
+          for (var item in distortionsData) {
+            if (item is String) {
+              distortions[item] = false;
+            }
+          }
+        } else if (distortionsData is Map) {
+          // If it's a map
+          distortionsData.forEach((key, value) {
+            if (key is String) {
+              distortions[key] = value is bool ? value : false;
+            }
+          });
+        }
+        
+        if (distortions.isNotEmpty) {
+          print('Successfully processed ${distortions.length} distortions from field');
+          return distortions;
+        }
+      }
+    }
+    
+    // If we couldn't find them as a field, try the subcollection approach
+    final distortionsCollectionSnapshot = await _firestore
+        .collection('treatments ')
+        .doc('CBTtherapy')
+        .collection('cognitiveDistortions')
+        .get();
+        
+    print('Subcollection exists: ${distortionsCollectionSnapshot.metadata != null}');
+    print('Found ${distortionsCollectionSnapshot.docs.length} documents in subcollection');
+    
+    if (distortionsCollectionSnapshot.docs.isNotEmpty) {
+      final distortions = <String, bool>{};
+      
+      for (var doc in distortionsCollectionSnapshot.docs) {
+        final data = doc.data();
+        print('Document data: $data');
+        
+        if (data.containsKey('name') && data['name'] != null) {
+          distortions[data['name'] as String] = false;
+        }
+      }
+      
+      if (distortions.isNotEmpty) {
+        print('Successfully processed ${distortions.length} distortions from subcollection');
+        return distortions;
+      }
+    }
+    
+    // If all attempts fail, use default distortions
+    print('No distortions found in any locations, using default distortions');
+    return _getDefaultCognitiveDistortions();
+  } catch (e) {
+    print('Error fetching cognitive distortions: $e');
+    return _getDefaultCognitiveDistortions();
   }
+}
+
+// Separate method for default distortions to keep code clean
+Map<String, bool> _getDefaultCognitiveDistortions() {
+  return {
+    'التفكير الثنائي ( شيء أو لا شيء)': false,
+    'التعميم المفرط': false,
+    'التصفية العقلية (التركيز على السلبيات)': false,
+    'القفز إلى الاستنتاجات': false,
+    'التهويل أو التقليل': false,
+    'الاستدلال العاطفي': false,
+    'العبارات الإلزامية (يجب، ينبغي)': false,
+    'التسمية الخاطئة': false,
+    'لوم الذات أو الآخرين': false,
+  };
+}
 }
 
 // Events
@@ -284,8 +359,18 @@ class CBTTherapyBloc extends Bloc<CBTTherapyEvent, CBTTherapyState> {
     on<CompleteCBTExerciseEvent>(_onCompleteExercise);
   }
 
-  Future<void> _onLoadData(
-    LoadCBTDataEvent event, Emitter<CBTTherapyState> emit) async {
+  // Add this method to your CBTTherapyBloc class
+void debugCognitiveDistortions() {
+  print('---------------- COGNITIVE DISTORTIONS DEBUG ----------------');
+  print('Current cognitive distortions in state: ${state.cognitiveDistortions}');
+  print('Number of distortions: ${state.cognitiveDistortions.length}');
+  print('Are any distortions selected: ${state.cognitiveDistortions.containsValue(true)}');
+  print('--------------------------------------------------------------');
+}
+
+// Modify your _onLoadData method to call this debug function
+Future<void> _onLoadData(
+  LoadCBTDataEvent event, Emitter<CBTTherapyState> emit) async {
   try {
     emit(state.copyWith(isLoading: true, isError: false, errorMessage: ''));
 
@@ -293,11 +378,13 @@ class CBTTherapyBloc extends Bloc<CBTTherapyEvent, CBTTherapyState> {
     final List<String> instructions = 
         await _repository.fetchInstructions(event.treatmentId);
     
-    print("Loaded instructions: $instructions"); // Add this debug line
+    print("Loaded instructions: $instructions");
     
     // Fetch cognitive distortions
     final Map<String, bool> cognitiveDistortions = 
         await _repository.fetchCognitiveDistortions();
+        
+    print("Loaded cognitive distortions: $cognitiveDistortions");
 
     emit(state.copyWith(
       isLoading: false,
@@ -306,11 +393,13 @@ class CBTTherapyBloc extends Bloc<CBTTherapyEvent, CBTTherapyState> {
       totalSteps: instructions.length,
     ));
     
-    // Add this debug line after emitting the state
+    // Debug after state update
+    debugCognitiveDistortions();
+    
     print("New state instructions: ${state.instructions}");
     print("New state totalSteps: ${state.totalSteps}");
   } catch (e) {
-    print("Error in _onLoadData: $e"); // Add this debug line
+    print("Error in _onLoadData: $e");
     emit(state.copyWith(
       isLoading: false,
       isError: true,

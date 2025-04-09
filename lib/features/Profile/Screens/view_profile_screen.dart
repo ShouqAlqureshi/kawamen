@@ -80,21 +80,21 @@ class ViewProfileScreen extends StatelessWidget {
           style: Theme.of(context).textTheme.headlineMedium,
           textAlign: TextAlign.right,
         ),
-        leading: IconButton(
-          icon: const Icon(
-            Icons.arrow_back,
-            color: Colors.white,
-          ),
-          onPressed: () {
-            // Instead of simply popping, navigate to DeepBreathingPage
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const CBTTherapyPage(),
-              ),
-            );
-          },
-        ),
+        // leading: IconButton(
+        //   icon: const Icon(
+        //     Icons.arrow_back,
+        //     color: Colors.white,
+        //   ),
+        //   onPressed: () {
+        //     // Instead of simply popping, navigate to DeepBreathingPage
+        //     Navigator.pushReplacement(
+        //       context,
+        //       MaterialPageRoute(
+        //         builder: (context) => const CBTTherapyPage(),
+        //       ),
+        //     );
+        //   },
+        // ),
       ),
       body: Center(
         child: SingleChildScrollView(
@@ -193,6 +193,36 @@ class ViewProfileScreen extends StatelessWidget {
                           context,
                           MaterialPageRoute(
                             builder: (context) => const DashboardScreen(),
+                          ),
+                        );
+                      },
+                    ),
+                    IconButton(
+                      icon: Icon(
+                        Icons.mood_bad, // Sad face icon
+                        color: Colors.white.withValues(alpha: 1.0),
+                      ),
+                      onPressed: () async {
+                        await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                const CBTTherapyPage(), // Navigate to deep breathing for sad mood
+                          ),
+                        );
+                      },
+                    ),
+                    IconButton(
+                      icon: Icon(
+                        Icons.sentiment_very_dissatisfied, // Angry face icon
+                        color: Colors.white.withValues(alpha: 1.0),
+                      ),
+                      onPressed: () async {
+                        await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                const DeepBreathingPage(), // Navigate to CBT therapy for angry mood
                           ),
                         );
                       },
