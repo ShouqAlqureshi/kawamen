@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:kawamen/features/Profile/Screens/view_profile_screen.dart';
-import 'package:kawamen/features/Treatment/bloc/deep_breathing_bloc.dart';
+import 'package:kawamen/features/Treatment/deep_breathing/bloc/deep_breathing_bloc.dart';
 import 'dart:math';
 
 class DeepBreathingPage extends StatelessWidget {

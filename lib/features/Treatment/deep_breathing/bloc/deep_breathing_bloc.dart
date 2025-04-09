@@ -82,12 +82,13 @@ class TreatmentRepository {
     return user.uid;
   }
 
-  // Track user's treatment status
-Future<void> trackUserTreatment({
+ // Track user's treatment status
+Future<String> trackUserTreatment({
   required String treatmentId,
   required TreatmentStatus status,
   String? emotionFeedback,
   double progress = 0.0,
+  String? userTreatmentId, // Add optional parameter to support updating specific treatment
 }) async {
   try {
     final userId = _getCurrentUserId();
@@ -100,49 +101,138 @@ Future<void> trackUserTreatment({
     final now = DateTime.now();
     final formattedDate = DateFormat('yyyy-MM-dd HH:mm:ss').format(now);
 
-    // Query for existing treatments with this treatmentId
-    final querySnapshot = await collectionRef
-        .where('treatmentId', isEqualTo: treatmentId)
-        .limit(1)
-        .get();
-
-    if (querySnapshot.docs.isEmpty) {
-      // Create new treatment instance with auto-generated ID
-      await collectionRef.add({
-        'treatmentId': treatmentId,
-        'date': formattedDate,
-        'status': status.value,
-        'progress': progress,
-        'updatedAt': formattedDate,
-        'emotion': emotionFeedback, // Save emotion when creating document
-      });
-    } else {
-      // Update existing treatment instance
-      final docRef = querySnapshot.docs.first.reference;
+    String documentId;
+    
+    if (userTreatmentId != null) {
+      // Update existing specific treatment instance by ID
+      documentId = userTreatmentId;
+      final docRef = collectionRef.doc(userTreatmentId);
+      
       final updateData = <String, dynamic>{
         'status': status.value,
         'progress': progress,
         'updatedAt': formattedDate,
       };
 
-      // Add emotion if not already set (only on first save)
-      if (emotionFeedback != null && !querySnapshot.docs.first.data().containsKey('emotion')) {
-        updateData['emotion'] = emotionFeedback;
-      }
-
       // Add completedAt timestamp if treatment is completed
       if (status == TreatmentStatus.completed) {
         updateData['completedAt'] = formattedDate;
       }
 
+      // Add emotion if provided and not already set
+      final doc = await docRef.get();
+      if (emotionFeedback != null && !doc.data()!.containsKey('emotion')) {
+        updateData['emotion'] = emotionFeedback;
+      }
+
       await docRef.update(updateData);
+    } else {
+      // Query for existing treatments with this treatmentId that are not completed
+      final querySnapshot = await collectionRef
+          .where('treatmentId', isEqualTo: treatmentId)
+          .where('status', whereIn: [
+            TreatmentStatus.started.value, 
+            TreatmentStatus.inProgress.value
+          ])
+          .limit(1)
+          .get();
+
+      if (querySnapshot.docs.isEmpty) {
+        // Create new treatment instance with auto-generated ID
+        final newDocRef = await collectionRef.add({
+          'treatmentId': treatmentId,
+          'date': formattedDate,
+          'status': status.value,
+          'progress': progress,
+          'updatedAt': formattedDate,
+          'emotion': emotionFeedback, // Save emotion when creating document
+        });
+        
+        // Update the document to include its own ID
+        documentId = newDocRef.id;
+        await newDocRef.update({'userTreatmentId': documentId});
+      } else {
+        // Update existing treatment instance
+        final docRef = querySnapshot.docs.first.reference;
+        documentId = querySnapshot.docs.first.id;
+        
+        final updateData = <String, dynamic>{
+          'status': status.value,
+          'progress': progress,
+          'updatedAt': formattedDate,
+          'userTreatmentId': documentId, // Ensure ID is set
+        };
+
+        // Add emotion if not already set (only on first save)
+        if (emotionFeedback != null && !querySnapshot.docs.first.data().containsKey('emotion')) {
+          updateData['emotion'] = emotionFeedback;
+        }
+
+        // Add completedAt timestamp if treatment is completed
+        if (status == TreatmentStatus.completed) {
+          updateData['completedAt'] = formattedDate;
+        }
+
+        await docRef.update(updateData);
+      }
     }
 
     developer.log(
-        'User treatment tracking updated: $treatmentId, status: ${status.value}');
+        'User treatment tracking updated: $treatmentId, status: ${status.value}, userTreatmentId: $documentId');
+    return documentId; // Return the ID so it can be used for resuming
   } catch (e) {
     developer.log('Error updating user treatment tracking: $e');
-    // Don't throw here to prevent blocking the main flow if tracking fails
+    throw Exception('Failed to update treatment tracking: $e');
+  }
+}
+
+// New method to get a specific user treatment by ID
+Future<Map<String, dynamic>?> getUserTreatmentById(String userTreatmentId) async {
+  try {
+    final userId = _getCurrentUserId();
+    final docRef = _firestore
+        .collection('users')
+        .doc(userId)
+        .collection('userTreatments')
+        .doc(userTreatmentId);
+    
+    final doc = await docRef.get();
+    if (!doc.exists) {
+      return null;
+    }
+    
+    return doc.data();
+  } catch (e) {
+    developer.log('Error getting user treatment: $e');
+    return null;
+  }
+}
+
+// New method to get user's latest treatment for a specific treatment type
+Future<Map<String, dynamic>?> getLatestUserTreatment(String treatmentId) async {
+  try {
+    final userId = _getCurrentUserId();
+    final querySnapshot = await _firestore
+        .collection('users')
+        .doc(userId)
+        .collection('userTreatments')
+        .where('treatmentId', isEqualTo: treatmentId)
+        .where('status', whereIn: [
+          TreatmentStatus.started.value, 
+          TreatmentStatus.inProgress.value
+        ])
+        .orderBy('updatedAt', descending: true)
+        .limit(1)
+        .get();
+    
+    if (querySnapshot.docs.isEmpty) {
+      return null;
+    }
+    
+    return querySnapshot.docs.first.data();
+  } catch (e) {
+    developer.log('Error getting latest user treatment: $e');
+    return null;
   }
 }
 
@@ -300,7 +390,19 @@ class CompleteTrackingTreatmentEvent extends DeepBreathingEvent {
   @override
   List<Object> get props => [];
 }
+// Add new event for resuming specific treatment
+class LoadUserTreatmentEvent extends DeepBreathingEvent {
+  final String userTreatmentId;
+  final String treatmentId;
 
+  const LoadUserTreatmentEvent({
+    required this.userTreatmentId,
+    required this.treatmentId,
+  });
+
+  @override
+  List<Object> get props => [userTreatmentId, treatmentId];
+}
 class UpdateTreatmentProgressEvent extends DeepBreathingEvent {
   final double progress;
 
@@ -345,6 +447,7 @@ class DeepBreathingState extends Equatable {
   final double countdownOpacity;
   final InstructionPhase currentPhase;
   final bool isAnimating;
+  final String? userTreatmentId;
 
   const DeepBreathingState({
     required this.isLoading,
@@ -361,6 +464,7 @@ class DeepBreathingState extends Equatable {
     required this.countdownOpacity,
     required this.currentPhase,
     required this.isAnimating,
+    this.userTreatmentId,
   });
 
   // Initial state factory
@@ -378,6 +482,7 @@ class DeepBreathingState extends Equatable {
       countdownOpacity: 0.0,
       currentPhase: InstructionPhase.inhale,
       isAnimating: false,
+      userTreatmentId: null,
     );
   }
 
@@ -396,6 +501,7 @@ class DeepBreathingState extends Equatable {
       countdownOpacity: 0.0,
       currentPhase: InstructionPhase.inhale,
       isAnimating: false,
+      userTreatmentId: null,
     );
   }
 
@@ -417,6 +523,7 @@ class DeepBreathingState extends Equatable {
       countdownOpacity: 0.0,
       currentPhase: InstructionPhase.inhale,
       isAnimating: false,
+      userTreatmentId: null,
     );
   }
 
@@ -471,6 +578,8 @@ class DeepBreathingState extends Equatable {
     double? countdownOpacity,
     InstructionPhase? currentPhase,
     bool? isAnimating,
+    String? userTreatmentId,
+
   }) {
     return DeepBreathingState(
       isLoading: isLoading ?? this.isLoading,
@@ -488,6 +597,8 @@ class DeepBreathingState extends Equatable {
       countdownOpacity: countdownOpacity ?? this.countdownOpacity,
       currentPhase: currentPhase ?? this.currentPhase,
       isAnimating: isAnimating ?? this.isAnimating,
+      userTreatmentId: userTreatmentId ?? this.userTreatmentId,
+
     );
   }
 
@@ -507,6 +618,8 @@ class DeepBreathingState extends Equatable {
         countdownOpacity,
         currentPhase,
         isAnimating,
+        userTreatmentId,
+
       ];
 }
 
@@ -543,33 +656,39 @@ class DeepBreathingBloc extends Bloc<DeepBreathingEvent, DeepBreathingState> {
     on<StartTrackingTreatmentEvent>(_onStartTrackingTreatment);
     on<CompleteTrackingTreatmentEvent>(_onCompleteTrackingTreatment);
     on<UpdateTreatmentProgressEvent>(_onUpdateTreatmentProgress);
+    on<LoadUserTreatmentEvent>(_onLoadUserTreatment);
+
   }
- Future<void> _onStartTrackingTreatment(StartTrackingTreatmentEvent event,
+ Future<void> _onStartTrackingTreatment(
+    StartTrackingTreatmentEvent event,
     Emitter<DeepBreathingState> emit) async {
   if (state.treatment == null) return;
 
   try {
-    await _repository.trackUserTreatment(
+    final userTreatmentId = await _repository.trackUserTreatment(
       treatmentId: state.treatment!.id,
       status: TreatmentStatus.started,
       emotionFeedback: "anger", // Add constant "anger" emotion when starting
       progress: 0.0,
     );
+    
+    emit(state.copyWith(userTreatmentId: userTreatmentId));
+    developer.log('Treatment tracking started with ID: $userTreatmentId');
   } catch (e) {
     developer.log('Error starting treatment tracking: $e');
   }
 }
 
-  Future<void> _onCompleteTrackingTreatment(
+Future<void> _onCompleteTrackingTreatment(
     CompleteTrackingTreatmentEvent event,
     Emitter<DeepBreathingState> emit) async {
-  if (state.treatment == null) return;
+  if (state.treatment == null || state.userTreatmentId == null) return;
 
   try {
     await _repository.trackUserTreatment(
       treatmentId: state.treatment!.id,
       status: TreatmentStatus.completed,
-      // No need to pass emotionFeedback here since it was set at the start
+      userTreatmentId: state.userTreatmentId,
       progress: 100.0, // Completed means 100%
     );
   } catch (e) {
@@ -577,20 +696,74 @@ class DeepBreathingBloc extends Bloc<DeepBreathingEvent, DeepBreathingState> {
   }
 }
 
-  Future<void> _onUpdateTreatmentProgress(UpdateTreatmentProgressEvent event,
-      Emitter<DeepBreathingState> emit) async {
-    if (state.treatment == null) return;
+Future<void> _onUpdateTreatmentProgress(
+    UpdateTreatmentProgressEvent event,
+    Emitter<DeepBreathingState> emit) async {
+  if (state.treatment == null || state.userTreatmentId == null) return;
 
-    try {
-      await _repository.trackUserTreatment(
-        treatmentId: state.treatment!.id,
-        status: TreatmentStatus.inProgress,
-        progress: event.progress,
-      );
-    } catch (e) {
-      developer.log('Error updating treatment progress: $e');
-    }
+  try {
+    await _repository.trackUserTreatment(
+      treatmentId: state.treatment!.id,
+      status: TreatmentStatus.inProgress,
+      userTreatmentId: state.userTreatmentId,
+      progress: event.progress,
+    );
+  } catch (e) {
+    developer.log('Error updating treatment progress: $e');
   }
+}
+
+// Add new method to load a specific user treatment
+Future<void> _onLoadUserTreatment(
+    LoadUserTreatmentEvent event,
+    Emitter<DeepBreathingState> emit) async {
+  try {
+    emit(DeepBreathingState.loading());
+
+    // First, get the treatment details
+    final treatment = await _repository.getTreatmentWithSteps(event.treatmentId);
+
+    // Then get the user treatment details
+    final userTreatment = await _repository.getUserTreatmentById(event.userTreatmentId);
+    
+    if (userTreatment == null) {
+      throw Exception("Couldn't find the specific treatment session");
+    }
+    
+    // Calculate total exercise time
+    int totalStepsDuration = 0;
+    for (var step in treatment.steps) {
+      totalStepsDuration += step.duration;
+    }
+    final totalExerciseTime = totalRepetitions * (totalStepsDuration + transitionTimePerRepetition);
+    
+    // Get stored progress
+    final progress = userTreatment['progress'] as double? ?? 0.0;
+    
+    // Calculate where we are in the exercise based on progress
+    final completedTime = (totalExerciseTime * (progress / 100)).round();
+    final remainingTime = totalExerciseTime - completedTime;
+    
+    // Determine initial phase (simplified - you might want to store more state info)
+    InstructionPhase initialPhase = InstructionPhase.inhale;
+    
+    emit(state.copyWith(
+      isLoading: false,
+      treatment: treatment,
+      totalExerciseSeconds: remainingTime,
+      userTreatmentId: event.userTreatmentId,
+      currentPhase: initialPhase,
+      // You might want to restore more state from the saved userTreatment
+      // such as currentRepetition, currentInstructionIndex, etc.
+    ));
+    
+    developer.log('Loaded user treatment: ${event.userTreatmentId} with progress: $progress%');
+  } catch (e) {
+    developer.log('Error loading user treatment: $e');
+    emit(DeepBreathingState.error('Failed to load treatment session: ${e.toString()}'));
+  }
+}
+
 
   Future<void> _onLoadTreatment(
       LoadTreatmentEvent event, Emitter<DeepBreathingState> emit) async {
