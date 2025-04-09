@@ -109,6 +109,9 @@ class _CBTTherapyViewState extends State<_CBTTherapyView>
     // Start the continuous animations
     _pulseAnimationController.repeat(reverse: true);
     _glowAnimationController.repeat(reverse: true);
+    context
+        .read<CBTTherapyBloc>()
+        .add(const LoadCBTDataEvent(treatmentId: 'CBTtherapy'));
   }
 
   @override
@@ -407,19 +410,30 @@ class _CBTTherapyViewState extends State<_CBTTherapyView>
                             Container(
                               height: 60,
                               alignment: Alignment.center,
+                              // In your widget's build method:
                               child: AnimatedOpacity(
                                 duration: const Duration(milliseconds: 500),
                                 opacity: state.instructionOpacity,
-                                child: Text(
-                                  state.instructions[
-                                      state.currentInstructionIndex],
-                                  style: TextStyle(
-                                    color: theme.colorScheme.onBackground,
-                                    fontSize: 22,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                  textAlign: TextAlign.center,
-                                ),
+                                child: state.instructions.isEmpty
+                                    ? const Text(
+                                        "لا توجد تعليمات متاحة",
+                                        style: TextStyle(
+                                          color: Colors.red,
+                                          fontSize: 22,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                        textAlign: TextAlign.center,
+                                      )
+                                    : Text(
+                                        state.instructions[
+                                            state.currentInstructionIndex],
+                                        style: TextStyle(
+                                          color: theme.colorScheme.onBackground,
+                                          fontSize: 22,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                        textAlign: TextAlign.center,
+                                      ),
                               ),
                             ),
 

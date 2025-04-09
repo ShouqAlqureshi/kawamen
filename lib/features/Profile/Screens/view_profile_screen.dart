@@ -90,7 +90,7 @@ class ViewProfileScreen extends StatelessWidget {
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(
-                builder: (context) => const DeepBreathingPage(),
+                builder: (context) => const CBTTherapyPage(),
               ),
             );
           },
