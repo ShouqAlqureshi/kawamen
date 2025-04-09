@@ -5,7 +5,7 @@ import 'package:kawamen/features/Dashboard/bloc/dashboard_bloc.dart';
 import 'package:kawamen/features/Dashboard/repository/chart.dart';
 import 'package:kawamen/features/Dashboard/repository/dashboardloadingscreen.dart';
 import 'package:kawamen/features/Dashboard/repository/progress_bar.dart';
-import 'package:kawamen/features/Treatment/screen/CBT_therapy_page.dart';
+import 'package:kawamen/features/Treatment/CBT_therapy/screen/CBT_therapy_page.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
