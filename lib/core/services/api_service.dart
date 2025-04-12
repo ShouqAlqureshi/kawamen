@@ -27,7 +27,8 @@ class APIService {
           "timeout": 10000,
           "modules": {
             "vad": {"minSegmentLength": 2.0},
-            "speakerAttributes": {}
+            "speakerAttributes": {},
+            "expression_large": {}
           }
         })
         ..files.add(await http.MultipartFile.fromPath('file', audioFile.path));
