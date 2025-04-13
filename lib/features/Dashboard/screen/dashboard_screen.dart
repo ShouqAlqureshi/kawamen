@@ -69,7 +69,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   } else if (state is DashboardError) {
                     return Center(
                       child: Text(
-                        state.massage,
+                        state.message,
                         style: theme.textTheme.bodyLarge,
                       ),
                     );
@@ -79,7 +79,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 listener: (context, state) {
                   if (state is DashboardError) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text(state.massage)),
+                      SnackBar(content: Text(state.message)),
                     );
                   }
                 },
