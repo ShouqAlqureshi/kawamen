@@ -53,19 +53,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
               body: BlocConsumer<DashboardBloc, DashboardState>(
                 builder: (context, state) {
                   if (state is DashboardInitial) {
-                    return buildDashboard(
-                      context,
-                      theme,
-                    );
-                    // return const DashboardLoadingScreen();
+                    return const DashboardLoadingScreen();
                   } else if (state is DashboardLoaded) {
                     return buildDashboard(
                       context,
-                      theme,
+                      theme, 
+                      state,  // Pass the state to the buildDashboard method
                     );
                   } else if (state is DashboardLoading) {
                     return const LoadingScreen();
-                    // return const Center(child: CircularProgressIndicator());
                   } else if (state is DashboardError) {
                     return Center(
                       child: Text(
@@ -90,21 +86,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget buildDashboard(
     BuildContext context,
     ThemeData theme,
-    // DashboardLoaded state,
+    DashboardLoaded state,  // Add the state parameter
   ) {
     return Padding(
       padding: const EdgeInsets.all(20.0),
       child: Stack(children: <Widget>[
         Column(
           children: [
-            SizedBox(
+            const SizedBox(
               height: 30,
             ),
             Padding(
               padding: const EdgeInsets.all(20.0),
               child: Container(
-                padding: const EdgeInsets.all(
-                    10), // Add padding around the progress bar
+                padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
                     colors: [
@@ -124,13 +119,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   aspectRatio: 1.23,
                   child: Stack(
                     children: <Widget>[
-                      const Column(
+                      Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: <Widget>[
-                          SizedBox(
+                          const SizedBox(
                             height: 37,
                           ),
-                          Text(
+                          const Text(
                             "المشاعر المكتشفه هاذا الاسبوع",
                             style: TextStyle(
                               color: Colors.white,
@@ -140,35 +135,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             ),
                             textAlign: TextAlign.center,
                           ),
-                          SizedBox(
+                          const SizedBox(
                             height: 37,
                           ),
                           Expanded(
                             child: Padding(
-                              padding: EdgeInsets.only(right: 16, left: 6),
+                              padding: const EdgeInsets.only(right: 16, left: 6),
                               child: EmotionalTrendGraph(
-                                angerEmotionalData: {
-                                  1: 3,
-                                  2: 1,
-                                  3: 0,
-                                  4: 0,
-                                  5: 2,
-                                  6: 6,
-                                  7: 8
-                                },
-                                sadEmotionalData: {
-                                  1: 0,
-                                  2: 4,
-                                  3: 3,
-                                  4: 2,
-                                  5: 6,
-                                  6: 1,
-                                  7: 4
-                                },
+                                angerEmotionalData: state.angerEmotionalData,  // Use the state data
+                                sadEmotionalData: state.sadEmotionalData,      // Use the state data
                               ),
                             ),
                           ),
-                          SizedBox(
+                          const SizedBox(
                             height: 10,
                           ),
                         ],
@@ -176,30 +155,30 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       IconButton(
                         icon: Icon(
                           Icons.refresh,
-                          color: Colors.white.withValues(alpha: 1.0),
+                          color: Colors.white.withOpacity(1.0),  // Fixed withValues to withOpacity
                         ),
                         onPressed: () {
                           context.read<DashboardBloc>().add(FetchDashboard());
                         },
                       ),
-                      // if (state.isEmpty)
-                      //   Center(
-                      //     child: Container(
-                      //       padding: const EdgeInsets.all(16),
-                      //       decoration: BoxDecoration(
-                      //         color: Colors.black.withValues(alpha: .8),
-                      //         borderRadius: BorderRadius.circular(10),
-                      //       ),
-                      //       child: const Text(
-                      //         'There is no emotion detected for this week',
-                      //         style: TextStyle(
-                      //           color: Colors.white,
-                      //           fontSize: 18,
-                      //           fontWeight: FontWeight.bold,
-                      //         ),
-                      //       ),
-                      //     ),
-                      //   ),
+                      if (state.isEmpty)  // Uncommented the empty state check
+                        Center(
+                          child: Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: Colors.black.withOpacity(0.8),  // Fixed withValues to withOpacity
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: const Text(
+                              'There is no emotion detected for this week',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
                     ],
                   ),
                 ),

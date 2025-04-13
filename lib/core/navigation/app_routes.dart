@@ -10,18 +10,21 @@ class AppRoutes {
   static const String login = '/login';
   static const String profile = '/profile';
   static const String emotionTest = '/emotion-test';
+  static const String home = '/home';
 
   static Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
       case entry:
         return MaterialPageRoute(builder: (_) => const EntryScreen());
       case login:
-        // After login, go directly to the Emotion Test Screen
-        return MaterialPageRoute(builder: (_) => const EmotionTestScreen());
+        // Using LoginPage, which should navigate to profile after successful login
+        return MaterialPageRoute(builder: (_) => const LoginPage());
       case profile:
-        return MaterialPageRoute(builder: (_) => const EmotionTestScreen());
+        return MaterialPageRoute(builder: (_) => const ViewProfileScreen());
       case emotionTest:
         return MaterialPageRoute(builder: (_) => const EmotionTestScreen());
+      case home:
+        return MaterialPageRoute(builder: (_) => const HomePage());
       default:
         return MaterialPageRoute(
           builder: (_) => const Scaffold(
