@@ -1,8 +1,11 @@
+// File: lib/features/emotion_detection/screens/emotion_test_screen.dart
+import 'package:permission_handler/permission_handler.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../Bloc/emotion_detection_bloc.dart';
 import '../Bloc/emotion_detection_event.dart';
 import '../Bloc/emotion_detection_state.dart';
+import 'package:kawamen/core/utils/permission_handler.dart';
 
 class EmotionTestScreen extends StatefulWidget {
   const EmotionTestScreen({Key? key}) : super(key: key);
@@ -15,41 +18,24 @@ class _EmotionTestScreenState extends State<EmotionTestScreen> {
   bool micEnabled = false;
   bool detectionEnabled = false;
   String resultMessage = '';
-  bool micInitialized = false;
 
-  Future<void> _handleMicToggle(bool value) async {
-    final bloc = context.read<EmotionDetectionBloc>();
-    if (value) {
-      try {
-        await bloc.recorderService.init();
-        setState(() {
-          micEnabled = true;
-          micInitialized = true;
-        });
-      } catch (e) {
-        setState(() {
-          micEnabled = false;
-          detectionEnabled = false;
-          micInitialized = false;
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Microphone permission denied or error: $e")),
-        );
-      }
+  Future<void> _handleMicAccess() async {
+    final granted = await AppPermissionHandler.requestMicPermission();
+
+    if (granted) {
+      setState(() => micEnabled = true);
     } else {
-      bloc.add(StopEmotionDetection());
-      setState(() {
-        micEnabled = false;
-        detectionEnabled = false;
-        micInitialized = false;
-        resultMessage = '';
-      });
+      final permanentlyDenied =
+          await AppPermissionHandler.isMicPermanentlyDenied();
+      if (permanentlyDenied) {
+        await AppPermissionHandler.openSettings();
+      }
     }
   }
 
   void _handleDetectionToggle(bool value) {
     final bloc = context.read<EmotionDetectionBloc>();
-    if (!micEnabled || !micInitialized) {
+    if (!micEnabled) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Enable microphone access first.")),
       );
@@ -74,7 +60,7 @@ class _EmotionTestScreenState extends State<EmotionTestScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             ElevatedButton.icon(
-              onPressed: micEnabled ? null : () => _handleMicToggle(true),
+              onPressed: micEnabled ? null : _handleMicAccess,
               icon: const Icon(Icons.mic),
               label: const Text("Enable Microphone"),
             ),
