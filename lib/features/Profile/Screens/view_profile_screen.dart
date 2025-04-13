@@ -7,8 +7,8 @@ import 'package:kawamen/features/Profile/Screens/edit_profile_screen.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:kawamen/features/Reset%20Password/bloc/bloc/reset_password_bloc.dart';
 import 'package:kawamen/features/Reset%20Password/bloc/bloc/screen/reset_password_screen.dart';
-import 'package:kawamen/features/Treatment/screen/CBT_therapy_page.dart';
-import 'package:kawamen/features/Treatment/screen/deep_breathing_page.dart';
+import 'package:kawamen/features/Treatment/CBT_therapy/screen/CBT_therapy_page.dart';
+import 'package:kawamen/features/Treatment/deep_breathing/screen/deep_breathing_page.dart';
 import '../Bloc/profile_bloc.dart';
 
 class ViewProfileScreen extends StatelessWidget {
@@ -80,21 +80,21 @@ class ViewProfileScreen extends StatelessWidget {
           style: Theme.of(context).textTheme.headlineMedium,
           textAlign: TextAlign.right,
         ),
-        leading: IconButton(
-          icon: const Icon(
-            Icons.arrow_back,
-            color: Colors.white,
-          ),
-          onPressed: () {
-            // Instead of simply popping, navigate to DeepBreathingPage
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const CBTTherapyPage(),
-              ),
-            );
-          },
-        ),
+        // leading: IconButton(
+        //   icon: const Icon(
+        //     Icons.arrow_back,
+        //     color: Colors.white,
+        //   ),
+        //   onPressed: () {
+        //     // Instead of simply popping, navigate to DeepBreathingPage
+        //     Navigator.pushReplacement(
+        //       context,
+        //       MaterialPageRoute(
+        //         builder: (context) => const CBTTherapyPage(),
+        //       ),
+        //     );
+        //   },
+        // ),
       ),
       body: Center(
         child: SingleChildScrollView(
@@ -193,6 +193,36 @@ class ViewProfileScreen extends StatelessWidget {
                           context,
                           MaterialPageRoute(
                             builder: (context) => const DashboardScreen(),
+                          ),
+                        );
+                      },
+                    ),
+                    IconButton(
+                      icon: Icon(
+                        Icons.mood_bad, // Sad face icon
+                        color: Colors.white.withValues(alpha: 1.0),
+                      ),
+                      onPressed: () async {
+                        await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                const CBTTherapyPage(), // Navigate to deep breathing for sad mood
+                          ),
+                        );
+                      },
+                    ),
+                    IconButton(
+                      icon: Icon(
+                        Icons.sentiment_very_dissatisfied, // Angry face icon
+                        color: Colors.white.withValues(alpha: 1.0),
+                      ),
+                      onPressed: () async {
+                        await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                const DeepBreathingPage(), // Navigate to CBT therapy for angry mood
                           ),
                         );
                       },

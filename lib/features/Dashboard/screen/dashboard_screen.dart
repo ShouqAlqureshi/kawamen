@@ -5,7 +5,7 @@ import 'package:kawamen/features/Dashboard/bloc/dashboard_bloc.dart';
 import 'package:kawamen/features/Dashboard/repository/chart.dart';
 import 'package:kawamen/features/Dashboard/repository/dashboardloadingscreen.dart';
 import 'package:kawamen/features/Dashboard/repository/progress_bar.dart';
-import 'package:kawamen/features/Treatment/screen/CBT_therapy_page.dart';
+import 'package:kawamen/features/Treatment/CBT_therapy/screen/CBT_therapy_page.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -69,7 +69,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   } else if (state is DashboardError) {
                     return Center(
                       child: Text(
-                        state.massage,
+                        state.message,
                         style: theme.textTheme.bodyLarge,
                       ),
                     );
@@ -79,7 +79,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 listener: (context, state) {
                   if (state is DashboardError) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text(state.massage)),
+                      SnackBar(content: Text(state.message)),
                     );
                   }
                 },

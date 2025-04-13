@@ -1,3 +1,5 @@
+// File: core/api/api_service.dart
+
 import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -5,45 +7,49 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class APIService {
   final String baseUrl = "https://devaice-web-api.audeering.com/api/v2/";
-
-  // Securely load credentials from .env(Create .env file in root directory)
   final String apiKey = dotenv.env['API_KEY'] ?? "";
   final String userId = dotenv.env['USER_ID'] ?? "";
 
-  Future<String> uploadAudio(File audioFile) async {
-    try {
-      if (apiKey.isEmpty || userId.isEmpty) {
-        throw Exception(
-            "API Key or UserID is missing. Please set them in your .env file.");
-      }
+  /// Uploads an audio file with the provided config and returns an uploadId
+  Future<String> uploadAudio(
+      File audioFile, Map<String, dynamic> config) async {
+    if (apiKey.isEmpty || userId.isEmpty) {
+      throw Exception("API Key or User ID is missing.");
+    }
 
-      var uri = Uri.parse("$baseUrl/upload");
+    final uri = Uri.parse("$baseUrl/upload");
 
-      var request = http.MultipartRequest("POST", uri)
-        ..headers["X-API-KEY"] = apiKey
-        ..headers["X-USER-ID"] = userId
-        ..fields['config'] = jsonEncode({
-          "apiVersion": "4.7.0",
-          "timeout": 10000,
-          "modules": {
-            "vad": {"minSegmentLength": 2.0},
-            "speakerAttributes": {}
-          }
-        })
-        ..files.add(await http.MultipartFile.fromPath('file', audioFile.path));
+    final request = http.MultipartRequest("POST", uri)
+      ..headers["X-API-KEY"] = apiKey
+      ..headers["X-USER-ID"] = userId
+      ..fields['config'] = jsonEncode(config)
+      ..files.add(await http.MultipartFile.fromPath('file', audioFile.path));
 
-      var response = await request.send();
+    final response = await request.send();
 
-      if (response.statusCode == 200 || response.statusCode == 202) {
-        var responseData = await response.stream.bytesToString();
-        var jsonResponse = json.decode(responseData);
-        return jsonResponse["uploadId"] ?? "No uploadId returned";
-      } else {
-        throw Exception(
-            "Upload failed with status: ${response.statusCode} - ${response.reasonPhrase}");
-      }
-    } catch (e) {
-      throw Exception("Error uploading audio: $e");
+    if (response.statusCode == 200 || response.statusCode == 202) {
+      final responseData = await response.stream.bytesToString();
+      final jsonResponse = json.decode(responseData);
+      return jsonResponse["uploadId"] ?? "";
+    } else {
+      throw Exception(
+          "Upload failed: ${response.statusCode} ${response.reasonPhrase}");
+    }
+  }
+
+  /// Fetches the result of a previous upload using uploadId
+  Future<Map<String, dynamic>> getResult(String uploadId) async {
+    final uri = Uri.parse("$baseUrl/result/$uploadId");
+
+    final response = await http.get(uri, headers: {
+      "X-API-KEY": apiKey,
+      "X-USER-ID": userId,
+    });
+
+    if (response.statusCode == 200) {
+      return json.decode(response.body);
+    } else {
+      throw Exception("Result fetch failed: ${response.statusCode}");
     }
   }
 }

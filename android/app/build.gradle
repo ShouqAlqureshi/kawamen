@@ -9,7 +9,7 @@ plugins {
 
 android {
     namespace = "com.kawamen.android"
-    compileSdk = 34   // Specify compileSdkVersion here
+    compileSdk = 35   // Specify compileSdkVersion here
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
@@ -23,8 +23,8 @@ android {
 
     defaultConfig {
         applicationId "com.kawamen.android"
-        minSdkVersion 23
-        targetSdkVersion 34
+        minSdkVersion 24
+        targetSdkVersion 35
         versionCode 1
         versionName "1.0"
     }

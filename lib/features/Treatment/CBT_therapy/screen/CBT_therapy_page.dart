@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:kawamen/features/Profile/Screens/view_profile_screen.dart';
 import 'dart:math';
-import 'package:kawamen/features/Treatment/bloc/CBT_therapy_bloc.dart';
+import 'package:kawamen/features/Treatment/CBT_therapy/bloc/CBT_therapy_bloc.dart';
 
 class CBTTherapyPage extends StatelessWidget {
   const CBTTherapyPage({Key? key}) : super(key: key);
@@ -109,6 +109,9 @@ class _CBTTherapyViewState extends State<_CBTTherapyView>
     // Start the continuous animations
     _pulseAnimationController.repeat(reverse: true);
     _glowAnimationController.repeat(reverse: true);
+    context
+        .read<CBTTherapyBloc>()
+        .add(const LoadCBTDataEvent(treatmentId: 'CBTtherapy'));
   }
 
   @override
@@ -407,20 +410,34 @@ class _CBTTherapyViewState extends State<_CBTTherapyView>
                             Container(
                               height: 60,
                               alignment: Alignment.center,
-                              child: AnimatedOpacity(
-                                duration: const Duration(milliseconds: 500),
-                                opacity: state.instructionOpacity,
-                                child: Text(
-                                  state.instructions[
-                                      state.currentInstructionIndex],
-                                  style: TextStyle(
-                                    color: theme.colorScheme.onBackground,
-                                    fontSize: 22,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                  textAlign: TextAlign.center,
-                                ),
-                              ),
+                              child: state.isLoading
+                                  ? const CircularProgressIndicator()
+                                  : AnimatedOpacity(
+                                      duration:
+                                          const Duration(milliseconds: 500),
+                                      opacity: state.instructionOpacity,
+                                      child: state.instructions.isEmpty
+                                          ? const Text(
+                                              "لا توجد تعليمات متاحة",
+                                              style: TextStyle(
+                                                color: Colors.red,
+                                                fontSize: 22,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                              textAlign: TextAlign.center,
+                                            )
+                                          : Text(
+                                              state.instructions[state
+                                                  .currentInstructionIndex],
+                                              style: TextStyle(
+                                                color: theme
+                                                    .colorScheme.onBackground,
+                                                fontSize: 22,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                              textAlign: TextAlign.center,
+                                            ),
+                                    ),
                             ),
 
                             const SizedBox(height: 20),
