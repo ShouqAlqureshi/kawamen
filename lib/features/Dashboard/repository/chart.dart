@@ -11,6 +11,17 @@ class EmotionalTrendGraph extends StatelessWidget {
     required this.sadEmotionalData
   }) : super(key: key);
 
+  // Helper method to convert from Dart weekday (1=Monday, 7=Sunday)
+  // to display weekday (1=Sunday, 2=Monday, ..., 7=Saturday)
+  int _convertWeekday(int dartWeekday) {
+    // Convert from Dart weekday to display weekday
+    if (dartWeekday == 7) { // Sunday in Dart is 7
+      return 1;  // Sunday should be 1 in our display
+    } else {
+      return dartWeekday + 1; // Monday(1) becomes 2, Tuesday(2) becomes 3, etc.
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return LineChart(
@@ -21,16 +32,18 @@ class EmotionalTrendGraph extends StatelessWidget {
         lineBarsData: [
           LineChartBarData(//sad
             spots: sadEmotionalData.entries.map((e) {
-              return FlSpot(e.key.toDouble(), e.value.toDouble());
+              // Convert the weekday number before creating the FlSpot
+              return FlSpot(_convertWeekday(e.key).toDouble(), e.value.toDouble());
             }).toList(),
             isCurved: true,
             isStrokeCapRound: true,
             color: Colors.blue,
             dotData: const FlDotData(show: false),
           ),
-           LineChartBarData(//anger 
+          LineChartBarData(//anger 
             spots: angerEmotionalData.entries.map((e) {
-              return FlSpot(e.key.toDouble(), e.value.toDouble());
+              // Convert the weekday number before creating the FlSpot
+              return FlSpot(_convertWeekday(e.key).toDouble(), e.value.toDouble());
             }).toList(),
             isCurved: true,
             isStrokeCapRound: true,
