@@ -2,16 +2,19 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:kawamen/features/Dashboard/bloc/progress_bar_bloc.dart';
 import 'package:percent_indicator/percent_indicator.dart';
 import 'package:flutter/material.dart';
+
 class TreatmentProgressTracker extends StatelessWidget {
   const TreatmentProgressTracker({super.key});
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => TreatmentProgressBloc()..add(FetchTreatmentProgress()),
+      create: (context) =>
+          TreatmentProgressBloc()..add(FetchTreatmentProgress()),
       child: BlocBuilder<TreatmentProgressBloc, TreatmentProgressState>(
         builder: (context, state) {
-          if (state is TreatmentProgressLoading || state is TreatmentProgressInitial) {
+          if (state is TreatmentProgressLoading ||
+              state is TreatmentProgressInitial) {
             return _buildProgressContainer(
               0.0,
               Center(
@@ -64,7 +67,9 @@ class TreatmentProgressTracker extends StatelessWidget {
                     IconButton(
                       icon: Icon(Icons.refresh, color: Colors.white),
                       onPressed: () {
-                        context.read<TreatmentProgressBloc>().add(FetchTreatmentProgress());
+                        context
+                            .read<TreatmentProgressBloc>()
+                            .add(FetchTreatmentProgress());
                       },
                     ),
                   ],
@@ -81,7 +86,7 @@ class TreatmentProgressTracker extends StatelessWidget {
   Widget _buildProgressContainer(double progress, Widget child) {
     return Container(
       width: 330,
-      padding: const EdgeInsets.all(15),
+      padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           colors: [

@@ -197,7 +197,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                   borderRadius: BorderRadius.circular(10),
                                 ),
                                 child: const Text(
-                                  'There is no emotion detected for this week',
+                                  'ليس لديك مشاعر مكتشفه لهاذا الاسبوع',
                                   style: TextStyle(
                                     color: Colors.white,
                                     fontSize: 18,
