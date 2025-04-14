@@ -164,7 +164,7 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
         // Share the image
         await Share.shareXFiles(
           [XFile(tempPath)],
-          text: 'Check out my productivity ranking!',
+          text: 'Check out my Emotional Dashboard for this week!',
         );
 
         // Delete the temporary file
