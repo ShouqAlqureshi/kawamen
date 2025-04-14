@@ -185,7 +185,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
             ),
             const TreatmentProgressTracker(
-              progress: 0.8,
             ) //fetch progress (Completed treatments/ All treatment of this week)
           ],
         ),
