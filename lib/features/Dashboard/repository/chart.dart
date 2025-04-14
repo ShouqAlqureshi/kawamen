@@ -2,11 +2,14 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 
 class EmotionalTrendGraph extends StatelessWidget {
-  final Map<int,int>
-      sadEmotionalData; // map of day :count
-final Map<int,int>
-      angerEmotionalData;
-  const EmotionalTrendGraph({super.key, required this.angerEmotionalData,required this.sadEmotionalData});
+  final Map<int, int> sadEmotionalData; // map of day:count
+  final Map<int, int> angerEmotionalData;
+  
+  const EmotionalTrendGraph({
+    Key? key, 
+    required this.angerEmotionalData,
+    required this.sadEmotionalData
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -39,55 +42,55 @@ final Map<int,int>
     );
   }
 
-  Widget bottomTitleWidgets(double value, TitleMeta meta) {
+  Widget getTitles(double value, TitleMeta? meta) {
     const style = TextStyle(
       fontWeight: FontWeight.bold,
       fontSize: 16,
+      color: Colors.white,
     );
-    Widget text;
+    
+    String text;
     switch (value.toInt()) {
       case 1:
-        text = const Text('SUN', style: style);
+        text = 'SUN';
         break;
       case 2:
-        text = const Text('MON', style: style);
+        text = 'MON';
         break;
       case 3:
-        text = const Text('TUE', style: style);
+        text = 'TUE';
         break;
       case 4:
-        text = const Text('WEN', style: style);
+        text = 'WED';
         break;
       case 5:
-        text = const Text('THU', style: style);
+        text = 'THU';
         break;
       case 6:
-        text = const Text('FRI', style: style);
+        text = 'FRI';
         break;
       case 7:
-        text = const Text('SAT', style: style);
+        text = 'SAT';
         break;
       default:
-        text = const Text('');
+        text = '';
         break;
     }
 
-    return SideTitleWidget(
-      meta: meta,
-      space: 10,
-      child: text,
+    return Text(
+      text,
+      style: style,
     );
   }
 
-  SideTitles get bottomTitles => SideTitles(
-        showTitles: true,
-        reservedSize: 32,
-        interval: 1,
-        getTitlesWidget: bottomTitleWidgets,
-      );
   FlTitlesData get titlesData => FlTitlesData(
         bottomTitles: AxisTitles(
-          sideTitles: bottomTitles,
+          sideTitles: SideTitles(
+            showTitles: true,
+            reservedSize: 32,
+            interval: 1,
+            getTitlesWidget: getTitles,
+          ),
         ),
         rightTitles: const AxisTitles(
           sideTitles: SideTitles(showTitles: false),
