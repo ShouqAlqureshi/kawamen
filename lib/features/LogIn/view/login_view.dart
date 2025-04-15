@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:kawamen/core/utils/Loadingscreen.dart';
 import '../../Profile/Screens/view_profile_screen.dart';
 import '../../Profile/Screens/edit_profile_screen.dart'; // Add this import
 import '../../Reset Password/bloc/bloc/screen/reset_password_screen.dart';
@@ -177,8 +178,7 @@ class _LoginViewState extends State<LoginView> {
                             ),
                           ),
                           child: state is LoginLoading
-                              ? const CircularProgressIndicator(
-                                  color: Colors.white)
+                              ? const LoadingScreen()
                               : const Text(
                                   'تسجيل دخول',
                                   style: TextStyle(color: Colors.white),

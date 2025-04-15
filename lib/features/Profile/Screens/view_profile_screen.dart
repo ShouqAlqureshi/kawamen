@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:kawamen/core/utils/Loadingscreen.dart';
 import 'package:kawamen/features/Dashboard/screen/dashboard_screen.dart';
 import 'package:kawamen/features/Profile/Bloc/microphone_bloc.dart';
 import 'package:kawamen/features/Profile/Screens/edit_profile_screen.dart';
@@ -42,7 +43,7 @@ class ViewProfileScreen extends StatelessWidget {
             },
             builder: (context, state) {
               if (state is ProfileLoading) {
-                return const Center(child: CircularProgressIndicator());
+                return const Center(child: LoadingScreen());
               } else if (state is ToggleStatesLoaded) {
                 return _buildProfile(context, state, theme);
               } else if (state is ProfileError) {

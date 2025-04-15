@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:kawamen/core/utils/Loadingscreen.dart';
 import 'package:kawamen/features/Profile/Screens/view_profile_screen.dart';
 import 'package:kawamen/features/Treatment/deep_breathing/bloc/deep_breathing_bloc.dart';
 import 'dart:math';
@@ -331,10 +332,8 @@ class _DeepBreathingViewState extends State<_DeepBreathingView>
         if (state.isLoading) {
           return Scaffold(
             backgroundColor: theme.scaffoldBackgroundColor,
-            body: Center(
-              child: CircularProgressIndicator(
-                color: colorScheme.secondary,
-              ),
+            body: const Center(
+              child: LoadingScreen(),
             ),
           );
         }

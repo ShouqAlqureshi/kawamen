@@ -1,4 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:kawamen/core/utils/Loadingscreen.dart';
 import 'package:kawamen/features/Dashboard/bloc/progress_bar_bloc.dart';
 import 'package:percent_indicator/percent_indicator.dart';
 import 'package:flutter/material.dart';
@@ -17,10 +18,8 @@ class TreatmentProgressTracker extends StatelessWidget {
               state is TreatmentProgressInitial) {
             return _buildProgressContainer(
               0.0,
-              Center(
-                child: CircularProgressIndicator(
-                  color: Colors.white,
-                ),
+              const Center(
+                child: LoadingScreen(),
               ),
             );
           } else if (state is TreatmentProgressLoaded) {
