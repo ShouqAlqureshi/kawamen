@@ -9,6 +9,7 @@ import 'package:kawamen/features/Reset%20Password/bloc/bloc/reset_password_bloc.
 import 'package:kawamen/features/Reset%20Password/bloc/bloc/screen/reset_password_screen.dart';
 import 'package:kawamen/features/Treatment/CBT_therapy/screen/CBT_therapy_page.dart';
 import 'package:kawamen/features/Treatment/deep_breathing/screen/deep_breathing_page.dart';
+import '../../Treatment/bloc/emotion_bloc.dart';
 import '../Bloc/profile_bloc.dart';
 
 class ViewProfileScreen extends StatelessWidget {
@@ -196,7 +197,14 @@ class ViewProfileScreen extends StatelessWidget {
                           ),
                         );
                       },
-                    ),
+                    ),ElevatedButton(
+  onPressed: () {
+    // Simulate an emotion detection event
+    final emotionBloc = BlocProvider.of<EmotionBloc>(context);
+    emotionBloc.add(EmotionProcessed('sadness',0.85) as EmotionEvent);
+  },
+  child: Text('Test Sadness Notification'),
+),
                     IconButton(
                       icon: Icon(
                         Icons.mood_bad, // Sad face icon
