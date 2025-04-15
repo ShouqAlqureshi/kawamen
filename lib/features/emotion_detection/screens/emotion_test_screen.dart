@@ -1,4 +1,4 @@
-// File: lib/features/emotion_detection/screens/emotion_test_screen.dart
+import 'dart:async';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -18,6 +18,30 @@ class _EmotionTestScreenState extends State<EmotionTestScreen> {
   bool micEnabled = false;
   bool detectionEnabled = false;
   String resultMessage = '';
+  bool isRecording = false;
+  Timer? micStatusTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    _startMicStatusMonitor();
+  }
+
+  @override
+  void dispose() {
+    micStatusTimer?.cancel();
+    super.dispose();
+  }
+
+  void _startMicStatusMonitor() {
+    final bloc = context.read<EmotionDetectionBloc>();
+    micStatusTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      final currentStatus = bloc.recorderService.isRecording;
+      if (currentStatus != isRecording) {
+        setState(() => isRecording = currentStatus);
+      }
+    });
+  }
 
   Future<void> _handleMicAccess() async {
     final granted = await AppPermissionHandler.requestMicPermission();
@@ -52,6 +76,9 @@ class _EmotionTestScreenState extends State<EmotionTestScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final micStatusText =
+        isRecording ? "🎙️ Mic is recording" : "🔇 Mic is not recording";
+
     return Scaffold(
       appBar: AppBar(title: const Text('Emotion Detection Test')),
       body: Padding(
@@ -59,6 +86,15 @@ class _EmotionTestScreenState extends State<EmotionTestScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            Text(
+              micStatusText,
+              style: TextStyle(
+                fontSize: 16,
+                color: isRecording ? Colors.green : Colors.red,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 10),
             ElevatedButton.icon(
               onPressed: micEnabled ? null : _handleMicAccess,
               icon: const Icon(Icons.mic),
@@ -95,9 +131,11 @@ class _EmotionTestScreenState extends State<EmotionTestScreen> {
                 if (state is DetectionInProgress) {
                   return const Center(child: CircularProgressIndicator());
                 }
-                return Text(resultMessage,
-                    style: const TextStyle(
-                        fontSize: 18, fontWeight: FontWeight.w500));
+                return Text(
+                  resultMessage,
+                  style: const TextStyle(
+                      fontSize: 18, fontWeight: FontWeight.w500),
+                );
               },
             ),
           ],

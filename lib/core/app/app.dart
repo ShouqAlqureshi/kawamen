@@ -4,10 +4,12 @@ import 'package:kawamen/core/app/app_view.dart';
 import 'package:kawamen/core/navigation/app_routes.dart';
 import 'package:kawamen/core/utils/theme/theme.dart';
 import 'package:kawamen/features/Profile/Bloc/profile_bloc.dart';
+import 'package:kawamen/features/emotion_detection/Bloc/emotion_detection_bloc.dart';
+import 'package:kawamen/features/emotion_detection/repository/emotion_detection_repository.dart';
+import 'package:kawamen/features/emotion_detection/service/audio_recorder_service.dart';
 import 'package:kawamen/features/registration/bloc/auth_bloc.dart';
 import 'package:kawamen/features/registration/repository/auth_repository.dart';
 import 'package:kawamen/features/login/bloc/login_bloc.dart';
-
 import '../../features/Treatment/bloc/emotion_bloc.dart';
 import '../navigation/MainNavigator.dart';
 import '../services/Notification_service.dart';
@@ -22,6 +24,9 @@ class App extends StatefulWidget {
 class _AppState extends State<App> with WidgetsBindingObserver {
   final EmotionBloc _emotionBloc = EmotionBloc();
 
+  final EmotionDetectionBloc _emotionDetectionBloc = EmotionDetectionBloc(
+      repository: EmotionDetectionRepository(),
+      recorderService: AudioRecorderService()); // Add this
   @override
   void initState() {
     super.initState();
@@ -43,13 +48,13 @@ class _AppState extends State<App> with WidgetsBindingObserver {
             create: (context) =>
                 ProfileBloc(context: context)..add(FetchToggleStates())),
         BlocProvider<EmotionBloc>.value(value: _emotionBloc),
+        BlocProvider<EmotionDetectionBloc>.value(value: _emotionDetectionBloc),
       ],
       child: MaterialApp(
         theme: AppTheme.darkTheme,
         debugShowCheckedModeBanner: false,
         onGenerateRoute: AppRoutes.generateRoute,
         home: const MainNavigator(),
-
       ),
     );
   }
@@ -59,6 +64,7 @@ class _AppState extends State<App> with WidgetsBindingObserver {
     _emotionBloc.close();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
+    _emotionDetectionBloc.close();
   }
 
   @override
