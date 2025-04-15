@@ -34,7 +34,7 @@ class TreatmentProgressTracker extends StatelessWidget {
                     child: Text(
                       "لا تملك جلسات لهذا الاسبوع",
                       style: TextStyle(
-                        fontSize: 18, 
+                        fontSize: 18,
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
                       ),
@@ -44,7 +44,7 @@ class TreatmentProgressTracker extends StatelessWidget {
                 ),
               );
             }
-            
+
             return _buildProgressContainer(
               state.progress,
               CircularPercentIndicator(
@@ -112,7 +112,7 @@ class TreatmentProgressTracker extends StatelessWidget {
         gradient: const LinearGradient(
           colors: [
             Color.fromARGB(255, 42, 24, 49),
-            Color.fromARGB(255, 38, 23, 48),
+            Color.fromARGB(255, 19, 2, 26),
           ],
           begin: Alignment.bottomCenter,
           end: Alignment.topCenter,
