@@ -40,8 +40,7 @@ Future<String> trackUserTreatment({
         .collection('userTreatments');
     
     // Get current timestamp
-    final now = DateTime.now();
-    final formattedDate = DateFormat('yyyy-MM-dd HH:mm:ss').format(now);
+    final timestamp = Timestamp.now(); // Firebase Timestamp object
 
     String documentId;
     
@@ -53,12 +52,12 @@ Future<String> trackUserTreatment({
       final updateData = <String, dynamic>{
         'status': status.value,
         'progress': progress,
-        'updatedAt': formattedDate,
+        'updatedAt': timestamp,
       };
 
       // Add completedAt timestamp if treatment is completed
       if (status == TreatmentStatus.completed) {
-        updateData['completedAt'] = formattedDate;
+        updateData['completedAt'] = timestamp;
       }
 
       // Add emotion if provided and not already set
@@ -83,10 +82,10 @@ Future<String> trackUserTreatment({
         // Create new treatment instance with auto-generated ID
         final newDocRef = await collectionRef.add({
           'treatmentId': treatmentId,
-          'date': formattedDate,
+          'date': timestamp,
           'status': status.value,
           'progress': progress,
-          'updatedAt': formattedDate,
+          'updatedAt': timestamp,
           'emotion': emotionFeedback, // Save emotion when creating document
         });
         
@@ -101,7 +100,7 @@ Future<String> trackUserTreatment({
         final updateData = <String, dynamic>{
           'status': status.value,
           'progress': progress,
-          'updatedAt': formattedDate,
+          'updatedAt': timestamp,
           'userTreatmentId': documentId, // Ensure ID is set
         };
 
@@ -112,7 +111,7 @@ Future<String> trackUserTreatment({
 
         // Add completedAt timestamp if treatment is completed
         if (status == TreatmentStatus.completed) {
-          updateData['completedAt'] = formattedDate;
+          updateData['completedAt'] = timestamp;
         }
 
         await docRef.update(updateData);

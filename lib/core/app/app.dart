@@ -8,8 +8,25 @@ import 'package:kawamen/features/registration/bloc/auth_bloc.dart';
 import 'package:kawamen/features/registration/repository/auth_repository.dart';
 import 'package:kawamen/features/login/bloc/login_bloc.dart';
 
-class App extends StatelessWidget {
+import '../../features/Treatment/bloc/emotion_bloc.dart';
+import '../services/Notification_service.dart';
+
+class App extends StatefulWidget {
   const App({super.key});
+
+  @override
+  State<App> createState() => _AppState();
+}
+
+class _AppState extends State<App> with WidgetsBindingObserver {
+  final EmotionBloc _emotionBloc = EmotionBloc();
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    NotificationService().connectToEmotionBloc(_emotionBloc);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -24,14 +41,27 @@ class App extends StatelessWidget {
         BlocProvider(
             create: (context) =>
                 ProfileBloc(context: context)..add(FetchToggleStates())),
+        BlocProvider<EmotionBloc>.value(value: _emotionBloc),
       ],
       child: MaterialApp(
         theme: AppTheme.darkTheme,
         debugShowCheckedModeBanner: false,
-        // initialRoute: AppRoutes.entry, // Ensure the initial route is set
-        onGenerateRoute:
-            AppRoutes.generateRoute, // Use AppRoutes for navigation
+        onGenerateRoute: AppRoutes.generateRoute,
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _emotionBloc.close();
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      // App came to foreground, check for pending notifications
+    }
   }
 }

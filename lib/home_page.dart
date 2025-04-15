@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'core/services/Notification_service.dart';
+
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
 
@@ -145,8 +147,9 @@ class HomePage extends StatelessWidget {
                 style:
                     TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
               ),
-            )
-        ],
+            ),
+                  const TreatmentNavigator(),
+],
       ),
     );
   }

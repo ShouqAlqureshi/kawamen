@@ -114,34 +114,68 @@ class EmotionBloc extends Bloc<EmotionEvent, EmotionState> {
   }
 
   Future<void> _trackEmotionInFirestore(
-      String emotion, String emotionId, double intensity) async {
-    try {
-      final user = FirebaseAuth.instance.currentUser;
-      if (user == null) throw Exception('User not logged in');
+    String emotion, String emotionId, double intensity) async {
+  try {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) throw Exception('User not logged in');
 
-      final userDocRef = _firestore.collection('users').doc(user.uid);
+    final userDocRef = _firestore.collection('users').doc(user.uid);
 
-      final userDoc = await userDocRef.get();
+    final userDoc = await userDocRef.get();
 
-      final emotionData = {
-        'date': FieldValue.serverTimestamp(),
-        'emotion': emotion,
-        'emotionId': emotionId,
-        'intensity': intensity,
-      };
+    final emotionData = {
+      'date': FieldValue.serverTimestamp(),
+      'emotion': emotion,
+      'emotionId': emotionId,
+      'intensity': intensity,
+      'treatmentStatus': 'pending', // Add initial status
+    };
 
-      if (userDoc.exists) {
-        await userDocRef.update({
-          'emotionalData': FieldValue.arrayUnion([emotionData])
-        });
-      } else {
-        await userDocRef.set({
-          'emotionalData': [emotionData]
-        });
-      }
-    } catch (e) {
-      log('Error saving emotion to Firestore: ${e.toString()}');
-      rethrow;
+    if (userDoc.exists) {
+      await userDocRef.update({
+        'emotionalData': FieldValue.arrayUnion([emotionData])
+      });
+    } else {
+      await userDocRef.set({
+        'emotionalData': [emotionData]
+      });
     }
+  } catch (e) {
+    log('Error saving emotion to Firestore: ${e.toString()}');
+    rethrow;
   }
+}
+Future<void> updateTreatmentStatus(String emotionId, String status) async {
+  try {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) throw Exception('User not logged in');
+
+    final userDocRef = _firestore.collection('users').doc(user.uid);
+    
+    // Get the current document
+    final userDoc = await userDocRef.get();
+    if (userDoc.exists) {
+      final data = userDoc.data();
+      if (data != null && data.containsKey('emotionalData')) {
+        List<dynamic> emotionalData = List.from(data['emotionalData']);
+        
+        // Find and update the emotion with matching ID
+        bool updated = false;
+        for (int i = 0; i < emotionalData.length; i++) {
+          if (emotionalData[i]['emotionId'] == emotionId) {
+            emotionalData[i]['treatmentStatus'] = status;
+            updated = true;
+            break;
+          }
+        }
+        
+        if (updated) {
+          await userDocRef.update({'emotionalData': emotionalData});
+        }
+      }
+    }
+  } catch (e) {
+    log('Error updating treatment status: ${e.toString()}');
+  }
+}
 }

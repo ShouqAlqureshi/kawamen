@@ -20,6 +20,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     super.initState();
   }
 
+  final GlobalKey _boundaryKey = GlobalKey();
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -52,15 +53,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
               body: BlocConsumer<DashboardBloc, DashboardState>(
                 builder: (context, state) {
-                  if (state is DashboardInitial) {
+                  if (state is DashboardInitial || state is DashboardExported) {
+                    context.read<DashboardBloc>().add(FetchDashboard());
                     return const DashboardLoadingScreen();
                   } else if (state is DashboardLoaded) {
                     return buildDashboard(
                       context,
-                      theme, 
-                      state,  // Pass the state to the buildDashboard method
+                      theme,
+                      state, // Pass the state to the buildDashboard method
                     );
-                  } else if (state is DashboardLoading) {
+                  } else if (state is DashboardLoading ||
+                      state is DashboardExporting) {
                     return const LoadingScreen();
                   } else if (state is DashboardError) {
                     return Center(
@@ -86,110 +89,135 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget buildDashboard(
     BuildContext context,
     ThemeData theme,
-    DashboardLoaded state,  // Add the state parameter
+    DashboardLoaded state, // Add the state parameter
   ) {
     return Padding(
       padding: const EdgeInsets.all(20.0),
-      child: Stack(children: <Widget>[
-        Column(
-          children: [
-            const SizedBox(
-              height: 30,
-            ),
-            Padding(
-              padding: const EdgeInsets.all(20.0),
-              child: Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [
-                      Color.fromARGB(255, 42, 24, 49), // Light
-                      Color.fromARGB(255, 38, 23, 48), // Darker
-                    ],
-                    begin: Alignment.bottomCenter,
-                    end: Alignment.topCenter,
-                  ),
-                  borderRadius: BorderRadius.circular(20), // Rounded corners
-                  border: Border.all(
-                    color: Colors.transparent, // Border color
-                    width: 2, // Border width
-                  ),
+      child: Stack(
+        children: <Widget>[
+          RepaintBoundary(
+            key: _boundaryKey,
+            child: Column(
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    IconButton(
+                        onPressed: () {
+                          context
+                              .read<DashboardBloc>()
+                              .add(ExportDashboard(_boundaryKey));
+                        },
+                        icon: const Icon(Icons.share)),
+                  ],
                 ),
-                child: AspectRatio(
-                  aspectRatio: 1.23,
-                  child: Stack(
-                    children: <Widget>[
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                const SizedBox(
+                  height: 2,
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(20.0),
+                  child: Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [
+                          Color.fromARGB(255, 42, 24, 49), // Light
+                          Color.fromARGB(255, 38, 23, 48), // Darker
+                        ],
+                        begin: Alignment.bottomCenter,
+                        end: Alignment.topCenter,
+                      ),
+                      borderRadius:
+                          BorderRadius.circular(20), // Rounded corners
+                      border: Border.all(
+                        color: Colors.transparent, // Border color
+                        width: 2, // Border width
+                      ),
+                    ),
+                    child: AspectRatio(
+                      aspectRatio: 1.23,
+                      child: Stack(
                         children: <Widget>[
-                          const SizedBox(
-                            height: 37,
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: <Widget>[
+                              const SizedBox(
+                                height: 37,
+                              ),
+                              const Text(
+                                "المشاعر المكتشفه هاذا الاسبوع",
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: 2,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                              const SizedBox(
+                                height: 37,
+                              ),
+                              Expanded(
+                                child: Padding(
+                                  padding:
+                                      const EdgeInsets.only(right: 16, left: 6),
+                                  child: EmotionalTrendGraph(
+                                    angerEmotionalData: state
+                                        .angerEmotionalData, // Use the state data
+                                    sadEmotionalData: state
+                                        .sadEmotionalData, // Use the state data
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(
+                                height: 10,
+                              ),
+                            ],
                           ),
-                          const Text(
-                            "المشاعر المكتشفه هاذا الاسبوع",
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              letterSpacing: 2,
+                          IconButton(
+                            icon: Icon(
+                              Icons.refresh,
+                              color: Colors.white.withOpacity(
+                                  1.0), // Fixed withValues to withOpacity
                             ),
-                            textAlign: TextAlign.center,
+                            onPressed: () {
+                              context
+                                  .read<DashboardBloc>()
+                                  .add(FetchDashboard());
+                            },
                           ),
-                          const SizedBox(
-                            height: 37,
-                          ),
-                          Expanded(
-                            child: Padding(
-                              padding: const EdgeInsets.only(right: 16, left: 6),
-                              child: EmotionalTrendGraph(
-                                angerEmotionalData: state.angerEmotionalData,  // Use the state data
-                                sadEmotionalData: state.sadEmotionalData,      // Use the state data
+                          if (state
+                              .isEmpty) // Uncommented the empty state check
+                            Center(
+                              child: Container(
+                                padding: const EdgeInsets.all(16),
+                                decoration: BoxDecoration(
+                                  color: Colors.black.withOpacity(
+                                      0.8), // Fixed withValues to withOpacity
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: const Text(
+                                  'ليس لديك مشاعر مكتشفه لهاذا الاسبوع',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
                               ),
                             ),
-                          ),
-                          const SizedBox(
-                            height: 10,
-                          ),
                         ],
                       ),
-                      IconButton(
-                        icon: Icon(
-                          Icons.refresh,
-                          color: Colors.white.withOpacity(1.0),  // Fixed withValues to withOpacity
-                        ),
-                        onPressed: () {
-                          context.read<DashboardBloc>().add(FetchDashboard());
-                        },
-                      ),
-                      if (state.isEmpty)  // Uncommented the empty state check
-                        Center(
-                          child: Container(
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color: Colors.black.withOpacity(0.8),  // Fixed withValues to withOpacity
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: const Text(
-                              'There is no emotion detected for this week',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ),
-                    ],
+                    ),
                   ),
                 ),
-              ),
+
+                const TreatmentProgressTracker() //fetch progress (Completed treatments/ All treatment of this week)
+              ],
             ),
-            const TreatmentProgressTracker(
-              progress: 0.8,
-            ) //fetch progress (Completed treatments/ All treatment of this week)
-          ],
-        ),
-      ]),
+          ),
+        ],
+      ),
     );
   }
 }

@@ -55,6 +55,10 @@ dependencies:
   lottie: ^3.3.1
   intl: ^0.20.2
   flutter_sound: ^9.28.0
+  share_plus: ^10.1.4
+  path_provider: ^2.1.5
+  flutter_local_notifications: ^19.1.0
+  firebase_messaging: ^15.2.5
  
 
 

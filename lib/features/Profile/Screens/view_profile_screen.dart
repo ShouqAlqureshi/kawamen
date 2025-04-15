@@ -9,6 +9,7 @@ import 'package:kawamen/features/Reset%20Password/bloc/bloc/reset_password_bloc.
 import 'package:kawamen/features/Reset%20Password/bloc/bloc/screen/reset_password_screen.dart';
 import 'package:kawamen/features/Treatment/CBT_therapy/screen/CBT_therapy_page.dart';
 import 'package:kawamen/features/Treatment/deep_breathing/screen/deep_breathing_page.dart';
+import '../../Treatment/bloc/emotion_bloc.dart';
 import '../Bloc/profile_bloc.dart';
 
 class ViewProfileScreen extends StatelessWidget {
