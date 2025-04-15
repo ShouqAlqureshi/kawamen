@@ -53,8 +53,8 @@ class _MainNavigatorState extends State<MainNavigator> {
       body: _pages[_selectedIndex], // Show the selected page
       bottomNavigationBar: ConvexAppBar(
         style: TabStyle.reactCircle,
-        backgroundColor: Colors.deepPurple, // Match your app's color scheme
-        activeColor: Colors.white, // Match your active color
+        backgroundColor: Colors.black, // Match your app's color scheme
+        activeColor: Colors.green, // Match your active color
         color: Colors.white, // Match your inactive color
         items: const [
           TabItem(icon: Icons.home,),

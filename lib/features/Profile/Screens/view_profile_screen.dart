@@ -195,20 +195,6 @@ class ViewProfileScreen extends StatelessWidget {
                     ),
                     IconButton(
                       icon: Icon(
-                        Icons.analytics,
-                        color: Colors.white.withValues(alpha: 1.0),
-                      ),
-                      onPressed: () async {
-                        await Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const DashboardScreen(),
-                          ),
-                        );
-                      },
-                    ),
-                    IconButton(
-                      icon: Icon(
                         Icons.mood_bad, // Sad face icon
                         color: Colors.white.withValues(alpha: 1.0),
                       ),

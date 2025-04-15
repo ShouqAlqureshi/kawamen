@@ -79,20 +79,19 @@ class TreatmentProgressBloc extends Bloc<TreatmentProgressEvent, TreatmentProgre
         }
       }
       
-      // Calculate start date (beginning of current week - Sunday)
+      // Calculate start date (7 days ago from now)
       final now = DateTime.now();
-      final daysToSubtract = now.weekday == 7 ? 0 : now.weekday;
-      final startDate = DateTime(now.year, now.month, now.day - daysToSubtract);
+      final startDate = DateTime(now.year, now.month, now.day).subtract(const Duration(days: 6));
       
-      // Get the end date (7 days after start date)
-      final endDate = startDate.add(const Duration(days: 7));
+      // End date is end of today
+      final endDate = DateTime(now.year, now.month, now.day).add(const Duration(days: 1));
       
       // Debug log dates
       print('Current date: ${now.toIso8601String()}');
-      print('Start date for query: ${startDate.toIso8601String()}');
+      print('Start date for query (last 7 days): ${startDate.toIso8601String()}');
       print('End date for query: ${endDate.toIso8601String()}');
 
-      // Fetch treatments from Firestore for the current week
+      // Fetch treatments from Firestore for the last 7 days
       final treatmentsQuery = FirebaseFirestore.instance
           .collection('users')
           .doc(userId)
@@ -103,10 +102,10 @@ class TreatmentProgressBloc extends Bloc<TreatmentProgressEvent, TreatmentProgre
       final treatmentsSnapshot = await treatmentsQuery.get();
       
       // Debug log
-      print('Found ${treatmentsSnapshot.docs.length} treatment records for current week');
+      print('Found ${treatmentsSnapshot.docs.length} treatment records for last 7 days');
       
       if (treatmentsSnapshot.docs.isEmpty) {
-        print('No treatment data found for the current week');
+        print('No treatment data found for the last 7 days');
         
         // Check every document's date to see if it's within range
         if (allTreatmentsSnapshot.docs.isNotEmpty) {
