@@ -9,6 +9,7 @@ import 'package:kawamen/features/registration/repository/auth_repository.dart';
 import 'package:kawamen/features/login/bloc/login_bloc.dart';
 
 import '../../features/Treatment/bloc/emotion_bloc.dart';
+import '../navigation/MainNavigator.dart';
 import '../services/Notification_service.dart';
 
 class App extends StatefulWidget {
@@ -47,6 +48,8 @@ class _AppState extends State<App> with WidgetsBindingObserver {
         theme: AppTheme.darkTheme,
         debugShowCheckedModeBanner: false,
         onGenerateRoute: AppRoutes.generateRoute,
+        home: const MainNavigator(),
+
       ),
     );
   }

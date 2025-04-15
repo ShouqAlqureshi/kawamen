@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
-
 import 'core/services/Notification_service.dart';
 
 class HomePage extends StatelessWidget {
-  const HomePage({super.key});
+  // Add an optional parameter to control whether to show the bottom nav
+  final bool showBottomNav;
+  
+  const HomePage({super.key, this.showBottomNav = false});
 
   @override
   Widget build(BuildContext context) {
@@ -37,7 +39,7 @@ class HomePage extends StatelessWidget {
               child: RichText(
                 textAlign: TextAlign.center,
                 text: const TextSpan(
-                  text: 'أَلَا بِذِكْرِ اللَّهِ تَطْمَئِنُّ ',
+                  text: 'أَلَا بِذِكْرِ اللَّهِ تَطْمَئِنُّ ',
                   style: TextStyle(
                     fontSize: 26,
                     color: Colors.white,
@@ -87,7 +89,8 @@ class HomePage extends StatelessWidget {
           ],
         ),
       ),
-      bottomNavigationBar: BottomNavigationBar(
+      // Only show the bottom navigation bar if showBottomNav is true
+      bottomNavigationBar: showBottomNav ? BottomNavigationBar(
         backgroundColor: const Color(0xFF1A1A1A),
         selectedItemColor: Colors.green,
         unselectedItemColor: Colors.grey,
@@ -96,7 +99,7 @@ class HomePage extends StatelessWidget {
           BottomNavigationBarItem(icon: Icon(Icons.mic), label: ''),
           BottomNavigationBarItem(icon: Icon(Icons.bar_chart), label: ''),
         ],
-      ),
+      ) : null,
     );
   }
 
@@ -148,8 +151,8 @@ class HomePage extends StatelessWidget {
                     TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
               ),
             ),
-                  const TreatmentNavigator(),
-],
+          const TreatmentNavigator(),
+        ],
       ),
     );
   }
