@@ -110,8 +110,19 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
   
   final Map<String, String> _emotionTreatments = {
     'anger': 'جرب تمارين التنفس العميق للتهدئة.',
-  'sadness': 'تواصل مع شخص تثق به أو مارس الرحمة الذاتية.',
-    
+    'sadness': 'تواصل مع شخص تثق به أو مارس الرحمة الذاتية.',
+  };
+  
+  // Add mapping of English emotion names to Arabic
+  final Map<String, String> _emotionNamesArabic = {
+    'anger': 'الغضب',
+    'sadness': 'الحزن',
+    'fear': 'الخوف',
+    'anxiety': 'القلق',
+    'anxious': 'القلق',
+    'sad': 'الحزن',
+    'angry': 'الغضب',
+    // Add other emotions as needed
   };
 
   NotificationBloc({
@@ -124,47 +135,46 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
     on<NotificationRejected>(_onNotificationRejected);
     on<NotificationPostponed>(_onNotificationPostponed);
     on<UpdateTreatmentStatus>(_onUpdateTreatmentStatus);
-
-    
   }
+  
   Future<bool> _requestNotificationPermissions() async {
-  final settings = await firebaseMessaging.requestPermission();
-  return settings.authorizationStatus == AuthorizationStatus.authorized;
-}
+    final settings = await firebaseMessaging.requestPermission();
+    return settings.authorizationStatus == AuthorizationStatus.authorized;
+  }
 
-
-FutureOr<void> _onUpdateTreatmentStatus(
-    UpdateTreatmentStatus event, Emitter<NotificationState> emit) async {
-  try {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user != null) {
-      final userDocRef = FirebaseFirestore.instance.collection('users').doc(user.uid);
-      
-      // First get the emotional data array
-      final userDoc = await userDocRef.get();
-      if (userDoc.exists) {
-        final data = userDoc.data();
-        if (data != null && data.containsKey('emotionalData')) {
-          List<dynamic> emotionalData = List.from(data['emotionalData']);
-          
-          // Find and update the specific emotion entry
-          for (int i = 0; i < emotionalData.length; i++) {
-            if (emotionalData[i]['emotionId'] == event.emotionId) {
-              emotionalData[i]['treatmentStatus'] = event.status;
-              break;
+  FutureOr<void> _onUpdateTreatmentStatus(
+      UpdateTreatmentStatus event, Emitter<NotificationState> emit) async {
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        final userDocRef = FirebaseFirestore.instance.collection('users').doc(user.uid);
+        
+        // First get the emotional data array
+        final userDoc = await userDocRef.get();
+        if (userDoc.exists) {
+          final data = userDoc.data();
+          if (data != null && data.containsKey('emotionalData')) {
+            List<dynamic> emotionalData = List.from(data['emotionalData']);
+            
+            // Find and update the specific emotion entry
+            for (int i = 0; i < emotionalData.length; i++) {
+              if (emotionalData[i]['emotionId'] == event.emotionId) {
+                emotionalData[i]['treatmentStatus'] = event.status;
+                break;
+              }
             }
+            
+            // Update the document
+            await userDocRef.update({'emotionalData': emotionalData});
+            emit(TreatmentStatusUpdated(event.emotionId, event.status));
           }
-          
-          // Update the document
-          await userDocRef.update({'emotionalData': emotionalData});
-          emit(TreatmentStatusUpdated(event.emotionId, event.status));
         }
       }
+    } catch (e) {
+      print('Error updating treatment status: $e');
     }
-  } catch (e) {
-    print('Error updating treatment status: $e');
   }
-}
+  
   FutureOr<void> _onInitializeNotifications(
       InitializeNotifications event, Emitter<NotificationState> emit) async {
     const AndroidInitializationSettings initializationSettingsAndroid =
@@ -175,34 +185,34 @@ FutureOr<void> _onUpdateTreatmentStatus(
     );
     
     await flutterLocalNotificationsPlugin.initialize(
-  initializationSettings,
-  onDidReceiveNotificationResponse: (NotificationResponse response) {
-    final payload = response.payload;
-    if (payload != null) {
-      final parts = payload.split('|');
-      if (parts.length >= 3) {
-        final action = parts[0];
-        final emotion = parts[1];
-        final emotionId = parts[2];
-        final intensity = parts.length >= 4 ? double.tryParse(parts[3]) ?? 0.0 : 0.0;
-        
-        if (action == 'EMOTION') {
-          switch (response.actionId) {
-            case 'accept':
-              add(NotificationAccepted(emotion, emotionId));
-              break;
-            case 'reject':
-              add(NotificationRejected());
-              break;
-            case 'later':
-              add(NotificationPostponed(emotion, emotionId, intensity));
-              break;
+      initializationSettings,
+      onDidReceiveNotificationResponse: (NotificationResponse response) {
+        final payload = response.payload;
+        if (payload != null) {
+          final parts = payload.split('|');
+          if (parts.length >= 3) {
+            final action = parts[0];
+            final emotion = parts[1];
+            final emotionId = parts[2];
+            final intensity = parts.length >= 4 ? double.tryParse(parts[3]) ?? 0.0 : 0.0;
+            
+            if (action == 'EMOTION') {
+              switch (response.actionId) {
+                case 'accept':
+                  add(NotificationAccepted(emotion, emotionId));
+                  break;
+                case 'reject':
+                  add(NotificationRejected());
+                  break;
+                case 'later':
+                  add(NotificationPostponed(emotion, emotionId, intensity));
+                  break;
+              }
+            }
           }
         }
-      }
-    }
-  },
-);
+      },
+    );
     
     // Request permissions
     await firebaseMessaging.requestPermission(
@@ -231,42 +241,46 @@ FutureOr<void> _onUpdateTreatmentStatus(
     await _showNotification(event.emotion, event.emotionId, event.intensity);
     emit(NotificationShowing(event.emotion, event.emotionId));
   }
+  
   Future<void> checkNotificationPermissions() async {
-  final settings = await FirebaseMessaging.instance.getNotificationSettings();
-  print('Notification permission status: ${settings.authorizationStatus}');
-}
+    final settings = await FirebaseMessaging.instance.getNotificationSettings();
+    print('Notification permission status: ${settings.authorizationStatus}');
+  }
 
-FutureOr<void> _onNotificationAccepted(
-    NotificationAccepted event, Emitter<NotificationState> emit) {
-  flutterLocalNotificationsPlugin.cancel(0);
-  
-  add(UpdateTreatmentStatus(event.emotionId, 'accepted'));
-  
-  emit(NavigateToTreatment(event.emotion, event.emotionId));
-}
+  FutureOr<void> _onNotificationAccepted(
+      NotificationAccepted event, Emitter<NotificationState> emit) {
+    flutterLocalNotificationsPlugin.cancel(0);
+    
+    add(UpdateTreatmentStatus(event.emotionId, 'accepted'));
+    
+    emit(NavigateToTreatment(event.emotion, event.emotionId));
+  }
 
   FutureOr<void> _onNotificationRejected(
-    NotificationRejected event, Emitter<NotificationState> emit) {
-  if (state is NotificationShowing) {
-    final currentState = state as NotificationShowing;
-    add(UpdateTreatmentStatus(currentState.emotionId, 'rejected'));
+      NotificationRejected event, Emitter<NotificationState> emit) {
+    if (state is NotificationShowing) {
+      final currentState = state as NotificationShowing;
+      add(UpdateTreatmentStatus(currentState.emotionId, 'rejected'));
+    }
+    
+    flutterLocalNotificationsPlugin.cancel(0);
+    emit(NotificationReady());
   }
-  
-  flutterLocalNotificationsPlugin.cancel(0);
-  emit(NotificationReady());
-}
 
   FutureOr<void> _onNotificationPostponed(
-    NotificationPostponed event, Emitter<NotificationState> emit) async {
-  flutterLocalNotificationsPlugin.cancel(0);
-  
-  add(UpdateTreatmentStatus(event.emotionId, 'postponed'));
-  
-  await Future.delayed(const Duration(minutes: 30));
-  add(ShowEmotionNotification(event.emotion, event.intensity, event.emotionId));
-}
+      NotificationPostponed event, Emitter<NotificationState> emit) async {
+    flutterLocalNotificationsPlugin.cancel(0);
+    
+    add(UpdateTreatmentStatus(event.emotionId, 'postponed'));
+    
+    await Future.delayed(const Duration(minutes: 30));
+    add(ShowEmotionNotification(event.emotion, event.intensity, event.emotionId));
+  }
 
   Future<void> _showNotification(String emotion, String emotionId, double intensity) async {
+    // Get Arabic emotion name
+    String emotionArabic = _emotionNamesArabic[emotion.toLowerCase()] ?? 'مشاعر';
+    
     // Get treatment text for this emotion
     String treatmentText = _emotionTreatments[emotion.toLowerCase()] ??
                         'لدينا اقتراحات لمساعدتك مع مشاعرك الحالية.';
@@ -303,8 +317,8 @@ FutureOr<void> _onNotificationAccepted(
 
     await flutterLocalNotificationsPlugin.show(
       0,
-      'تم اكتشاف مشاعر:${emotion.toUpperCase()}',
-      'أنت تشعر بـ $emotion... $treatmentText',
+      'تم اكتشاف مشاعر: $emotionArabic',
+      'أنت تشعر بـ $emotionArabic... $treatmentText',
       platformChannelSpecifics,
       payload: 'EMOTION|$emotion|$emotionId|$intensity',
     );
@@ -354,17 +368,17 @@ class NotificationService {
       }
     });
   }
+  
   void _showNotification(String emotion, String emotionId) {
-  print('Showing notification for emotion: $emotion');
-}
+    print('Showing notification for emotion: $emotion');
+  }
 
-void _onNotificationAccepted(String emotion, String emotionId) {
-  print('Notification accepted for emotion: $emotion');
-}
+  void _onNotificationAccepted(String emotion, String emotionId) {
+    print('Notification accepted for emotion: $emotion');
+  }
 
   NotificationBloc get bloc => _notificationBloc;
 }
-
 
 class TreatmentNavigator extends StatelessWidget {
   const TreatmentNavigator({Key? key}) : super(key: key);
@@ -426,7 +440,6 @@ class TreatmentNavigator extends StatelessWidget {
         break;
         
       default:
-      
         Navigator.pushNamed(
           context,
           '/cbt-therapy',
@@ -439,4 +452,3 @@ class TreatmentNavigator extends StatelessWidget {
     }
   }
 }
-

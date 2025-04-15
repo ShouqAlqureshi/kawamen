@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:kawamen/core/utils/Loadingscreen.dart';
 import 'package:kawamen/features/Profile/Screens/view_profile_screen.dart';
 import 'dart:math';
 import 'package:kawamen/features/Treatment/CBT_therapy/bloc/CBT_therapy_bloc.dart';
@@ -415,7 +416,7 @@ class _CBTTherapyViewState extends State<_CBTTherapyView>
                               height: 60,
                               alignment: Alignment.center,
                               child: state.isLoading
-                                  ? const CircularProgressIndicator()
+                                  ? const LoadingScreen()
                                   : AnimatedOpacity(
                                       duration:
                                           const Duration(milliseconds: 500),

@@ -30,25 +30,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
           builder: (context) => Scaffold(
               appBar: AppBar(
                 backgroundColor: Colors.transparent,
+                centerTitle: true, // This is the key line
                 title: Text(
                   "لوحة البيانات",
                   style: Theme.of(context).textTheme.headlineMedium,
-                  textAlign: TextAlign.right,
-                ),
-                leading: IconButton(
-                  icon: const Icon(
-                    Icons.arrow_back,
-                    color: Colors.white,
-                  ),
-                  onPressed: () {
-                    // Instead of simply popping, navigate to DeepBreathingPage
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const CBTTherapyPage(),
-                      ),
-                    );
-                  },
                 ),
               ),
               body: BlocConsumer<DashboardBloc, DashboardState>(
