@@ -32,7 +32,7 @@ class ViewProfileScreen extends StatelessWidget {
         // Add this Builder widget
         builder: (context) => Scaffold(
           // Now this context has access to the providers
-          backgroundColor: theme.colorScheme.background,
+          backgroundColor: theme.colorScheme.surface,
           body: BlocConsumer<ProfileBloc, ProfileState>(
             listener: (context, state) {
               if (state is ProfileUpdated) {
@@ -158,6 +158,15 @@ class ViewProfileScreen extends StatelessWidget {
                         if (result == true) {
                           context.read<ProfileBloc>().add(FetchToggleStates());
                         }
+                      },
+                    ),
+                    _buildCard(
+                      context: context,
+                      title: "اختبار المشاعر",
+                      theme: theme,
+                      leading: Icons.record_voice_over,
+                      onTap: () {
+                        Navigator.pushNamed(context, '/emotion-test');
                       },
                     ),
                     _buildCard(
@@ -292,8 +301,8 @@ class ViewProfileScreen extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color:
-                theme.colorScheme.surfaceVariant, // Adjust based on your theme
+            color: theme.colorScheme
+                .surfaceContainerHighest, // Adjust based on your theme
             borderRadius: BorderRadius.circular(25),
           ),
           child: Column(
@@ -326,7 +335,7 @@ class ViewProfileScreen extends StatelessWidget {
                     color: theme.colorScheme.onSurface.withOpacity(0.7),
                   ),
                 ),
-                tileColor: theme.colorScheme.surfaceVariant,
+                tileColor: theme.colorScheme.surfaceContainerHighest,
                 activeColor: theme.colorScheme.primary,
                 inactiveTrackColor:
                     theme.colorScheme.onSurface.withOpacity(0.3),
@@ -367,7 +376,7 @@ class ViewProfileScreen extends StatelessWidget {
                             : theme.colorScheme.onSurface.withOpacity(0.7),
                       ),
                     ),
-                    tileColor: theme.colorScheme.surfaceVariant,
+                    tileColor: theme.colorScheme.surfaceContainerHighest,
                     activeColor: theme.colorScheme.primary,
                     inactiveTrackColor:
                         theme.colorScheme.onSurface.withOpacity(0.3),
