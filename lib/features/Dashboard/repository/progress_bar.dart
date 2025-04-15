@@ -24,6 +24,27 @@ class TreatmentProgressTracker extends StatelessWidget {
               ),
             );
           } else if (state is TreatmentProgressLoaded) {
+            // Check if the user has any treatments
+            if (state.totalTreatments == 0) {
+              return _buildProgressContainer(
+                0.0,
+                Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(16.0),
+                    child: Text(
+                      "لا تملك جلسات لهذا الاسبوع",
+                      style: TextStyle(
+                        fontSize: 18, 
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ),
+              );
+            }
+            
             return _buildProgressContainer(
               state.progress,
               CircularPercentIndicator(
