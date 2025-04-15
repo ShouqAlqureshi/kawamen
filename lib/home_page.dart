@@ -15,15 +15,7 @@ class HomePage extends StatelessWidget {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: Icon(Icons.menu, color: Colors.white),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: CircleAvatar(
-              backgroundImage: AssetImage("lib/core/assets/images/profile.png"),
-              radius: 20,
-            ),
-          )
-        ],
+      
         title: const Text(
           'الرئيسية',
           style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
