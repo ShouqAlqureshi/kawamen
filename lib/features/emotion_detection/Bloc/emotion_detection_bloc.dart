@@ -20,19 +20,25 @@ class EmotionDetectionBloc
   }
 
   Future<void> _onStartDetection(
-      StartEmotionDetection event, Emitter<EmotionDetectionState> emit) async {
+    StartEmotionDetection event,
+    Emitter<EmotionDetectionState> emit,
+  ) async {
     emit(DetectionInProgress());
+
     try {
-      final file = await recorderService.recordFiveMinuteSession();
-      final isSpeech = await recorderService.containsSpeech(file.path);
-      if (!isSpeech) {
-        emit(DetectionSkippedNoSpeech());
-        return;
-      }
+      await recorderService.init();
+
+      final file = await recorderService.recordThirtySecondSession();
+      print("🎤 File path: ${file.path}");
+
       final uploadId = await repository.uploadAudio(file);
+      print("🎯 Upload ID: $uploadId");
+
       final dominantEmotion =
           await repository.fetchDominantCategoricalEmotion(uploadId);
+
       emit(DetectionSuccess({"dominant": dominantEmotion}));
+      print('🎯 Final emotion: $dominantEmotion');
     } catch (e) {
       emit(DetectionFailure(e.toString()));
     }
