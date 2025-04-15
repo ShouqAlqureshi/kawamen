@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:kawamen/core/utils/Loadingscreen.dart';
 import 'package:kawamen/features/Profile/Screens/view_profile_screen.dart';
 import 'dart:math';
 import 'package:kawamen/features/Treatment/CBT_therapy/bloc/CBT_therapy_bloc.dart';
@@ -250,18 +251,23 @@ class _CBTTherapyViewState extends State<_CBTTherapyView>
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                           children: [
-                            // Repeat button - Use the captured bloc reference
-                            ElevatedButton.icon(
+                            // Repeat button - Now with outlined style
+                            OutlinedButton.icon(
                               onPressed: () {
                                 Navigator.of(dialogContext).pop();
                                 cbtTherapyBloc.add(ResetCBTExerciseEvent());
                                 cbtTherapyBloc.add(StartCBTExerciseEvent());
                               },
-                              icon: const Icon(Icons.replay_rounded),
+                              icon: Icon(
+                                Icons.replay_rounded,
+                                color: theme.colorScheme
+                                    .secondary, // Explicitly set icon color to match text
+                              ),
                               label: const Text('إعادة'),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: theme.colorScheme.secondary,
-                                foregroundColor: theme.colorScheme.onSecondary,
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: theme.colorScheme.secondary,
+                                side: BorderSide(
+                                    color: theme.colorScheme.secondary),
                                 padding: const EdgeInsets.symmetric(
                                     horizontal: 16, vertical: 12),
                                 shape: RoundedRectangleBorder(
@@ -270,8 +276,8 @@ class _CBTTherapyViewState extends State<_CBTTherapyView>
                               ),
                             ),
 
-                            // Okay button
-                            OutlinedButton(
+                            // Okay button - Now with filled style
+                            ElevatedButton(
                               onPressed: () {
                                 Navigator.pushReplacement(
                                   dialogContext,
@@ -280,17 +286,16 @@ class _CBTTherapyViewState extends State<_CBTTherapyView>
                                           const ViewProfileScreen()),
                                 );
                               },
-                              child: const Text('حسنا'),
-                              style: OutlinedButton.styleFrom(
-                                foregroundColor: theme.colorScheme.secondary,
-                                side: BorderSide(
-                                    color: theme.colorScheme.secondary),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: theme.colorScheme.secondary,
+                                foregroundColor: theme.colorScheme.onSecondary,
                                 padding: const EdgeInsets.symmetric(
                                     horizontal: 24, vertical: 12),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                               ),
+                              child: const Text('حسنا'),
                             ),
                           ],
                         ),
@@ -411,7 +416,7 @@ class _CBTTherapyViewState extends State<_CBTTherapyView>
                               height: 60,
                               alignment: Alignment.center,
                               child: state.isLoading
-                                  ? const CircularProgressIndicator()
+                                  ? const LoadingScreen()
                                   : AnimatedOpacity(
                                       duration:
                                           const Duration(milliseconds: 500),

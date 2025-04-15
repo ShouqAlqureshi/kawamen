@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:kawamen/core/utils/Loadingscreen.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -118,7 +119,7 @@ class _EmotionTestScreenState extends State<EmotionTestScreen> {
             BlocBuilder<EmotionDetectionBloc, EmotionDetectionState>(
               builder: (context, state) {
                 if (state is DetectionInProgress) {
-                  return const Center(child: CircularProgressIndicator());
+                  return const Center(child: LoadingScreen());
                 }
 
                 if (state is DetectionSuccess) {

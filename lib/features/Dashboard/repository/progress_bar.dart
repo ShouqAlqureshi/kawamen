@@ -1,4 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:kawamen/core/utils/Loadingscreen.dart';
 import 'package:kawamen/features/Dashboard/bloc/progress_bar_bloc.dart';
 import 'package:percent_indicator/percent_indicator.dart';
 import 'package:flutter/material.dart';
@@ -17,13 +18,32 @@ class TreatmentProgressTracker extends StatelessWidget {
               state is TreatmentProgressInitial) {
             return _buildProgressContainer(
               0.0,
-              Center(
-                child: CircularProgressIndicator(
-                  color: Colors.white,
-                ),
+              const Center(
+                child: LoadingScreen(),
               ),
             );
           } else if (state is TreatmentProgressLoaded) {
+            // Check if the user has any treatments
+            if (state.totalTreatments == 0) {
+              return _buildProgressContainer(
+                0.0,
+                Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(16.0),
+                    child: Text(
+                      "لا تملك جلسات لهذا الاسبوع",
+                      style: TextStyle(
+                        fontSize: 18,
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ),
+              );
+            }
+
             return _buildProgressContainer(
               state.progress,
               CircularPercentIndicator(
@@ -91,7 +111,7 @@ class TreatmentProgressTracker extends StatelessWidget {
         gradient: const LinearGradient(
           colors: [
             Color.fromARGB(255, 42, 24, 49),
-            Color.fromARGB(255, 38, 23, 48),
+            Color.fromARGB(255, 19, 2, 26),
           ],
           begin: Alignment.bottomCenter,
           end: Alignment.topCenter,

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:kawamen/core/utils/Loadingscreen.dart';
 import 'package:kawamen/features/Reset%20Password/bloc/bloc/reset_password_bloc.dart';
 
 class ResetPasswordPage extends StatelessWidget {
@@ -145,9 +146,7 @@ class _ResetPasswordFormState extends State<_ResetPasswordForm> {
                       ? const SizedBox(
                           height: 20,
                           width: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                          ),
+                          child: LoadingScreen(),
                         )
                       : const Text('اعادة تعيين الرقم السري'),
                 ),
