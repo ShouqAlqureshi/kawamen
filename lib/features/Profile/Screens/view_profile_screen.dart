@@ -197,14 +197,7 @@ class ViewProfileScreen extends StatelessWidget {
                           ),
                         );
                       },
-                    ),ElevatedButton(
-  onPressed: () {
-    // Simulate an emotion detection event
-    final emotionBloc = BlocProvider.of<EmotionBloc>(context);
-    emotionBloc.add(EmotionProcessed('sadness',0.85) as EmotionEvent);
-  },
-  child: Text('Test Sadness Notification'),
-),
+                    ),
                     IconButton(
                       icon: Icon(
                         Icons.mood_bad, // Sad face icon
