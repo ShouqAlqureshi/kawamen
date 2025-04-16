@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:kawamen/core/navigation/MainNavigator.dart';
 import 'package:kawamen/core/utils/Loadingscreen.dart';
 import 'package:kawamen/features/Profile/Screens/view_profile_screen.dart';
 import 'package:kawamen/features/Treatment/deep_breathing/bloc/deep_breathing_bloc.dart';
@@ -279,7 +280,7 @@ class _DeepBreathingViewState extends State<_DeepBreathingView>
                                   dialogContext,
                                   MaterialPageRoute(
                                       builder: (_) =>
-                                          const ViewProfileScreen()),
+                                          const MainNavigator()),
                                 );
                               },
                               style: ElevatedButton.styleFrom(
