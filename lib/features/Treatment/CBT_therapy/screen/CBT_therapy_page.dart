@@ -516,6 +516,29 @@ class _CBTTherapyViewState extends State<_CBTTherapyView>
                                         );
                                         return; // Don't proceed if validation fails
                                       }
+
+                                      // For step 3, validate both evidence fields
+                                      if (state.currentStep == 3 &&
+                                          (!_validateInput(
+                                                  _supportingEvidenceController
+                                                      .text) ||
+                                              !_validateInput(
+                                                  _contradictingEvidenceController
+                                                      .text))) {
+                                        // Show a snackbar or toast message
+                                        ScaffoldMessenger.of(context)
+                                            .showSnackBar(
+                                          const SnackBar(
+                                            content: Text(
+                                                'الرجاء إدخال الأدلة في كلا الحقلين قبل المتابعة',
+                                                textDirection:
+                                                    TextDirection.rtl),
+                                            backgroundColor: Colors.red,
+                                          ),
+                                        );
+                                        return; // Don't proceed if validation fails
+                                      }
+
                                       // For step 4, validate the alternative thought input
                                       if (state.currentStep == 4 &&
                                           !_validateInput(
@@ -533,6 +556,7 @@ class _CBTTherapyViewState extends State<_CBTTherapyView>
                                         );
                                         return; // Don't proceed if validation fails
                                       }
+
                                       // Otherwise, move to the next step
                                       context
                                           .read<CBTTherapyBloc>()
@@ -541,6 +565,13 @@ class _CBTTherapyViewState extends State<_CBTTherapyView>
                                                 _thoughtController.text,
                                             alternativeThought:
                                                 _alternativeController.text,
+                                            // Add supporting and contradicting evidence
+                                            supportingEvidence:
+                                                _supportingEvidenceController
+                                                    .text,
+                                            contradictingEvidence:
+                                                _contradictingEvidenceController
+                                                    .text,
                                           ));
                                     }
                                   },
@@ -567,7 +598,7 @@ class _CBTTherapyViewState extends State<_CBTTherapyView>
                                       borderRadius: BorderRadius.circular(12),
                                     ),
                                   ),
-                                ),
+                                )
                               ],
                             ),
 
@@ -918,10 +949,25 @@ class _CBTTherapyViewState extends State<_CBTTherapyView>
                                   width: 2,
                                 ),
                               ),
+                              errorBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
+                                borderSide: const BorderSide(
+                                  color: Colors.red,
+                                  width: 2,
+                                ),
+                              ),
                               contentPadding: const EdgeInsets.symmetric(
                                   horizontal: 8, vertical: 8),
                               filled: true,
                               fillColor: const Color(0xFF1A1A1A),
+                              // Conditionally show error text if the field is empty
+                              errorText: _supportingEvidenceController
+                                      .text.isEmpty
+                                  ? null
+                                  : _validateInput(
+                                          _supportingEvidenceController.text)
+                                      ? null
+                                      : 'لا يمكن أن يكون الحقل فارغًا',
                             ),
                             style: const TextStyle(color: Colors.white),
                             textAlign: TextAlign.right,
@@ -970,10 +1016,25 @@ class _CBTTherapyViewState extends State<_CBTTherapyView>
                                   width: 2,
                                 ),
                               ),
+                              errorBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
+                                borderSide: const BorderSide(
+                                  color: Colors.red,
+                                  width: 2,
+                                ),
+                              ),
                               contentPadding: const EdgeInsets.symmetric(
                                   horizontal: 8, vertical: 8),
                               filled: true,
                               fillColor: const Color(0xFF1A1A1A),
+                              // Conditionally show error text if the field is empty
+                              errorText: _contradictingEvidenceController
+                                      .text.isEmpty
+                                  ? null
+                                  : _validateInput(
+                                          _contradictingEvidenceController.text)
+                                      ? null
+                                      : 'لا يمكن أن يكون الحقل فارغًا',
                             ),
                             style: const TextStyle(color: Colors.white),
                             textAlign: TextAlign.right,
@@ -1105,23 +1166,23 @@ class _CBTTherapyViewState extends State<_CBTTherapyView>
 
               const SizedBox(height: 20),
 
-              // Reflection question
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF5D4EE6).withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: const Text(
-                  'كيف يشعر جسمك الآن بعد استبدال الفكرة السلبية بفكرة أكثر توازناً؟',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                    color: Colors.white,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-              ),
+              // // Reflection question
+              // Container(
+              //   padding: const EdgeInsets.all(12),
+              //   decoration: BoxDecoration(
+              //     color: const Color(0xFF5D4EE6).withOpacity(0.2),
+              //     borderRadius: BorderRadius.circular(10),
+              //   ),
+              //   child: const Text(
+              //     'كيف يشعر جسمك الآن بعد استبدال الفكرة السلبية بفكرة أكثر توازناً؟',
+              //     style: TextStyle(
+              //       fontWeight: FontWeight.bold,
+              //       fontSize: 16,
+              //       color: Colors.white,
+              //     ),
+              //     textAlign: TextAlign.center,
+              //   ),
+              // ),
             ],
           ),
         );

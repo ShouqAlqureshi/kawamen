@@ -31,13 +31,25 @@ class PauseCBTExerciseEvent extends CBTTherapyEvent {}
 class ResetCBTExerciseEvent extends CBTTherapyEvent {}
 
 class NextCBTStepEvent extends CBTTherapyEvent {
-  final String? userThought;
-  final String? alternativeThought;
+  final String userThought;
+  final String alternativeThought;
+  final String supportingEvidence;
+  final String contradictingEvidence;
 
-  const NextCBTStepEvent({this.userThought, this.alternativeThought});
+  const NextCBTStepEvent({
+    this.userThought = '',
+    this.alternativeThought = '',
+    this.supportingEvidence = '',
+    this.contradictingEvidence = '',
+  });
 
   @override
-  List<Object?> get props => [userThought, alternativeThought];
+  List<Object> get props => [
+    userThought, 
+    alternativeThought, 
+    supportingEvidence, 
+    contradictingEvidence
+  ];
 }
 
 class PreviousCBTStepEvent extends CBTTherapyEvent {}
