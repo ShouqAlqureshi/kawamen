@@ -115,7 +115,7 @@ class TreatmentProgressTracker extends StatelessWidget {
           gradient: const LinearGradient(
             colors: [
               Color(0xFF2B2B2B),
-              Color(0xFF2B2B2B),
+              Color.fromARGB(255, 24, 24, 24),
             ],
             begin: Alignment.bottomCenter,
             end: Alignment.topCenter,

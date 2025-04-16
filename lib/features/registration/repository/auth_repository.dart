@@ -36,7 +36,11 @@ class AuthRepository {
       throw Exception("Registration failed: ${e.toString()}");
     }
   }
-
+Future<bool> isUserAuthenticated() async {
+    // Check if user is logged in using Firebase Auth
+    final currentUser = FirebaseAuth.instance.currentUser;
+    return currentUser != null;
+  }
   signOut() {}
 
   signIn({required String email, required String password}) {}

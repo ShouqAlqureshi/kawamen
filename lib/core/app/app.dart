@@ -3,11 +3,14 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:kawamen/core/app/app_view.dart';
 import 'package:kawamen/core/navigation/app_routes.dart';
 import 'package:kawamen/core/utils/theme/theme.dart';
+import 'package:kawamen/features/LogIn/view/login_page.dart';
 import 'package:kawamen/features/Profile/Bloc/profile_bloc.dart';
 import 'package:kawamen/features/emotion_detection/Bloc/emotion_detection_bloc.dart';
 import 'package:kawamen/features/emotion_detection/repository/emotion_detection_repository.dart';
 import 'package:kawamen/features/emotion_detection/service/audio_recorder_service.dart';
 import 'package:kawamen/features/registration/bloc/auth_bloc.dart';
+import 'package:kawamen/features/registration/bloc/auth_event.dart';
+import 'package:kawamen/features/registration/bloc/auth_state.dart';
 import 'package:kawamen/features/registration/repository/auth_repository.dart';
 import 'package:kawamen/features/login/bloc/login_bloc.dart';
 import '../../features/Treatment/bloc/emotion_bloc.dart';
@@ -23,10 +26,10 @@ class App extends StatefulWidget {
 
 class _AppState extends State<App> with WidgetsBindingObserver {
   final EmotionBloc _emotionBloc = EmotionBloc();
-
   final EmotionDetectionBloc _emotionDetectionBloc = EmotionDetectionBloc(
       repository: EmotionDetectionRepository(),
-      recorderService: AudioRecorderService()); // Add this
+      recorderService: AudioRecorderService());
+      
   @override
   void initState() {
     super.initState();
@@ -39,7 +42,7 @@ class _AppState extends State<App> with WidgetsBindingObserver {
     return MultiBlocProvider(
       providers: [
         BlocProvider<AuthBloc>(
-          create: (context) => AuthBloc(AuthRepository()),
+          create: (context) => AuthBloc(AuthRepository())..add(CheckAuthStatus()),
         ),
         BlocProvider<LoginBloc>(
           create: (context) => LoginBloc(),
@@ -54,11 +57,20 @@ class _AppState extends State<App> with WidgetsBindingObserver {
         theme: AppTheme.darkTheme,
         debugShowCheckedModeBanner: false,
         onGenerateRoute: AppRoutes.generateRoute,
-        home: const MainNavigator(),
+        home: BlocBuilder<AuthBloc, AuthState>(
+          builder: (context, state) {
+            if (state is AuthSuccess) {
+              return const MainNavigator();
+            } else {
+              // Assuming you have a login screen route
+              return const LoginPage(); // Replace with your actual login screen
+            }
+          },
+        ),
       ),
     );
   }
-
+  
   @override
   void dispose() {
     _emotionBloc.close();

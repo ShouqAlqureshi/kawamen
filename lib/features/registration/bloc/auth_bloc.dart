@@ -10,6 +10,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<RegisterUser>(_onRegisterUser);
     on<LoginUser>(_onLoginUser);
     on<LogoutUser>(_onLogoutUser);
+    on<CheckAuthStatus>(_onCheckAuthStatus);
   }
 
   // Handle User Registration
@@ -42,7 +43,21 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       emit(AuthFailure(error: e.toString()));
     }
   }
-
+  Future<void> _onCheckAuthStatus(
+    CheckAuthStatus event,
+    Emitter<AuthState> emit,
+  ) async {
+    try {
+      final isAuthenticated = await _authRepository.isUserAuthenticated();
+      if (isAuthenticated) {
+        emit(AuthSuccess());
+      } else {
+        emit(AuthInitial());
+      }
+    } catch (e) {
+      emit(AuthFailure(error: e.toString()));
+    }
+  }
   // Handle User Logout
   Future<void> _onLogoutUser(LogoutUser event, Emitter<AuthState> emit) async {
     try {

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:kawamen/core/navigation/MainNavigator.dart';
 import 'package:kawamen/core/utils/Loadingscreen.dart';
 import '../../Profile/Screens/view_profile_screen.dart';
 import '../../Profile/Screens/edit_profile_screen.dart'; // Add this import
@@ -49,7 +50,7 @@ class _LoginViewState extends State<LoginView> {
                 if (state is LoginSuccessState) {
                   Navigator.pushReplacement(
                     context,
-                    MaterialPageRoute(builder: (_) => const ViewProfileScreen()),
+                    MaterialPageRoute(builder: (_) => const MainNavigator()),
                   );
                 } else if (state is LoginFailure) {
                   ScaffoldMessenger.of(context).showSnackBar(

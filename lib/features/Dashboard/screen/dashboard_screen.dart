@@ -115,7 +115,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       gradient: const LinearGradient(
                         colors: [
                           Color(0xFF2B2B2B), // Light
-                          Color(0xFF2B2B2B), // Darker
+                          Color.fromARGB(255, 24, 24, 24),
                         ],
                         begin: Alignment.bottomCenter,
                         end: Alignment.topCenter,
