@@ -21,6 +21,8 @@ class ProfileLoaded extends ProfileState {
   ProfileLoaded(this.userData);
 }
 
+class UsernNotAuthenticated extends ProfileState {}
+
 class ToggleStatesLoaded extends ProfileState {
   final Map<String, dynamic> userData;
   final bool emotionDetectionToggle;
@@ -45,14 +47,14 @@ class ToggleStatesLoaded extends ProfileState {
   }) {
     return ToggleStatesLoaded(
       userData: userData ?? this.userData,
-      emotionDetectionToggle: emotionDetectionToggle ?? this.emotionDetectionToggle,
+      emotionDetectionToggle:
+          emotionDetectionToggle ?? this.emotionDetectionToggle,
       notificationToggle: notificationToggle ?? this.notificationToggle,
       microphoneToggle: microphoneToggle ?? this.microphoneToggle,
       showControlCenter: showControlCenter ?? this.showControlCenter,
     );
   }
 }
-
 
 class AccountDeleted extends ProfileState {}
 

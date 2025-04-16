@@ -1,16 +1,12 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:kawamen/core/utils/Loadingscreen.dart';
-import 'package:kawamen/features/Dashboard/screen/dashboard_screen.dart';
+import 'package:kawamen/features/LogIn/view/login_view.dart';
 import 'package:kawamen/features/Profile/Bloc/microphone_bloc.dart';
 import 'package:kawamen/features/Profile/Screens/edit_profile_screen.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:kawamen/features/Reset%20Password/bloc/bloc/reset_password_bloc.dart';
-import 'package:kawamen/features/Reset%20Password/bloc/bloc/screen/reset_password_screen.dart';
 import 'package:kawamen/features/Treatment/CBT_therapy/screen/CBT_therapy_page.dart';
 import 'package:kawamen/features/Treatment/deep_breathing/screen/deep_breathing_page.dart';
-import '../../Treatment/bloc/emotion_bloc.dart';
 import '../Bloc/profile_bloc.dart';
 
 class ViewProfileScreen extends StatelessWidget {
@@ -39,6 +35,11 @@ class ViewProfileScreen extends StatelessWidget {
             listener: (context, state) {
               if (state is ProfileUpdated) {
                 context.read<ProfileBloc>().add(FetchToggleStates());
+              } else if (state is UsernNotAuthenticated) {
+                Navigator.pushAndRemoveUntil(
+                    context,
+                    MaterialPageRoute(builder: (context) => const LoginView()),
+                    (_) => false);
               }
             },
             builder: (context, state) {
@@ -54,12 +55,7 @@ class ViewProfileScreen extends StatelessWidget {
                   ),
                 );
               }
-              return Center(
-                child: Text(
-                  'Something went wrong',
-                  style: theme.textTheme.bodyLarge,
-                ),
-              );
+              return const SizedBox(height: 10);
             },
           ),
         ),

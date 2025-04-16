@@ -3,9 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:kawamen/core/utils/Loadingscreen.dart';
 import 'package:kawamen/features/Dashboard/bloc/dashboard_bloc.dart';
 import 'package:kawamen/features/Dashboard/repository/chart.dart';
-import 'package:kawamen/features/Dashboard/repository/dashboardloadingscreen.dart';
 import 'package:kawamen/features/Dashboard/repository/progress_bar.dart';
-import 'package:kawamen/features/Treatment/CBT_therapy/screen/CBT_therapy_page.dart';
+import 'package:kawamen/features/LogIn/view/login_view.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -38,7 +37,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
               body: BlocConsumer<DashboardBloc, DashboardState>(
                 builder: (context, state) {
-                  if (state is DashboardInitial) {
+                  if (state is DashboardInitial ||
+                      state is DashboardLoading ||
+                      state is DashboardExporting) {
                     return const LoadingScreen();
                   } else if (state is DashboardLoaded) {
                     return buildDashboard(
@@ -46,9 +47,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       theme,
                       state, // Pass the state to the buildDashboard method
                     );
-                  } else if (state is DashboardLoading ||
-                      state is DashboardExporting) {
-                    return const LoadingScreen();
                   } else if (state is DashboardError) {
                     return Center(
                       child: Text(
@@ -66,6 +64,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     );
                   } else if (state is DashboardExported) {
                     context.read<DashboardBloc>().add(FetchDashboard());
+                  } else if (state is UsernNotAuthenticated) {
+                    Navigator.pushAndRemoveUntil(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => const LoginView()),
+                        (_) => false);
                   }
                 },
               ))),

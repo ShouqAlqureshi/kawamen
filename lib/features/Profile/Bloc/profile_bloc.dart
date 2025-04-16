@@ -40,7 +40,10 @@ otherwise if it already fetche just copy it and send
     emit(ProfileLoading());
     try {
       final String? userId = _auth.currentUser?.uid;
-      if (userId != null) {
+      if (userId == null) {
+        emit(UsernNotAuthenticated());
+        return;
+      } else {
         final userDoc = await _firestore.collection('users').doc(userId).get();
 
         if (userDoc.exists) {
@@ -83,7 +86,10 @@ otherwise if it already fetche just copy it and send
       final microphoneToggle = prefs.getBool('microphoneToggle') ?? false;
       // Fetch user data from Firestore
       final String? userId = FirebaseAuth.instance.currentUser?.uid;
-      if (userId != null) {
+      if (userId == null) {
+        emit(UsernNotAuthenticated());
+        return;
+      } else {
         DocumentSnapshot userDoc = await FirebaseFirestore.instance
             .collection('users')
             .doc(userId)
@@ -128,7 +134,7 @@ otherwise if it already fetche just copy it and send
     final String? userId = user?.uid;
     try {
       if (userId == null || user == null) {
-        emit(ProfileError('No user logged in'));
+        emit(UsernNotAuthenticated());
         return;
       }
 
@@ -204,7 +210,8 @@ otherwise if it already fetche just copy it and send
       final String? userId = user?.uid;
 
       if (userId == null) {
-        throw Exception("User is not authenticated or UID is null.");
+        emit(UsernNotAuthenticated());
+        return;
       }
       await user?.delete();
       await FirebaseFirestore.instance.collection('users').doc(userId).delete();

@@ -28,7 +28,7 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
     try {
       final String? userId = FirebaseAuth.instance.currentUser?.uid;
       if (userId == null) {
-        emit(DashboardError('User not authenticated'));
+        emit(UsernNotAuthenticated());
         return;
       }
 

@@ -26,4 +26,4 @@ class DashboardError extends DashboardState {
 
 class DashboardExporting extends DashboardState {}
 class DashboardExported extends DashboardState {}
-
+class UsernNotAuthenticated extends DashboardState {}
