@@ -283,8 +283,7 @@ class _CBTTherapyViewState extends State<_CBTTherapyView>
                                 Navigator.pushReplacement(
                                   dialogContext,
                                   MaterialPageRoute(
-                                      builder: (_) =>
-                                          const MainNavigator()),
+                                      builder: (_) => const MainNavigator()),
                                 );
                               },
                               style: ElevatedButton.styleFrom(
@@ -486,10 +485,9 @@ class _CBTTherapyViewState extends State<_CBTTherapyView>
                                       ),
                                     ),
                                   ),
-
-                                // Play/Pause/Next Button
-                                GestureDetector(
-                                  onTap: () {
+                                // Next/Check Button (now using FilledButton instead of OutlinedButton)
+                                FilledButton.icon(
+                                  onPressed: () {
                                     if (!state.isPlaying) {
                                       context
                                           .read<CBTTherapyBloc>()
@@ -518,7 +516,6 @@ class _CBTTherapyViewState extends State<_CBTTherapyView>
                                         );
                                         return; // Don't proceed if validation fails
                                       }
-
                                       // For step 4, validate the alternative thought input
                                       if (state.currentStep == 4 &&
                                           !_validateInput(
@@ -536,7 +533,6 @@ class _CBTTherapyViewState extends State<_CBTTherapyView>
                                         );
                                         return; // Don't proceed if validation fails
                                       }
-
                                       // Otherwise, move to the next step
                                       context
                                           .read<CBTTherapyBloc>()
@@ -548,30 +544,27 @@ class _CBTTherapyViewState extends State<_CBTTherapyView>
                                           ));
                                     }
                                   },
-                                  child: Container(
-                                    width: 64,
-                                    height: 64,
-                                    decoration: BoxDecoration(
-                                      color: colorScheme.primary,
-                                      borderRadius: BorderRadius.circular(32),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: colorScheme.primary
-                                              .withOpacity(0.4),
-                                          blurRadius: 12,
-                                          offset: const Offset(0, 4),
-                                        ),
-                                      ],
-                                    ),
-                                    child: Icon(
-                                      !state.isPlaying
-                                          ? Icons.play_arrow
-                                          : (state.currentStep ==
-                                                  state.totalSteps
-                                              ? Icons.check
-                                              : Icons.arrow_forward),
-                                      color: colorScheme.onPrimary,
-                                      size: 32,
+                                  icon: Icon(
+                                    !state.isPlaying
+                                        ? Icons.play_arrow
+                                        : (state.currentStep == state.totalSteps
+                                            ? Icons.check
+                                            : Icons.arrow_forward),
+                                  ),
+                                  label: Text(
+                                    !state.isPlaying
+                                        ? 'البدء'
+                                        : (state.currentStep == state.totalSteps
+                                            ? 'إنهاء'
+                                            : 'التالي'),
+                                  ),
+                                  style: FilledButton.styleFrom(
+                                    foregroundColor: Colors.white,
+                                    backgroundColor: colorScheme.primary,
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 16, vertical: 12),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
                                     ),
                                   ),
                                 ),
