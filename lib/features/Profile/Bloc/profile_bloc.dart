@@ -3,6 +3,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:kawamen/core/navigation/app_routes.dart';
+import 'package:kawamen/features/registration/bloc/auth_bloc.dart';
+import 'package:kawamen/features/registration/bloc/auth_event.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 part 'profile_event.dart';
 part 'profile_state.dart';
@@ -223,37 +225,40 @@ otherwise if it already fetche just copy it and send
     }
   }
 
-  Future<void> _onLogout(
-    Logout event,
-    Emitter<ProfileState> emit,
-  ) async {
-    emit(ProfileLoading());
-    try {
-      final user = FirebaseAuth.instance.currentUser;
+  Future<void> _onLogout(Logout event, Emitter<ProfileState> emit) async {
+  emit(ProfileLoading());
+  try {
+    final user = FirebaseAuth.instance.currentUser;
 
-      // Check if the user is logged in
-      if (user == null) {
-        showErrorDialog(context, "User is not logged in");
-        return;
-      }
-
-      final shouldLogout = await showLogOutDialog(context);
-      if (shouldLogout) {
-        await FirebaseAuth.instance.signOut();
-
-        // Optionally, clear shared preferences if needed
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.clear();
-
-        emit(ProfileInitial()); // Reset the profile state to initial
-
-        Navigator.of(context)
-            .pushNamedAndRemoveUntil(AppRoutes.entry, (route) => false);
-      }
-    } catch (e) {
-      emit(ProfileError('Error logging out: ${e.toString()}'));
+    // Check if the user is logged in
+    if (user == null) {
+      showErrorDialog(context, "User is not logged in");
+      return;
     }
+
+    final shouldLogout = await showLogOutDialog(context);
+    if (shouldLogout) {
+      await FirebaseAuth.instance.signOut();
+
+      // Clear shared preferences if needed
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.clear();
+
+      emit(ProfileInitial()); // Reset the profile state to initial
+      
+      // Notify AuthBloc about logout
+      BlocProvider.of<AuthBloc>(context).add(LogoutUser());
+      
+      // Navigate to login page directly
+      Navigator.of(context).pushNamedAndRemoveUntil(
+        AppRoutes.login, // Make sure this route exists in your AppRoutes
+        (route) => false
+      );
+    }
+  } catch (e) {
+    emit(ProfileError('Error logging out: ${e.toString()}'));
   }
+}
 
   void showErrorDialog(BuildContext context, String message) {
     showDialog(
