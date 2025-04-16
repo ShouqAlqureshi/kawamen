@@ -747,127 +747,153 @@ class _CBTTherapyViewState extends State<_CBTTherapyView>
       // This code replaces the existing case 3 in the _buildCurrentStepContent method
 
       case 3: // Challenge the thought
-        return Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: const Color(0xFF1A1A1A),
-            borderRadius: BorderRadius.circular(15),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.2),
-                blurRadius: 10,
-                spreadRadius: 1,
-              ),
-            ],
+  return Container(
+    width: double.infinity,
+    padding: const EdgeInsets.all(16),
+    decoration: BoxDecoration(
+      color: const Color(0xFF1A1A1A),
+      borderRadius: BorderRadius.circular(15),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withOpacity(0.2),
+          blurRadius: 10,
+          spreadRadius: 1,
+        ),
+      ],
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'فكرتك: "${state.userThought}"',
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 16,
+            color: Colors.white,
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'فكرتك: "${state.userThought}"',
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                  color: Colors.white,
+          textAlign: TextAlign.right,
+          textDirection: TextDirection.rtl,
+        ),
+        const SizedBox(height: 15),
+        Text(
+          'ما هو الدليل الذي يدعم أو يعارض هذه الفكرة؟',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 16,
+            color: const Color(0xFF4CAF50),
+          ),
+          textAlign: TextAlign.right,
+          textDirection: TextDirection.rtl,
+        ),
+        const SizedBox(height: 10),
+        Row(
+          children: [
+            // Supporting Evidence Column
+            Expanded(
+              child: Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE64E4E).withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(10),
                 ),
-                textAlign: TextAlign.right,
-                textDirection: TextDirection.rtl,
-              ),
-              const SizedBox(height: 15),
-              Text(
-                'ما هو الدليل الذي يدعم أو يعارض هذه الفكرة؟',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                  color: const Color(0xFF4CAF50),
-                ),
-                textAlign: TextAlign.right,
-                textDirection: TextDirection.rtl,
-              ),
-              const SizedBox(height: 10),
-              Row(
-                children: [
-                  // Supporting Evidence Column
-                  Expanded(
-                    child: Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFE64E4E).withOpacity(0.15),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Column(
-                        children: [
-                          Text(
-                            "مع",
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: Colors.red[400],
-                            ),
-                          ),
-                          const SizedBox(height: 5),
-                          TextField(
-                            controller:
-                                _supportingEvidenceController, // Add this controller to the class
-                            maxLines: 6,
-                            decoration: InputDecoration(
-                              hintText: 'اكتب الدليل الذي يدعم الفكرة...',
-                              hintStyle: TextStyle(color: Colors.white60),
-                              border: InputBorder.none,
-                              contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 8, vertical: 8),
-                            ),
-                            style: const TextStyle(color: Colors.white),
-                            textAlign: TextAlign.right,
-                            textDirection: TextDirection.rtl,
-                          ),
-                        ],
+                child: Column(
+                  children: [
+                    Text(
+                      "مع",
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.red[400],
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 10),
-                  // Contradicting Evidence Column
-                  Expanded(
-                    child: Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF4CAF50).withOpacity(0.15),
-                        borderRadius: BorderRadius.circular(10),
+                    const SizedBox(height: 5),
+                    TextField(
+                      controller: _supportingEvidenceController,
+                      maxLines: 6,
+                      decoration: InputDecoration(
+                        hintText: 'اكتب الدليل الذي يدعم الفكرة...',
+                        hintStyle: const TextStyle(color: Colors.white60),
+                        // Add clear borders to make it obvious this is an input field
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: BorderSide(
+                            color: Colors.red[400]!.withOpacity(0.5),
+                          ),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: BorderSide(
+                            color: Colors.red[400]!,
+                            width: 2,
+                          ),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                        filled: true,
+                        fillColor: const Color(0xFF1A1A1A),
                       ),
-                      child: Column(
-                        children: [
-                          Text(
-                            "ضد",
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: Colors.green[400],
-                            ),
-                          ),
-                          const SizedBox(height: 5),
-                          TextField(
-                            controller:
-                                _contradictingEvidenceController, // Add this controller to the class
-                            maxLines: 6,
-                            decoration: InputDecoration(
-                              hintText: 'اكتب الدليل الذي يعارض الفكرة...',
-                              hintStyle: TextStyle(color: Colors.white60),
-                              border: InputBorder.none,
-                              contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 8, vertical: 8),
-                            ),
-                            style: const TextStyle(color: Colors.white),
-                            textAlign: TextAlign.right,
-                            textDirection: TextDirection.rtl,
-                          ),
-                        ],
+                      style: const TextStyle(color: Colors.white),
+                      textAlign: TextAlign.right,
+                      textDirection: TextDirection.rtl,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(width: 10),
+            // Contradicting Evidence Column
+            Expanded(
+              child: Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF4CAF50).withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Column(
+                  children: [
+                    Text(
+                      "ضد",
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.green[400],
                       ),
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 5),
+                    TextField(
+                      controller: _contradictingEvidenceController, 
+                      maxLines: 6,
+                      decoration: InputDecoration(
+                        hintText: 'اكتب الدليل الذي يعارض الفكرة...',
+                        hintStyle: const TextStyle(color: Colors.white60),
+                        // Add clear borders to make it obvious this is an input field
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: BorderSide(
+                            color: Colors.green[400]!.withOpacity(0.5),
+                          ),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: BorderSide(
+                            color: Colors.green[400]!,
+                            width: 2,
+                          ),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                        filled: true,
+                        fillColor: const Color(0xFF1A1A1A),
+                      ),
+                      style: const TextStyle(color: Colors.white),
+                      textAlign: TextAlign.right,
+                      textDirection: TextDirection.rtl,
+                    ),
+                  ],
+                ),
               ),
-            ],
-          ),
-        );
+            ),
+          ],
+        ),
+      ],
+    ),
+  );
       case 4: // Create alternative thought
         return Column(
           children: [
