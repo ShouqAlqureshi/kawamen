@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:kawamen/core/utils/theme/theme.dart';
 import 'core/services/Notification_service.dart';
 
 class HomePage extends StatelessWidget {
@@ -9,16 +10,21 @@ class HomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Access the theme from the context
+    final theme = Theme.of(context);
+    final customColors = theme.extension<CustomColors>();
+    
     return Scaffold(
-      backgroundColor: Colors.black,
+      // Use theme's scaffoldBackgroundColor instead of hardcoded color
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: Icon(Icons.menu, color: Colors.white),
-      
-        title: const Text(
+        // Use theme's appBarTheme properties
+        backgroundColor: theme.appBarTheme.backgroundColor,
+        elevation: theme.appBarTheme.elevation,
+        leading: Icon(Icons.menu, color: theme.colorScheme.onBackground),
+        title: Text(
           'الرئيسية',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          style: theme.textTheme.headlineMedium,
         ),
         centerTitle: true,
       ),
@@ -30,19 +36,17 @@ class HomePage extends StatelessWidget {
             Center(
               child: RichText(
                 textAlign: TextAlign.center,
-                text: const TextSpan(
+                text: TextSpan(
                   text: 'أَلَا بِذِكْرِ اللَّهِ تَطْمَئِنُّ ',
-                  style: TextStyle(
+                  style: theme.textTheme.headlineMedium?.copyWith(
                     fontSize: 26,
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
                     height: 1.8,
                   ),
                   children: [
                     TextSpan(
                       text: 'القلوب',
                       style: TextStyle(
-                        color: Colors.green,
+                        color: theme.colorScheme.primary,
                         fontSize: 28,
                       ),
                     ),
@@ -51,28 +55,28 @@ class HomePage extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 20),
-            const Icon(Icons.auto_awesome, color: Colors.greenAccent),
+            Icon(Icons.auto_awesome, color: theme.colorScheme.primary.withOpacity(0.8)),
             const SizedBox(height: 30),
-            const Text(
+            Text(
               "جلساتك",
-              style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold),
+              style: theme.textTheme.headlineMedium?.copyWith(fontSize: 18),
             ),
             const SizedBox(height: 10),
             _buildSessionCard(
+              context: context,
               label: 'القلق',
               title: 'التنفس العميق والاسترخاء العضلي',
               icon: Icons.self_improvement,
               isActive: true,
             ),
             _buildSessionCard(
+              context: context,
               label: 'الحزن',
               title: 'الكتابة التأملية',
               icon: Icons.edit_note,
             ),
             _buildSessionCard(
+              context: context,
               label: 'القلق',
               title: 'إعادة التركيز وتحدي الأفكار السلبية',
               icon: Icons.sync_alt,
@@ -83,9 +87,9 @@ class HomePage extends StatelessWidget {
       ),
       // Only show the bottom navigation bar if showBottomNav is true
       bottomNavigationBar: showBottomNav ? BottomNavigationBar(
-        backgroundColor: const Color(0xFF1A1A1A),
-        selectedItemColor: Colors.green,
-        unselectedItemColor: Colors.grey,
+        backgroundColor: theme.colorScheme.surface,
+        selectedItemColor: theme.colorScheme.primary,
+        unselectedItemColor: theme.colorScheme.onSurface.withOpacity(0.6),
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: ''),
           BottomNavigationBarItem(icon: Icon(Icons.mic), label: ''),
@@ -96,21 +100,24 @@ class HomePage extends StatelessWidget {
   }
 
   Widget _buildSessionCard({
+    required BuildContext context,
     required String label,
     required String title,
     required IconData icon,
     bool isActive = false,
   }) {
+    final theme = Theme.of(context);
+    
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 8),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFF2B2B2B),
+        color: theme.cardColor,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
         children: [
-          Icon(icon, color: Colors.greenAccent),
+          Icon(icon, color: theme.colorScheme.primary),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -119,12 +126,12 @@ class HomePage extends StatelessWidget {
                 Text(
                   title,
                   textAlign: TextAlign.right,
-                  style: const TextStyle(color: Colors.white, fontSize: 16),
+                  style: theme.textTheme.bodyLarge,
                 ),
                 Text(
                   label,
                   textAlign: TextAlign.right,
-                  style: const TextStyle(color: Colors.grey, fontSize: 14),
+                  style: theme.textTheme.bodyMedium,
                 ),
               ],
             ),
@@ -134,13 +141,15 @@ class HomePage extends StatelessWidget {
               margin: const EdgeInsets.only(left: 8),
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                color: Colors.green,
+                color: theme.colorScheme.primary,
                 borderRadius: BorderRadius.circular(20),
               ),
-              child: const Text(
+              child: Text(
                 'استئناف',
-                style:
-                    TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  color: theme.colorScheme.onPrimary,
+                  fontWeight: FontWeight.bold
+                ),
               ),
             ),
           const TreatmentNavigator(),

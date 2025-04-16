@@ -116,26 +116,56 @@ class _EmotionTestScreenState extends State<EmotionTestScreen> {
               child: const Text("Stop Detection"),
             ),
             const SizedBox(height: 24),
-            BlocConsumer<EmotionDetectionBloc, EmotionDetectionState>(
-              listener: (context, state) {
-                if (state is DetectionSuccess) {
-                  final emotion =
-                      state.categoricalResult['dominant'] ?? 'Unknown';
-                  setState(() => resultMessage = 'Detected emotion: $emotion');
-                } else if (state is DetectionSkippedNoSpeech) {
-                  setState(() => resultMessage = 'No speech detected.');
-                } else if (state is DetectionFailure) {
-                  setState(() => resultMessage = 'Error: ${state.error}');
-                }
-              },
+            BlocBuilder<EmotionDetectionBloc, EmotionDetectionState>(
               builder: (context, state) {
                 if (state is DetectionInProgress) {
                   return const Center(child: LoadingScreen());
                 }
-                return Text(
-                  resultMessage,
-                  style: const TextStyle(
-                      fontSize: 18, fontWeight: FontWeight.w500),
+
+                if (state is DetectionSuccess) {
+                  final result = state.categoricalResult;
+
+                  // Extract top emotion from the result map
+                  final topEmotion = result.entries
+                      .reduce((a, b) => a.value > b.value ? a : b)
+                      .key;
+
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const SizedBox(height: 16),
+                      const Text(
+                        'Detected Emotion:',
+                        style: TextStyle(
+                            fontSize: 20, fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 10),
+                      Text(
+                        topEmotion.toUpperCase(),
+                        style:
+                            const TextStyle(fontSize: 32, color: Colors.teal),
+                      ),
+                    ],
+                  );
+                }
+
+                if (state is DetectionSkippedNoSpeech) {
+                  return const Padding(
+                    padding: EdgeInsets.only(top: 16),
+                    child: Text('No speech detected. Please try again.'),
+                  );
+                }
+
+                if (state is DetectionFailure) {
+                  return Padding(
+                    padding: const EdgeInsets.only(top: 16),
+                    child: Text('Error: ${state.error}'),
+                  );
+                }
+
+                return const Padding(
+                  padding: EdgeInsets.only(top: 16),
+                  child: Text('Press start to begin emotion detection.'),
                 );
               },
             ),
