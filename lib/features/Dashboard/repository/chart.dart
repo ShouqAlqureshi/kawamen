@@ -4,19 +4,20 @@ import 'package:flutter/material.dart';
 class EmotionalTrendGraph extends StatelessWidget {
   final Map<int, int> sadEmotionalData; // map of day:count
   final Map<int, int> angerEmotionalData;
-  
-  const EmotionalTrendGraph({
-    Key? key, 
-    required this.angerEmotionalData,
-    required this.sadEmotionalData
-  }) : super(key: key);
+
+  const EmotionalTrendGraph(
+      {Key? key,
+      required this.angerEmotionalData,
+      required this.sadEmotionalData})
+      : super(key: key);
 
   // Helper method to convert from Dart weekday (1=Monday, 7=Sunday)
   // to display weekday (1=Sunday, 2=Monday, ..., 7=Saturday)
   int _convertWeekday(int dartWeekday) {
     // Convert from Dart weekday to display weekday
-    if (dartWeekday == 7) { // Sunday in Dart is 7
-      return 1;  // Sunday should be 1 in our display
+    if (dartWeekday == 7) {
+      // Sunday in Dart is 7
+      return 1; // Sunday should be 1 in our display
     } else {
       return dartWeekday + 1; // Monday(1) becomes 2, Tuesday(2) becomes 3, etc.
     }
@@ -24,44 +25,101 @@ class EmotionalTrendGraph extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return LineChart(
-      LineChartData(
-        gridData: const FlGridData(show: false),
-        titlesData: titlesData,
-        borderData: FlBorderData(show: false),
-        lineBarsData: [
-          LineChartBarData(//sad
-            spots: sadEmotionalData.entries.map((e) {
-              // Convert the weekday number before creating the FlSpot
-              return FlSpot(_convertWeekday(e.key).toDouble(), e.value.toDouble());
-            }).toList(),
-            isCurved: true,
-            isStrokeCapRound: true,
-            color: Colors.blue,
-            dotData: const FlDotData(show: false),
+    return Column(
+      children: [
+        // Legend (indicator)
+        Padding(
+          padding: const EdgeInsets.only(bottom: 16.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // Sad indicator
+              Row(
+                children: [
+                  Container(
+                    width: 16,
+                    height: 3,
+                    color: Colors.blue,
+                  ),
+                  const SizedBox(width: 4),
+                  const Text(
+                    'حزين',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(width: 24),
+              // Anger indicator
+              Row(
+                children: [
+                  Container(
+                    width: 16,
+                    height: 3,
+                    color: Colors.red,
+                  ),
+                  const SizedBox(width: 4),
+                  const Text(
+                    'غاضب',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
-          LineChartBarData(//anger 
-            spots: angerEmotionalData.entries.map((e) {
-              // Convert the weekday number before creating the FlSpot
-              return FlSpot(_convertWeekday(e.key).toDouble(), e.value.toDouble());
-            }).toList(),
-            isCurved: true,
-            isStrokeCapRound: true,
-            color: Colors.red,
-            dotData: const FlDotData(show: false),
+        ),
+        // The chart
+        Expanded(
+          child: LineChart(
+            LineChartData(
+              gridData: const FlGridData(show: false),
+              titlesData: titlesData,
+              borderData: FlBorderData(show: false),
+              lineBarsData: [
+                LineChartBarData(
+                  //sad
+                  spots: sadEmotionalData.entries.map((e) {
+                    // Convert the weekday number before creating the FlSpot
+                    return FlSpot(
+                        _convertWeekday(e.key).toDouble(), e.value.toDouble());
+                  }).toList(),
+                  isCurved: true,
+                  isStrokeCapRound: true,
+                  color: Colors.blue,
+                  dotData: const FlDotData(show: false),
+                ),
+                LineChartBarData(
+                  //anger
+                  spots: angerEmotionalData.entries.map((e) {
+                    // Convert the weekday number before creating the FlSpot
+                    return FlSpot(
+                        _convertWeekday(e.key).toDouble(), e.value.toDouble());
+                  }).toList(),
+                  isCurved: true,
+                  isStrokeCapRound: true,
+                  color: Colors.red,
+                  dotData: const FlDotData(show: false),
+                ),
+              ],
+            ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
   Widget getTitles(double value, TitleMeta? meta) {
     const style = TextStyle(
       fontWeight: FontWeight.bold,
-      fontSize: 16,
+      fontSize: 10,
       color: Colors.white,
     );
-    
+
     String text;
     switch (value.toInt()) {
       case 1:

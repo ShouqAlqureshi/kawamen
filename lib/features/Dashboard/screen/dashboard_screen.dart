@@ -38,9 +38,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
               body: BlocConsumer<DashboardBloc, DashboardState>(
                 builder: (context, state) {
-                  if (state is DashboardInitial || state is DashboardExported) {
-                    context.read<DashboardBloc>().add(FetchDashboard());
-                    return const DashboardLoadingScreen();
+                  if (state is DashboardInitial) {
+                    return const LoadingScreen();
                   } else if (state is DashboardLoaded) {
                     return buildDashboard(
                       context,
@@ -65,6 +64,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(content: Text(state.message)),
                     );
+                  } else if (state is DashboardExported) {
+                    context.read<DashboardBloc>().add(FetchDashboard());
                   }
                 },
               ))),
@@ -93,7 +94,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               .read<DashboardBloc>()
                               .add(ExportDashboard(_boundaryKey));
                         },
-                        icon: const Icon(Icons.share)),
+                        icon: const Icon(
+                          Icons.share,
+                          color: Colors.greenAccent,
+                        )),
                   ],
                 ),
                 const SizedBox(
@@ -106,8 +110,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     decoration: BoxDecoration(
                       gradient: const LinearGradient(
                         colors: [
-                          Color.fromARGB(255, 42, 24, 49), // Light
-                          Color.fromARGB(255, 38, 23, 48), // Darker
+                          Color(0xFF2B2B2B), // Light
+                          Color(0xFF2B2B2B), // Darker
                         ],
                         begin: Alignment.bottomCenter,
                         end: Alignment.topCenter,
@@ -160,10 +164,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             ],
                           ),
                           IconButton(
-                            icon: Icon(
+                            icon: const Icon(
                               Icons.refresh,
-                              color: Colors.white.withOpacity(
-                                  1.0), // Fixed withValues to withOpacity
+                              color: Colors.greenAccent,
                             ),
                             onPressed: () {
                               context

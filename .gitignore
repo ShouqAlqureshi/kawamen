@@ -25,3 +25,5 @@ doc/api/
 
 .flutter-plugins
 .flutter-plugins-dependencies
+#debug files 
+~/kawamen/android/app/.cxx/Debug/
