@@ -24,6 +24,14 @@ class LoadCBTDataEvent extends CBTTherapyEvent {
   List<Object?> get props => [treatmentId];
 }
 
+class UpdateInstructionOpacityEvent extends CBTTherapyEvent {
+  final double opacity;
+  
+  const UpdateInstructionOpacityEvent({required this.opacity});
+  
+  @override
+  List<Object?> get props => [opacity];
+}
 class StartCBTExerciseEvent extends CBTTherapyEvent {}
 
 class PauseCBTExerciseEvent extends CBTTherapyEvent {}
@@ -220,6 +228,9 @@ class CBTTherapyBloc extends Bloc<CBTTherapyEvent, CBTTherapyState> {
     on<UpdateCBTTreatmentProgressEvent>(_onUpdateTreatmentProgress);
     on<CompleteCBTTreatmentEvent>(_onCompleteTreatment);
     on<LoadUserCBTTreatmentEvent>(_onLoadUserTreatment);
+    on<UpdateInstructionOpacityEvent>((event, emit) {
+  emit(state.copyWith(instructionOpacity: event.opacity));
+});
   }
 
   // Add this method to your CBTTherapyBloc class
@@ -451,33 +462,38 @@ Future<void> _onLoadData(
     ));
   }
 
-  void _onNextStep(NextCBTStepEvent event, Emitter<CBTTherapyState> emit) {
-    if (state.currentStep < state.totalSteps) {
-      // Update state with user inputs if provided
-      final updatedState = state.copyWith(
-        currentStep: state.currentStep + 1,
-        currentInstructionIndex: state.currentInstructionIndex + 1,
-        instructionOpacity: 1.0,
-      );
+void _onNextStep(NextCBTStepEvent event, Emitter<CBTTherapyState> emit) {
+  if (state.currentStep < state.totalSteps) {
+    // Combine all state updates into a single emit
+    final Map<String, bool> cogDistortions = event.userThought != null && 
+                                         event.userThought.isNotEmpty ? 
+                                         state.cognitiveDistortions : 
+                                         Map.fromEntries(state.cognitiveDistortions.keys.map((key) => MapEntry(key, false)));
+    
+    emit(state.copyWith(
+      currentStep: state.currentStep + 1,
+      currentInstructionIndex: state.currentInstructionIndex + 1,
+      instructionOpacity: 1.0,
+      userThought: event.userThought.isNotEmpty ? event.userThought : state.userThought,
+      alternativeThought: event.alternativeThought.isNotEmpty ? event.alternativeThought : state.alternativeThought,
+    ));
 
-      // Update user thought if provided and not empty
-      final newState =
-          event.userThought != null && event.userThought!.isNotEmpty
-              ? updatedState.copyWith(userThought: event.userThought)
-              : updatedState;
-
-      // Update alternative thought if provided and not empty
-      final finalState = event.alternativeThought != null &&
-              event.alternativeThought!.isNotEmpty
-          ? newState.copyWith(alternativeThought: event.alternativeThought)
-          : newState;
-
-      emit(finalState);
-
-      // Start instruction animation for the new step
-      _startInstructionAnimation(emit);
-    }
+    // Don't emit here - instead use a callback approach for animation
+    _instructionTimer?.cancel();
+    _instructionTimer = Timer.periodic(const Duration(milliseconds: 4000), (_) {
+      // Don't emit directly in the timer callback
+      // Instead, dispatch a new event for animation updates
+      if (!emit.isDone) {
+        emit(state.copyWith(instructionOpacity: 0.0));
+        
+        // This is problematic - we need to change the approach
+        // Future.delayed(const Duration(milliseconds: 500), () {
+        //   emit(state.copyWith(instructionOpacity: 1.0)); // This line causes the error
+        // });
+      }
+    });
   }
+}
 
   void _onPreviousStep(
       PreviousCBTStepEvent event, Emitter<CBTTherapyState> emit) {
@@ -517,19 +533,20 @@ void _startProgressUpdateTimer() {
     );
   }
   // Helper method to start instruction animation
-  void _startInstructionAnimation(Emitter<CBTTherapyState> emit) {
-    _instructionTimer?.cancel();
+void _startInstructionAnimation(Emitter<CBTTherapyState> emit) {
+  _instructionTimer?.cancel();
 
-    // Fade in-out animation for instructions
-    _instructionTimer =
-        Timer.periodic(const Duration(milliseconds: 4000), (timer) {
-      emit(state.copyWith(instructionOpacity: 0.0));
-
-      Future.delayed(const Duration(milliseconds: 500), () {
-        emit(state.copyWith(instructionOpacity: 1.0));
-      });
+  // Instead of using a timer with future delays that cause multiple emits,
+  // create a separate event for animation and dispatch it
+  _instructionTimer = Timer.periodic(const Duration(milliseconds: 4000), (_) {
+    add(UpdateInstructionOpacityEvent(opacity: 0.0));
+    
+    // Use a delayed dispatch for the fade-in
+    Future.delayed(const Duration(milliseconds: 500), () {
+      add(UpdateInstructionOpacityEvent(opacity: 1.0));
     });
-  }
+  });
+}
 
   void _cancelTimers() {
     _timer?.cancel();

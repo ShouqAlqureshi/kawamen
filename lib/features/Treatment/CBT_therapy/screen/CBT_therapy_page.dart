@@ -830,11 +830,11 @@ class _CBTTherapyViewState extends State<_CBTTherapyView>
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
-                              content: SingleChildScrollView(
+                              content: const SingleChildScrollView(
                                 child: Column(
                                   mainAxisSize: MainAxisSize.min,
                                   crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: const [
+                                  children: [
                                     Text(
                                       'في هذه الخطوة، نقوم بتحليل الفكرة السلبية من خلال جمع الأدلة:',
                                       style: TextStyle(
@@ -911,12 +911,12 @@ class _CBTTherapyViewState extends State<_CBTTherapyView>
                 ],
               ),
               const SizedBox(height: 15),
-              Text(
+              const Text(
                 'ما هو الدليل الذي يدعم أو يعارض هذه الفكرة؟',
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 16,
-                  color: const Color(0xFF4CAF50),
+                  color: Color(0xFF4CAF50),
                 ),
                 textAlign: TextAlign.right,
                 textDirection: TextDirection.rtl,
