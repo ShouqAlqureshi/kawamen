@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:kawamen/core/services/cache_service.dart';
 import 'package:kawamen/core/utils/Loadingscreen.dart';
 import 'package:kawamen/features/LogIn/view/login_view.dart';
 import 'package:kawamen/features/Profile/Bloc/microphone_bloc.dart';
@@ -46,7 +47,13 @@ class ViewProfileScreen extends StatelessWidget {
               if (state is ProfileLoading) {
                 return const Center(child: LoadingScreen());
               } else if (state is ToggleStatesLoaded) {
-                return _buildProfile(context, state, theme);
+                return StreamBuilder<Map<String, dynamic>>(
+                  stream: UserCacheService().getUserStream(state.userId),
+                  builder: (context, cacheSnapshot) {
+                    final userData = cacheSnapshot.data ?? state.userData;
+                    return _buildProfile(context, state, theme, userData);
+                  },
+                );
               } else if (state is ProfileError) {
                 return Center(
                   child: Text(
@@ -63,11 +70,11 @@ class ViewProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildProfile(
-      BuildContext context, ToggleStatesLoaded state, ThemeData theme) {
-    String userName = state.userData['fullName'] ?? '';
-    String userEmail = state.userData['email'] ?? '';
-    String userAge = state.userData['age']?.toString() ?? '';
+  Widget _buildProfile(BuildContext context, ToggleStatesLoaded state,
+      ThemeData theme, Map<String, dynamic> userData) {
+    String userName = userData['fullName'] ?? '';
+    String userEmail = userData['email'] ?? '';
+    String userAge = userData['age']?.toString() ?? '';
     String avatarText = getInitials(userName);
 
     return Scaffold(
@@ -140,7 +147,7 @@ class ViewProfileScreen extends StatelessWidget {
                           context,
                           MaterialPageRoute(
                             builder: (context) => EditProfileScreen(
-                              initialUserInfo: state.userData,
+                              initialUserInfo: userData,
                               onProfileUpdated: () {
                                 if (context.mounted) {
                                   context
