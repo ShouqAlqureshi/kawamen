@@ -124,7 +124,6 @@ class _EditProfileScreenContent extends StatelessWidget {
         ),
       ),
       child: Scaffold(
-        backgroundColor: const Color.fromARGB(255, 32, 32, 32),
         appBar: AppBar(
           backgroundColor: Colors.transparent,
           title: Text(

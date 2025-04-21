@@ -79,27 +79,13 @@ class ViewProfileScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
+        centerTitle: true,
         backgroundColor: Colors.transparent,
         title: Text(
           " الحساب الشخصي",
           style: Theme.of(context).textTheme.headlineMedium,
           textAlign: TextAlign.right,
         ),
-        // leading: IconButton(
-        //   icon: const Icon(
-        //     Icons.arrow_back,
-        //     color: Colors.white,
-        //   ),
-        //   onPressed: () {
-        //     // Instead of simply popping, navigate to DeepBreathingPage
-        //     Navigator.pushReplacement(
-        //       context,
-        //       MaterialPageRoute(
-        //         builder: (context) => const CBTTherapyPage(),
-        //       ),
-        //     );
-        //   },
-        // ),
       ),
       body: Center(
         child: SingleChildScrollView(
@@ -141,7 +127,6 @@ class ViewProfileScreen extends StatelessWidget {
                       title: "تعديل معلومات الحساب",
                       theme: theme,
                       onTap: () async {
-                        // Make this async
                         // Navigate and wait for result
                         final result = await Navigator.push(
                           context,
