@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:kawamen/core/utils/Loadingscreen.dart';
 import 'package:kawamen/features/Dashboard/bloc/dashboard_bloc.dart';
-import 'package:kawamen/features/Dashboard/bloc/treatments_boxes.dart';
+import 'package:kawamen/features/Dashboard/bloc/treatments_boxes_bloc.dart';
 import 'package:kawamen/features/Dashboard/repository/chart.dart';
-import 'package:kawamen/features/Dashboard/repository/progress_bar.dart';
+import 'package:kawamen/features/Dashboard/screen/treatment_progress_screen.dart';
+import 'package:kawamen/features/Dashboard/screen/treatment_boxes_screen.dart';
 import 'package:kawamen/features/LogIn/view/login_view.dart';
 
 class DashboardScreen extends StatefulWidget {

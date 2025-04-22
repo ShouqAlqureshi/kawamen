@@ -1,6 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:kawamen/core/utils/Loadingscreen.dart';
-import 'package:kawamen/features/Dashboard/bloc/progress_bar_bloc.dart';
+import 'package:kawamen/features/Dashboard/bloc/treatment_progress_bloc.dart';
 import 'package:percent_indicator/percent_indicator.dart';
 import 'package:flutter/material.dart';
 
