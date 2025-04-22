@@ -178,8 +178,8 @@ class _LoginViewState extends State<LoginView> {
                           ),
                           child: state is LoginLoading
                               ? const SizedBox(
-                                  height: 24,
-                                  width: 24,
+                                  height: 30,
+                                  width: 30,
                                   child: FittedBox(
                                     fit: BoxFit.contain,
                                     child: LoadingScreen(),
