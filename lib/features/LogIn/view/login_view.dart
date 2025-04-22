@@ -2,14 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:kawamen/core/navigation/MainNavigator.dart';
 import 'package:kawamen/core/utils/Loadingscreen.dart';
-import '../../Profile/Screens/view_profile_screen.dart';
-import '../../Profile/Screens/edit_profile_screen.dart'; // Add this import
+import '../../Profile/Screens/edit_profile_screen.dart';
 import '../../Reset Password/bloc/bloc/screen/reset_password_screen.dart';
 import '../../registration/screens/registration_screen.dart';
 import '../bloc/login_bloc.dart';
 import '../bloc/login_event.dart';
 import '../bloc/login_state.dart';
-import '../../Profile/bloc/profile_bloc.dart'; // Add this import
+import '../../Profile/bloc/profile_bloc.dart';
 
 class LoginView extends StatefulWidget {
   const LoginView({super.key});
@@ -92,7 +91,7 @@ class _LoginViewState extends State<LoginView> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                         Text(
+                        Text(
                           'تسجيل دخول',
                           style: Theme.of(context).textTheme.headlineMedium,
                           textAlign: TextAlign.right,
@@ -122,7 +121,6 @@ class _LoginViewState extends State<LoginView> {
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(16),
                               borderSide: BorderSide.none,
-
                             ),
                             suffixIcon: IconButton(
                               icon: Icon(
@@ -179,7 +177,14 @@ class _LoginViewState extends State<LoginView> {
                             ),
                           ),
                           child: state is LoginLoading
-                              ? const LoadingScreen()
+                              ? const SizedBox(
+                                  height: 24,
+                                  width: 24,
+                                  child: FittedBox(
+                                    fit: BoxFit.contain,
+                                    child: LoadingScreen(),
+                                  ),
+                                )
                               : const Text(
                                   'تسجيل دخول',
                                   style: TextStyle(color: Colors.white),
