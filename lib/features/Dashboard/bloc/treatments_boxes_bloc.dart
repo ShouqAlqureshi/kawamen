@@ -52,19 +52,11 @@ class TreatmentStatsBloc
         return;
       }
 
-      // Calculate date range for current week
-      final now = DateTime.now();
-      final daysToSubtract = now.weekday == 7 ? 0 : now.weekday;
-      final startDate = DateTime(now.year, now.month, now.day - daysToSubtract);
-      final endDate = startDate.add(const Duration(days: 7));
-
-      // Fetch treatments from Firestore for the current week
+      // Fetch ALL treatments from Firestore without date filtering
       final treatmentsSnapshot = await FirebaseFirestore.instance
           .collection('users')
           .doc(userId)
           .collection('userTreatments')
-          .where('date', isGreaterThanOrEqualTo: startDate)
-          .where('date', isLessThan: endDate)
           .get();
 
       int allTreatments = treatmentsSnapshot.docs.length;
@@ -99,5 +91,3 @@ class TreatmentStatsBloc
     }
   }
 }
-
-// Widget to display treatment statistics in boxes
