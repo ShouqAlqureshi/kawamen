@@ -6,7 +6,7 @@ import 'package:kawamen/features/Dashboard/bloc/treatments_boxes.dart';
 import 'package:kawamen/features/Dashboard/repository/chart.dart';
 import 'package:kawamen/features/Dashboard/repository/progress_bar.dart';
 import 'package:kawamen/features/LogIn/view/login_view.dart';
-// Import the new widget
+
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
 
@@ -107,98 +107,130 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ],
                   ),
                   const SizedBox(height: 2),
-                  
-                  // Add the new Treatment Stats Boxes widget
-                  const TreatmentStatsBoxes(),
-                  
-                  const SizedBox(height: 10),
-                  
-                  Padding(
-                    padding: const EdgeInsets.all(20.0),
-                    child: Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [
-                            Color(0xFF2B2B2B),
-                            Color.fromARGB(255, 24, 24, 24),
-                          ],
-                          begin: Alignment.bottomCenter,
-                          end: Alignment.topCenter,
-                        ),
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(
-                          color: Colors.transparent,
-                          width: 2,
-                        ),
+                  // Treatment stats container
+                  Container(
+                    padding: const EdgeInsets.all(15),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [
+                          Color(0xFF2B2B2B),
+                          Color.fromARGB(255, 24, 24, 24)
+                        ],
+                        begin: Alignment.bottomCenter,
+                        end: Alignment.topCenter,
                       ),
-                      child: AspectRatio(
-                        aspectRatio: 1.23,
-                        child: Stack(
-                          children: <Widget>[
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: <Widget>[
-                                const SizedBox(height: 37),
-                                const Text(
-                                  "المشاعر المكتشفه هاذا الاسبوع",
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: Colors.transparent, width: 2),
+                    ),
+                    child: const TreatmentStatsBoxes(),
+                  ),
+                  const SizedBox(height: 20),
+                  // Emotional trend container
+                  Container(
+                    padding: const EdgeInsets.all(15),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [
+                          Color(0xFF2B2B2B),
+                          Color.fromARGB(255, 24, 24, 24),
+                        ],
+                        begin: Alignment.bottomCenter,
+                        end: Alignment.topCenter,
+                      ),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: Colors.transparent,
+                        width: 2,
+                      ),
+                    ),
+                    child: AspectRatio(
+                      aspectRatio: 1.23,
+                      child: Stack(
+                        children: <Widget>[
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: <Widget>[
+                              const SizedBox(height: 37),
+                              const Text(
+                                "المشاعر المكتشفه هاذا الاسبوع",
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: 2,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                              const SizedBox(height: 37),
+                              Expanded(
+                                child: Padding(
+                                  padding: const EdgeInsets.only(
+                                      right: 16, left: 6),
+                                  child: EmotionalTrendGraph(
+                                    angerEmotionalData:
+                                        state.angerEmotionalData,
+                                    sadEmotionalData: state.sadEmotionalData,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 10),
+                            ],
+                          ),
+                          IconButton(
+                            icon: const Icon(
+                              Icons.refresh,
+                              color: Colors.greenAccent,
+                            ),
+                            onPressed: () {
+                              context
+                                  .read<DashboardBloc>()
+                                  .add(FetchDashboard());
+                            },
+                          ),
+                          if (state.isEmpty)
+                            Center(
+                              child: Container(
+                                padding: const EdgeInsets.all(16),
+                                decoration: BoxDecoration(
+                                  color: Colors.black.withOpacity(0.8),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: const Text(
+                                  'ليس لديك مشاعر مكتشفه لهاذا الاسبوع',
                                   style: TextStyle(
                                     color: Colors.white,
-                                    fontSize: 16,
+                                    fontSize: 18,
                                     fontWeight: FontWeight.bold,
-                                    letterSpacing: 2,
-                                  ),
-                                  textAlign: TextAlign.center,
-                                ),
-                                const SizedBox(height: 37),
-                                Expanded(
-                                  child: Padding(
-                                    padding: const EdgeInsets.only(right: 16, left: 6),
-                                    child: EmotionalTrendGraph(
-                                      angerEmotionalData: state.angerEmotionalData,
-                                      sadEmotionalData: state.sadEmotionalData,
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(height: 10),
-                              ],
-                            ),
-                            IconButton(
-                              icon: const Icon(
-                                Icons.refresh,
-                                color: Colors.greenAccent,
-                              ),
-                              onPressed: () {
-                                context
-                                    .read<DashboardBloc>()
-                                    .add(FetchDashboard());
-                              },
-                            ),
-                            if (state.isEmpty)
-                              Center(
-                                child: Container(
-                                  padding: const EdgeInsets.all(16),
-                                  decoration: BoxDecoration(
-                                    color: Colors.black.withOpacity(0.8),
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                  child: const Text(
-                                    'ليس لديك مشاعر مكتشفه لهاذا الاسبوع',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold,
-                                    ),
                                   ),
                                 ),
                               ),
-                          ],
-                        ),
+                            ),
+                        ],
                       ),
                     ),
                   ),
-
-                  const TreatmentProgressTracker()
+                  const SizedBox(height: 20),
+                  // Progress tracker container - now full width
+                  Container(
+                    padding: const EdgeInsets.all(15),
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [
+                          Color(0xFF2B2B2B),
+                          Color.fromARGB(255, 24, 24, 24),
+                        ],
+                        begin: Alignment.bottomCenter,
+                        end: Alignment.topCenter,
+                      ),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: Colors.transparent,
+                        width: 2,
+                      ),
+                    ),
+                    child: const TreatmentProgressTracker(),
+                  ),
                 ],
               ),
             ),

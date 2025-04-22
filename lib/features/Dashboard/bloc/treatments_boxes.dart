@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:kawamen/core/utils/theme/theme.dart';
 
 // Treatment Stats Event/State
 abstract class TreatmentStatsEvent {}
@@ -11,7 +12,9 @@ class FetchTreatmentStats extends TreatmentStatsEvent {}
 abstract class TreatmentStatsState {}
 
 class TreatmentStatsInitial extends TreatmentStatsState {}
+
 class TreatmentStatsLoading extends TreatmentStatsState {}
+
 class TreatmentStatsError extends TreatmentStatsState {
   final String message;
   TreatmentStatsError(this.message);
@@ -32,7 +35,8 @@ class TreatmentStatsLoaded extends TreatmentStatsState {
 }
 
 // BLoC for Treatment Stats
-class TreatmentStatsBloc extends Bloc<TreatmentStatsEvent, TreatmentStatsState> {
+class TreatmentStatsBloc
+    extends Bloc<TreatmentStatsEvent, TreatmentStatsState> {
   TreatmentStatsBloc() : super(TreatmentStatsInitial()) {
     on<FetchTreatmentStats>(_onFetchTreatmentStats);
   }
@@ -72,7 +76,7 @@ class TreatmentStatsBloc extends Bloc<TreatmentStatsEvent, TreatmentStatsState> 
       for (var doc in treatmentsSnapshot.docs) {
         final data = doc.data();
         final status = data['status'] as String? ?? '';
-        
+
         if (status == 'completed') {
           completedTreatments++;
         }
@@ -116,7 +120,12 @@ class TreatmentStatsBoxes extends StatelessWidget {
           } else if (state is TreatmentStatsLoaded) {
             return _buildStatsBoxes(context, state);
           } else if (state is TreatmentStatsError) {
-            return Center(child: Text(state.message));
+            return Center(
+              child: Text(
+                state.message,
+                style: Theme.of(context).textTheme.bodyLarge,
+              ),
+            );
           }
           return const SizedBox.shrink();
         },
@@ -125,8 +134,13 @@ class TreatmentStatsBoxes extends StatelessWidget {
   }
 
   Widget _buildStatsBoxes(BuildContext context, TreatmentStatsLoaded state) {
+    // Get chart colors from theme
+    final customColors = Theme.of(context).extension<CustomColors>();
+    final chartColors = customColors?.chartColors ??
+        [Colors.orange, Colors.purple, Colors.green, Colors.red];
+
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -139,7 +153,7 @@ class TreatmentStatsBoxes extends StatelessWidget {
                   title: "إجمالي الجلسات",
                   value: state.allTreatments.toString(),
                   icon: Icons.medical_services,
-                  color: Colors.purple,
+                  color: chartColors[1], // Purple from theme
                 ),
               ),
               const SizedBox(width: 10),
@@ -149,7 +163,7 @@ class TreatmentStatsBoxes extends StatelessWidget {
                   title: "الجلسات المكتملة",
                   value: state.completedTreatments.toString(),
                   icon: Icons.check_circle,
-                  color: Colors.green,
+                  color: chartColors[2], // Green from theme
                 ),
               ),
             ],
@@ -164,7 +178,9 @@ class TreatmentStatsBoxes extends StatelessWidget {
                   title: "الجلسات المقبولة",
                   value: state.acceptedTreatments.toString(),
                   icon: Icons.thumb_up,
-                  color: Colors.blue,
+                  color: Theme.of(context)
+                      .colorScheme
+                      .secondary, // Secondary color from theme
                 ),
               ),
               const SizedBox(width: 10),
@@ -174,7 +190,7 @@ class TreatmentStatsBoxes extends StatelessWidget {
                   title: "الجلسات المرفوضة",
                   value: state.rejectedTreatments.toString(),
                   icon: Icons.thumb_down,
-                  color: Colors.red,
+                  color: chartColors[3], // Red from theme
                 ),
               ),
             ],
@@ -191,63 +207,66 @@ class TreatmentStatsBoxes extends StatelessWidget {
     required IconData icon,
     required Color color,
   }) {
+    final theme = Theme.of(context);
+
     return Container(
-      height: 68,
+      height: 56, // Reduced height
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            color.withOpacity(0.7),
-            color.withOpacity(0.4),
+            color.withOpacity(0.6),
+            color.withOpacity(0.3),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(15),
+        borderRadius: BorderRadius.circular(12), // Slightly tighter corners
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.15),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
+            color: theme.colorScheme.background.withOpacity(0.1),
+            blurRadius: 3,
+            offset: const Offset(0, 1),
           ),
         ],
       ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        padding: const EdgeInsets.symmetric(
+            horizontal: 0, vertical: 0), // Smaller padding
         child: Row(
-          mainAxisAlignment: MainAxisAlignment.end, // For RTL layout
+          mainAxisAlignment: MainAxisAlignment.end,
           children: [
             Expanded(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.end, // For RTL layout
+                crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text(
                     title,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onPrimary,
+                      fontWeight: FontWeight.w500,
+                      fontSize: 11, // Smaller font
                     ),
                     textAlign: TextAlign.right,
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 2),
                   Text(
                     value,
-                    style: const TextStyle(
-                      color: Colors.white,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.onPrimary,
                       fontWeight: FontWeight.bold,
-                      fontSize: 20,
+                      fontSize: 16, // Smaller font
                     ),
                     textAlign: TextAlign.right,
                   ),
                 ],
               ),
             ),
-            const SizedBox(width: 8), // Space between icon and text
+            const SizedBox(width: 6),
             Icon(
               icon,
-              color: Colors.white,
-              size: 24,
+              color: theme.colorScheme.onPrimary,
+              size: 20, // Smaller icon
             ),
           ],
         ),
