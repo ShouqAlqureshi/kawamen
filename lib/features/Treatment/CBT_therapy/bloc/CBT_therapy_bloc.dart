@@ -221,10 +221,16 @@ class CBTTherapyBloc extends Bloc<CBTTherapyEvent, CBTTherapyState> {
   final CBTRepository _repository;
   Timer? _timer;
   Timer? _instructionTimer;
-  Timer? _progressUpdateTimer; // Add timer for regular progress updates
+  Timer? _progressUpdateTimer;
 
-  static const int progressUpdateInterval =
-      10; // Update progress every 10 seconds
+  // Cache structures
+  final Map<String, List<String>> _instructionsCache = {};
+  Map<String, bool>? _cognitiveDistortionsCache;
+  DateTime? _cognitiveDistortionsCacheTime;
+  
+  // Cache expiration duration - adjust as needed
+  static const Duration _cacheDuration = Duration(hours: 1);
+  static const int progressUpdateInterval = 10;
 
   CBTTherapyBloc({CBTRepository? repository})
       : _repository = repository ?? CBTRepository(),
@@ -242,8 +248,16 @@ class CBTTherapyBloc extends Bloc<CBTTherapyEvent, CBTTherapyState> {
     on<CompleteCBTTreatmentEvent>(_onCompleteTreatment);
     on<LoadUserCBTTreatmentEvent>(_onLoadUserTreatment);
     on<UpdateInstructionOpacityEvent>(_onUpdateInstructionOpacity);
-    on<UpdateElapsedTimeEvent>(_onUpdateElapsedTime); 
+    on<UpdateElapsedTimeEvent>(_onUpdateElapsedTime);
   }
+
+  // Helper method to check if cache is valid
+  bool _isCacheValid(DateTime? cacheTime) {
+    if (cacheTime == null) return false;
+    final now = DateTime.now();
+    return now.difference(cacheTime) < _cacheDuration;
+  }
+
   void _onUpdateInstructionOpacity(
       UpdateInstructionOpacityEvent event, Emitter<CBTTherapyState> emit) {
     emit(state.copyWith(instructionOpacity: event.opacity));
@@ -254,7 +268,6 @@ class CBTTherapyBloc extends Bloc<CBTTherapyEvent, CBTTherapyState> {
     emit(state.copyWith(elapsedTimeSeconds: event.elapsedTimeSeconds));
   }
 
-  // Add this method to your CBTTherapyBloc class
   void debugCognitiveDistortions() {
     print('---------------- COGNITIVE DISTORTIONS DEBUG ----------------');
     print(
@@ -265,22 +278,19 @@ class CBTTherapyBloc extends Bloc<CBTTherapyEvent, CBTTherapyState> {
     print('--------------------------------------------------------------');
   }
 
-//test
   Future<void> _onStartTrackingTreatment(StartTrackingCBTTreatmentEvent event,
       Emitter<CBTTherapyState> emit) async {
     try {
       final userTreatmentId = await _repository.trackUserTreatment(
-        treatmentId:
-            'CBTtherapy', // Assuming 'CBTtherapy' is your default treatmentId
+        treatmentId: 'CBTtherapy',
         status: TreatmentStatus.started,
-        emotionFeedback: "sad", // Default emotion when starting
+        emotionFeedback: "sad",
         progress: 0.0,
       );
 
       emit(state.copyWith(userTreatmentId: userTreatmentId));
       print('CBT treatment tracking started with ID: $userTreatmentId');
 
-      // Start progress update timer
       _startProgressUpdateTimer();
     } catch (e) {
       print('Error starting CBT treatment tracking: $e');
@@ -293,8 +303,7 @@ class CBTTherapyBloc extends Bloc<CBTTherapyEvent, CBTTherapyState> {
 
     try {
       await _repository.trackUserTreatment(
-        treatmentId:
-            'CBTtherapy', // Assuming 'CBTtherapy' is your default treatmentId
+        treatmentId: 'CBTtherapy',
         status: TreatmentStatus.inProgress,
         userTreatmentId: state.userTreatmentId,
         progress: event.progress,
@@ -312,12 +321,11 @@ class CBTTherapyBloc extends Bloc<CBTTherapyEvent, CBTTherapyState> {
 
     try {
       await _repository.trackUserTreatment(
-        treatmentId:
-            'CBTtherapy', // Assuming 'CBTtherapy' is your default treatmentId
+        treatmentId: 'CBTtherapy',
         status: TreatmentStatus.completed,
         emotionFeedback: event.emotion,
         userTreatmentId: state.userTreatmentId,
-        progress: 100.0, // Completed means 100%
+        progress: 100.0,
       );
     } catch (e) {
       print('Error completing treatment tracking: $e');
@@ -340,18 +348,11 @@ class CBTTherapyBloc extends Bloc<CBTTherapyEvent, CBTTherapyState> {
         throw Exception("Couldn't find the specific treatment session");
       }
 
-      // Get stored progress
       final progress = userTreatment['progress'] as double? ?? 0.0;
-
-      // Calculate the current step and elapsed time based on progress
       final totalSteps = state.totalSteps;
       final completedSteps = ((totalSteps * progress) / 100).floor();
       final currentStep = completedSteps + 1;
-
-      // Determine elapsed time based on progress
-      // Assuming each step takes roughly the same amount of time
-      final estimatedSecondsPerStep =
-          60; // Example: each step takes about 60 seconds
+      final estimatedSecondsPerStep = 60;
       final estimatedElapsedTime = completedSteps * estimatedSecondsPerStep;
 
       emit(state.copyWith(
@@ -374,21 +375,36 @@ class CBTTherapyBloc extends Bloc<CBTTherapyEvent, CBTTherapyState> {
     }
   }
 
-// Modify your _onLoadData method to call this debug function
   Future<void> _onLoadData(
       LoadCBTDataEvent event, Emitter<CBTTherapyState> emit) async {
     try {
       emit(state.copyWith(isLoading: true, isError: false, errorMessage: ''));
 
-      // Fetch instructions from database
-      final List<String> instructions =
-          await _repository.fetchInstructions(event.treatmentId);
+      // Fetch instructions with caching
+      List<String> instructions;
+      if (_instructionsCache.containsKey(event.treatmentId)) {
+        print("Using cached instructions for ${event.treatmentId}");
+        instructions = _instructionsCache[event.treatmentId]!;
+      } else {
+        print("Fetching instructions for ${event.treatmentId}");
+        instructions = await _repository.fetchInstructions(event.treatmentId);
+        _instructionsCache[event.treatmentId] = instructions;
+      }
 
       print("Loaded instructions: $instructions");
 
-      // Fetch cognitive distortions
-      final Map<String, bool> cognitiveDistortions =
-          await _repository.fetchCognitiveDistortions();
+      // Fetch cognitive distortions with caching
+      Map<String, bool> cognitiveDistortions;
+      if (_cognitiveDistortionsCache != null && 
+          _isCacheValid(_cognitiveDistortionsCacheTime)) {
+        print("Using cached cognitive distortions");
+        cognitiveDistortions = _cognitiveDistortionsCache!;
+      } else {
+        print("Fetching cognitive distortions");
+        cognitiveDistortions = await _repository.fetchCognitiveDistortions();
+        _cognitiveDistortionsCache = cognitiveDistortions;
+        _cognitiveDistortionsCacheTime = DateTime.now();
+      }
 
       print("Loaded cognitive distortions: $cognitiveDistortions");
 
@@ -399,7 +415,6 @@ class CBTTherapyBloc extends Bloc<CBTTherapyEvent, CBTTherapyState> {
         totalSteps: instructions.length,
       ));
 
-      // Debug after state update
       debugCognitiveDistortions();
 
       print("New state instructions: ${state.instructions}");
@@ -426,18 +441,13 @@ class CBTTherapyBloc extends Bloc<CBTTherapyEvent, CBTTherapyState> {
 
     _cancelTimers();
 
-    // Start the timer for elapsed time
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       add(UpdateElapsedTimeEvent(
           elapsedTimeSeconds: state.elapsedTimeSeconds + 1));
     });
 
     emit(state.copyWith(isPlaying: true));
-
-    // Start instruction animation (after emitting)
     _startInstructionAnimation(emit);
-
-    // Start tracking treatment
     add(const StartTrackingCBTTreatmentEvent());
   }
 
@@ -448,7 +458,6 @@ class CBTTherapyBloc extends Bloc<CBTTherapyEvent, CBTTherapyState> {
       isPlaying: false,
     ));
 
-    // Update progress when paused
     if (state.totalSteps > 0) {
       final progressPercentage = (state.currentStep / state.totalSteps) * 100;
       add(UpdateCBTTreatmentProgressEvent(progress: progressPercentage));
@@ -462,7 +471,6 @@ class CBTTherapyBloc extends Bloc<CBTTherapyEvent, CBTTherapyState> {
       isCompleting: true,
     ));
 
-    // Complete tracking
     add(const CompleteCBTTreatmentEvent());
   }
 
@@ -470,7 +478,6 @@ class CBTTherapyBloc extends Bloc<CBTTherapyEvent, CBTTherapyState> {
       ResetCBTExerciseEvent event, Emitter<CBTTherapyState> emit) {
     _cancelTimers();
 
-    // Reset the state but keep the fetched instructions and distortions
     emit(state.copyWith(
       isPlaying: false,
       isCompleting: false,
@@ -485,9 +492,10 @@ class CBTTherapyBloc extends Bloc<CBTTherapyEvent, CBTTherapyState> {
     ));
   }
 
+  // [All the other methods remain unchanged]
+
   void _onNextStep(NextCBTStepEvent event, Emitter<CBTTherapyState> emit) {
     if (state.currentStep < state.totalSteps) {
-      // Combine all state updates into a single emit
       final Map<String, bool> cogDistortions =
           event.userThought != null && event.userThought.isNotEmpty
               ? state.cognitiveDistortions
@@ -506,19 +514,11 @@ class CBTTherapyBloc extends Bloc<CBTTherapyEvent, CBTTherapyState> {
             : state.alternativeThought,
       ));
 
-      // Don't emit here - instead use a callback approach for animation
       _instructionTimer?.cancel();
       _instructionTimer =
           Timer.periodic(const Duration(milliseconds: 4000), (_) {
-        // Don't emit directly in the timer callback
-        // Instead, dispatch a new event for animation updates
         if (!emit.isDone) {
           emit(state.copyWith(instructionOpacity: 0.0));
-
-          // This is problematic - we need to change the approach
-          // Future.delayed(const Duration(milliseconds: 500), () {
-          //   emit(state.copyWith(instructionOpacity: 1.0)); // This line causes the error
-          // });
         }
       });
     }
@@ -533,7 +533,6 @@ class CBTTherapyBloc extends Bloc<CBTTherapyEvent, CBTTherapyState> {
         instructionOpacity: 1.0,
       ));
 
-      // Start instruction animation for the previous step
       _startInstructionAnimation(emit);
     }
   }
@@ -561,11 +560,9 @@ class CBTTherapyBloc extends Bloc<CBTTherapyEvent, CBTTherapyState> {
     });
   }
 
-  // Helper method to start instruction animation
   void _startInstructionAnimation(Emitter<CBTTherapyState> emit) {
     _instructionTimer?.cancel();
 
-    // Instead of emitting directly, dispatch events
     _instructionTimer = Timer.periodic(const Duration(milliseconds: 4000), (_) {
       add(const UpdateInstructionOpacityEvent(opacity: 0.0));
 
@@ -582,6 +579,14 @@ class CBTTherapyBloc extends Bloc<CBTTherapyEvent, CBTTherapyState> {
     _instructionTimer = null;
     _progressUpdateTimer?.cancel();
     _progressUpdateTimer = null;
+  }
+
+  // Method to clear caches (useful for testing or when user wants fresh data)
+  void clearCaches() {
+    _instructionsCache.clear();
+    _cognitiveDistortionsCache = null;
+    _cognitiveDistortionsCacheTime = null;
+    print('Caches cleared');
   }
 
   @override
