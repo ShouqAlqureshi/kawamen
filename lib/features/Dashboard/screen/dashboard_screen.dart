@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:kawamen/core/utils/Loadingscreen.dart';
+import 'package:kawamen/core/utils/theme/ThemedScaffold.dart';
 import 'package:kawamen/features/Dashboard/bloc/dashboard_bloc.dart';
 import 'package:kawamen/features/Dashboard/bloc/treatments_boxes_bloc.dart';
 import 'package:kawamen/features/Dashboard/repository/chart.dart';
@@ -29,7 +30,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return BlocProvider(
       create: (context) => DashboardBloc()..add(FetchDashboard()),
       child: Builder(
-          builder: (context) => Scaffold(
+          builder: (context) => ThemedScaffold(
               appBar: AppBar(
                 backgroundColor: Colors.transparent,
                 centerTitle: true,

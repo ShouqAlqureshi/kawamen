@@ -1,7 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:kawamen/core/app/app_view.dart';
 import 'package:kawamen/core/navigation/app_routes.dart';
 import 'package:kawamen/core/services/cache_service.dart';
 import 'package:kawamen/core/utils/theme/theme.dart';
@@ -28,7 +27,7 @@ class App extends StatefulWidget {
 
 class _AppState extends State<App> with WidgetsBindingObserver {
   final EmotionBloc _emotionBloc = EmotionBloc();
-  String currentUserId = FirebaseAuth.instance.currentUser!.uid;
+  String? currentUserId = FirebaseAuth.instance.currentUser?.uid;
   final UserCacheService _userCache = UserCacheService();
   final EmotionDetectionBloc _emotionDetectionBloc = EmotionDetectionBloc(
       repository: EmotionDetectionRepository(),
@@ -39,7 +38,7 @@ class _AppState extends State<App> with WidgetsBindingObserver {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     NotificationService().connectToEmotionBloc(_emotionBloc);
-    _initializeUser;
+    _initializeUser(); // Add the parentheses to call the method
   }
 
   @override
@@ -78,7 +77,9 @@ class _AppState extends State<App> with WidgetsBindingObserver {
   }
 
   Future<void> _initializeUser() async {
-    await _userCache.initializeUser(currentUserId);
+    if (currentUserId != null) {
+      await _userCache.initializeUser(currentUserId!);
+    }
   }
 
   @override
