@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:kawamen/core/navigation/MainNavigator.dart';
 import 'package:kawamen/core/utils/Loadingscreen.dart';
+import 'package:kawamen/core/utils/theme/ThemedScaffold.dart';
 import '../../Profile/Screens/edit_profile_screen.dart';
 import '../../Reset Password/bloc/bloc/screen/reset_password_screen.dart';
 import '../../registration/screens/registration_screen.dart';
@@ -31,8 +32,7 @@ class _LoginViewState extends State<LoginView> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+    return ThemedScaffold(
       body: MultiBlocProvider(
         providers: [
           BlocProvider(
@@ -83,144 +83,153 @@ class _LoginViewState extends State<LoginView> {
             ),
           ],
           child: BlocBuilder<LoginBloc, LoginState>(
-            builder: (context, state) {
-              return SafeArea(
-                child: SingleChildScrollView(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Text(
-                          'تسجيل دخول',
-                          style: Theme.of(context).textTheme.headlineMedium,
-                          textAlign: TextAlign.right,
+  builder: (context, state) {
+    return SafeArea(
+      child: SingleChildScrollView(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            minHeight: MediaQuery.of(context).size.height -
+                MediaQuery.of(context).padding.top -
+                MediaQuery.of(context).padding.bottom,
+          ),
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(
+                    'تسجيل دخول',
+                    style: Theme.of(context).textTheme.headlineMedium,
+                    textAlign: TextAlign.right,
+                  ),
+                  const SizedBox(height: 32),
+                  TextField(
+                    controller: _emailController,
+                    decoration: InputDecoration(
+                      hintText: 'البريد الالكتروني',
+                      filled: true,
+                      fillColor: Theme.of(context).cardColor,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide.none,
+                      ),
+                    ),
+                    textAlign: TextAlign.right,
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: _passwordController,
+                    obscureText: !_isPasswordVisible,
+                    decoration: InputDecoration(
+                      hintText: 'كلمة المرور',
+                      filled: true,
+                      fillColor: Theme.of(context).cardColor,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide.none,
+                      ),
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          _isPasswordVisible
+                              ? Icons.visibility_off
+                              : Icons.visibility,
+                          color: Colors.grey,
                         ),
-                        const SizedBox(height: 32),
-                        TextField(
-                          controller: _emailController,
-                          decoration: InputDecoration(
-                            hintText: 'البريد الالكتروني',
-                            filled: true,
-                            fillColor: Theme.of(context).cardColor,
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(16),
-                              borderSide: BorderSide.none,
-                            ),
+                        onPressed: () {
+                          setState(() {
+                            _isPasswordVisible = !_isPasswordVisible;
+                          });
+                        },
+                      ),
+                    ),
+                    textAlign: TextAlign.right,
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => ResetPasswordPage(
+                            onReauthenticationRequired: (context) {},
                           ),
-                          textAlign: TextAlign.right,
                         ),
-                        const SizedBox(height: 16),
-                        TextField(
-                          controller: _passwordController,
-                          obscureText: !_isPasswordVisible,
-                          decoration: InputDecoration(
-                            hintText: 'كلمة المرور',
-                            filled: true,
-                            fillColor: Theme.of(context).cardColor,
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(16),
-                              borderSide: BorderSide.none,
-                            ),
-                            suffixIcon: IconButton(
-                              icon: Icon(
-                                _isPasswordVisible
-                                    ? Icons.visibility_off
-                                    : Icons.visibility,
-                                color: Colors.grey,
-                              ),
-                              onPressed: () {
-                                setState(() {
-                                  _isPasswordVisible = !_isPasswordVisible;
-                                });
-                              },
-                            ),
-                          ),
-                          textAlign: TextAlign.right,
-                        ),
-                        TextButton(
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => ResetPasswordPage(
-                                  onReauthenticationRequired: (context) {
-                                    // Handle reauthentication if needed
-                                  },
-                                ),
-                              ),
-                            );
-                          },
-                          child: const Text(
-                            'نسيت كلمة المرور؟',
-                            style: TextStyle(color: Colors.purple),
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        ElevatedButton(
-                          onPressed: state is LoginLoading
-                              ? null
-                              : () {
-                                  context.read<LoginBloc>().add(
-                                        LoginButtonPressed(
-                                          email: _emailController.text,
-                                          password: _passwordController.text,
-                                        ),
-                                      );
-                                },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor:
-                                Theme.of(context).colorScheme.secondary,
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                          ),
-                          child: state is LoginLoading
-                              ? const SizedBox(
-                                  height: 30,
-                                  width: 30,
-                                  child: FittedBox(
-                                    fit: BoxFit.contain,
-                                    child: LoadingScreen(),
-                                  ),
-                                )
-                              : const Text(
-                                  'تسجيل دخول',
-                                  style: TextStyle(color: Colors.white),
-                                ),
-                        ),
-                        const SizedBox(height: 16),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            TextButton(
-                              onPressed: () {
-                                Navigator.pushReplacement(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (_) => RegistrationScreen(),
-                                  ),
-                                );
-                              },
-                              child: const Text(
-                                'قم بإنشاء حساب',
-                                style: TextStyle(color: Colors.purple),
-                              ),
-                            ),
-                            const Text(
-                              'لا تمتلك حساب؟',
-                              style: TextStyle(color: Colors.white),
-                            ),
-                          ],
-                        ),
-                      ],
+                      );
+                    },
+                    child: const Text(
+                      'نسيت كلمة المرور؟',
+                      style: TextStyle(color: Color.fromARGB(255, 255, 255, 255)),
                     ),
                   ),
-                ),
-              );
-            },
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: state is LoginLoading
+                        ? null
+                        : () {
+                            context.read<LoginBloc>().add(
+                                  LoginButtonPressed(
+                                    email: _emailController.text,
+                                    password: _passwordController.text,
+                                  ),
+                                );
+                          },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor:
+                          Theme.of(context).colorScheme.secondary,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    child: state is LoginLoading
+                        ? const SizedBox(
+                            height: 30,
+                            width: 30,
+                            child: FittedBox(
+                              fit: BoxFit.contain,
+                              child: LoadingScreen(),
+                            ),
+                          )
+                        : const Text(
+                            'تسجيل دخول',
+                            style: TextStyle(color: Colors.white),
+                          ),
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      TextButton(
+                        onPressed: () {
+                          Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => RegistrationScreen(),
+                            ),
+                          );
+                        },
+                        child: const Text(
+                          'قم بإنشاء حساب',
+                          style: TextStyle(color: Colors.purple),
+                        ),
+                      ),
+                      const Text(
+                        'لا تمتلك حساب؟',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
           ),
+        ),
+      ),
+    );
+  },
+),
+
         ),
       ),
     );
