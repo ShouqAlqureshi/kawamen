@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:kawamen/core/services/cache_service.dart';
 import 'package:kawamen/core/utils/Loadingscreen.dart';
+import 'package:kawamen/core/utils/theme/ThemedScaffold.dart';
 import 'package:kawamen/features/LogIn/view/login_view.dart';
 import 'package:kawamen/features/Profile/Bloc/microphone_bloc.dart';
 import 'package:kawamen/features/Profile/Screens/edit_profile_screen.dart';
@@ -77,7 +78,7 @@ class ViewProfileScreen extends StatelessWidget {
     String userAge = userData['age']?.toString() ?? '';
     String avatarText = getInitials(userName);
 
-    return Scaffold(
+    return ThemedScaffold(
       appBar: AppBar(
         centerTitle: true,
         backgroundColor: Colors.transparent,
