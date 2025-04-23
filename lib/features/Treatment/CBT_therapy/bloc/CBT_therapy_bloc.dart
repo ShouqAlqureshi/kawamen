@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 import 'package:bloc/bloc.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:equatable/equatable.dart';
@@ -13,6 +14,10 @@ abstract class CBTTherapyEvent extends Equatable {
 
   @override
   List<Object?> get props => [];
+}
+
+class PauseCBTTreatmentEvent extends CBTTherapyEvent {
+  const PauseCBTTreatmentEvent();
 }
 
 class LoadCBTDataEvent extends CBTTherapyEvent {
@@ -136,6 +141,8 @@ class CBTTherapyState extends Equatable {
   final List<String> instructions;
   final String? userTreatmentId;
   final double progress;
+  final String supportingEvidence;
+  final String contradictingEvidence;
 
   const CBTTherapyState({
     this.isLoading = true,
@@ -154,6 +161,8 @@ class CBTTherapyState extends Equatable {
     this.instructions = const [],
     this.userTreatmentId,
     this.progress = 0.0,
+    this.supportingEvidence = '',
+    this.contradictingEvidence = '',
   });
 
   CBTTherapyState copyWith({
@@ -173,6 +182,8 @@ class CBTTherapyState extends Equatable {
     List<String>? instructions,
     String? userTreatmentId,
     double? progress,
+    String? supportingEvidence,
+    String? contradictingEvidence,
   }) {
     return CBTTherapyState(
       isLoading: isLoading ?? this.isLoading,
@@ -192,6 +203,9 @@ class CBTTherapyState extends Equatable {
       instructions: instructions ?? this.instructions,
       userTreatmentId: userTreatmentId ?? this.userTreatmentId,
       progress: progress ?? this.progress,
+      supportingEvidence: supportingEvidence ?? this.supportingEvidence,
+      contradictingEvidence:
+          contradictingEvidence ?? this.contradictingEvidence,
     );
   }
 
@@ -213,6 +227,8 @@ class CBTTherapyState extends Equatable {
         instructions,
         userTreatmentId,
         progress,
+        supportingEvidence,
+        contradictingEvidence,
       ];
 }
 
@@ -227,7 +243,7 @@ class CBTTherapyBloc extends Bloc<CBTTherapyEvent, CBTTherapyState> {
   final Map<String, List<String>> _instructionsCache = {};
   Map<String, bool>? _cognitiveDistortionsCache;
   DateTime? _cognitiveDistortionsCacheTime;
-  
+
   // Cache expiration duration - adjust as needed
   static const Duration _cacheDuration = Duration(hours: 1);
   static const int progressUpdateInterval = 10;
@@ -249,6 +265,7 @@ class CBTTherapyBloc extends Bloc<CBTTherapyEvent, CBTTherapyState> {
     on<LoadUserCBTTreatmentEvent>(_onLoadUserTreatment);
     on<UpdateInstructionOpacityEvent>(_onUpdateInstructionOpacity);
     on<UpdateElapsedTimeEvent>(_onUpdateElapsedTime);
+    on<PauseCBTTreatmentEvent>(_onPauseTreatment);
   }
 
   // Helper method to check if cache is valid
@@ -268,6 +285,37 @@ class CBTTherapyBloc extends Bloc<CBTTherapyEvent, CBTTherapyState> {
     emit(state.copyWith(elapsedTimeSeconds: event.elapsedTimeSeconds));
   }
 
+  Future<void> _onPauseTreatment(
+      PauseCBTTreatmentEvent event, Emitter<CBTTherapyState> emit) async {
+    if (state.userTreatmentId == null) return;
+
+    try {
+      // Create a userData map with the current user inputs
+      final Map<String, dynamic> userData = {
+        'userThought': state.userThought,
+        'alternativeThought': state.alternativeThought,
+        'cognitiveDistortions': state.cognitiveDistortions,
+        'supportingEvidence': state.supportingEvidence,
+        'contradictingEvidence': state.contradictingEvidence,
+      };
+
+      // Calculate current progress
+      final progressPercentage = (state.currentStep / state.totalSteps) * 100;
+
+      await _repository.trackUserTreatment(
+        treatmentId: 'CBTtherapy',
+        status: TreatmentStatus.paused,
+        userTreatmentId: state.userTreatmentId,
+        progress: progressPercentage,
+        userData: userData, // Pass the userData to be saved
+      );
+
+      emit(state.copyWith(progress: progressPercentage));
+    } catch (e) {
+      print('Error pausing treatment: $e');
+    }
+  }
+
   void debugCognitiveDistortions() {
     print('---------------- COGNITIVE DISTORTIONS DEBUG ----------------');
     print(
@@ -281,15 +329,28 @@ class CBTTherapyBloc extends Bloc<CBTTherapyEvent, CBTTherapyState> {
   Future<void> _onStartTrackingTreatment(StartTrackingCBTTreatmentEvent event,
       Emitter<CBTTherapyState> emit) async {
     try {
-      final userTreatmentId = await _repository.trackUserTreatment(
-        treatmentId: 'CBTtherapy',
-        status: TreatmentStatus.started,
-        emotionFeedback: "sad",
-        progress: 0.0,
-      );
+      // If we already have a userTreatmentId, we should resume rather than create a new document
+      if (state.userTreatmentId != null) {
+        // Update the existing treatment to in-progress status
+        await _repository.trackUserTreatment(
+          treatmentId: 'CBTtherapy',
+          status: TreatmentStatus.inProgress,
+          userTreatmentId: state.userTreatmentId,
+          emotionFeedback: "sad",
+          progress: state.progress,
+        );
+      } else {
+        // Create a new treatment document
+        final userTreatmentId = await _repository.trackUserTreatment(
+          treatmentId: 'CBTtherapy',
+          status: TreatmentStatus.started,
+          emotionFeedback: "sad",
+          progress: 0.0,
+        );
 
-      emit(state.copyWith(userTreatmentId: userTreatmentId));
-      print('CBT treatment tracking started with ID: $userTreatmentId');
+        emit(state.copyWith(userTreatmentId: userTreatmentId));
+        print('CBT treatment tracking started with ID: $userTreatmentId');
+      }
 
       _startProgressUpdateTimer();
     } catch (e) {
@@ -302,11 +363,19 @@ class CBTTherapyBloc extends Bloc<CBTTherapyEvent, CBTTherapyState> {
     if (state.userTreatmentId == null) return;
 
     try {
+      // Create a userData map with the current user inputs
+      final Map<String, dynamic> userData = {
+        'userThought': state.userThought,
+        'alternativeThought': state.alternativeThought,
+        'cognitiveDistortions': state.cognitiveDistortions,
+      };
+
       await _repository.trackUserTreatment(
         treatmentId: 'CBTtherapy',
         status: TreatmentStatus.inProgress,
         userTreatmentId: state.userTreatmentId,
         progress: event.progress,
+        userData: userData, // Pass the userData to be saved
       );
 
       emit(state.copyWith(progress: event.progress));
@@ -350,21 +419,73 @@ class CBTTherapyBloc extends Bloc<CBTTherapyEvent, CBTTherapyState> {
 
       final progress = userTreatment['progress'] as double? ?? 0.0;
       final totalSteps = state.totalSteps;
-      final completedSteps = ((totalSteps * progress) / 100).floor();
-      final currentStep = completedSteps + 1;
+
+      // Calculate current step from progress
+      final currentStep =
+          min(((progress / 100) * totalSteps).ceil(), totalSteps);
+      final currentInstructionIndex = currentStep > 0 ? currentStep - 1 : 0;
+
       final estimatedSecondsPerStep = 60;
-      final estimatedElapsedTime = completedSteps * estimatedSecondsPerStep;
+      final estimatedElapsedTime = currentStep * estimatedSecondsPerStep;
+
+      // Retrieve saved user input data
+      String userThought = '';
+      String alternativeThought = '';
+      String supportingEvidence = '';
+      String contradictingEvidence = '';
+      Map<String, bool>? cognitiveDistortions;
+
+      // Check if additional data exists in userTreatment
+      if (userTreatment.containsKey('userData')) {
+        final userData = userTreatment['userData'] as Map<String, dynamic>?;
+        if (userData != null) {
+          userThought = userData['userThought'] as String? ?? '';
+          alternativeThought = userData['alternativeThought'] as String? ?? '';
+          supportingEvidence = userData['supportingEvidence'] as String? ?? '';
+          contradictingEvidence =
+              userData['contradictingEvidence'] as String? ?? '';
+
+          // Restore cognitive distortions if saved
+          if (userData.containsKey('cognitiveDistortions')) {
+            final distortionsData =
+                userData['cognitiveDistortions'] as Map<String, dynamic>?;
+            if (distortionsData != null) {
+              cognitiveDistortions = {};
+              distortionsData.forEach((key, value) {
+                cognitiveDistortions![key] = value as bool;
+              });
+            }
+          }
+        }
+      }
+
+      // Determine the treatment status
+      final status = userTreatment['status'] as String? ?? 'paused';
+
+      // IMPORTANT FIX: Set isPlaying to true when resuming
+      // This will make sure the UI shows the fields for the current step
+      // rather than just showing the "Start" button
+      final bool isPlaying = progress > 0 && currentStep > 0;
 
       emit(state.copyWith(
         isLoading: false,
         userTreatmentId: event.userTreatmentId,
         progress: progress,
-        currentStep: currentStep > totalSteps ? totalSteps : currentStep,
+        currentStep: max(currentStep, 1),
+        currentInstructionIndex: currentInstructionIndex,
         elapsedTimeSeconds: estimatedElapsedTime,
+        userThought: userThought,
+        alternativeThought: alternativeThought,
+        supportingEvidence: supportingEvidence,
+        contradictingEvidence: contradictingEvidence,
+        cognitiveDistortions:
+            cognitiveDistortions ?? state.cognitiveDistortions,
+        // IMPORTANT FIX: Set isPlaying flag to show proper fields
+        isPlaying: isPlaying,
       ));
 
       print(
-          'Loaded user CBT treatment: ${event.userTreatmentId} with progress: $progress%');
+          'Loaded user CBT treatment: ${event.userTreatmentId} with progress: $progress%, currentStep: $currentStep, isPlaying: $isPlaying');
     } catch (e) {
       print('Error loading user CBT treatment: $e');
       emit(state.copyWith(
@@ -395,7 +516,7 @@ class CBTTherapyBloc extends Bloc<CBTTherapyEvent, CBTTherapyState> {
 
       // Fetch cognitive distortions with caching
       Map<String, bool> cognitiveDistortions;
-      if (_cognitiveDistortionsCache != null && 
+      if (_cognitiveDistortionsCache != null &&
           _isCacheValid(_cognitiveDistortionsCacheTime)) {
         print("Using cached cognitive distortions");
         cognitiveDistortions = _cognitiveDistortionsCache!;
@@ -492,8 +613,6 @@ class CBTTherapyBloc extends Bloc<CBTTherapyEvent, CBTTherapyState> {
     ));
   }
 
-  // [All the other methods remain unchanged]
-
   void _onNextStep(NextCBTStepEvent event, Emitter<CBTTherapyState> emit) {
     if (state.currentStep < state.totalSteps) {
       final Map<String, bool> cogDistortions =
@@ -512,6 +631,12 @@ class CBTTherapyBloc extends Bloc<CBTTherapyEvent, CBTTherapyState> {
         alternativeThought: event.alternativeThought.isNotEmpty
             ? event.alternativeThought
             : state.alternativeThought,
+        supportingEvidence: event.supportingEvidence.isNotEmpty
+            ? event.supportingEvidence
+            : state.supportingEvidence,
+        contradictingEvidence: event.contradictingEvidence.isNotEmpty
+            ? event.contradictingEvidence
+            : state.contradictingEvidence,
       ));
 
       _instructionTimer?.cancel();

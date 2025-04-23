@@ -167,6 +167,7 @@ class LoadUserTreatmentEvent extends DeepBreathingEvent {
   @override
   List<Object> get props => [userTreatmentId, treatmentId];
 }
+
 class UpdateTreatmentProgressEvent extends DeepBreathingEvent {
   final double progress;
 
@@ -177,7 +178,7 @@ class UpdateTreatmentProgressEvent extends DeepBreathingEvent {
 }
 
 // Enum for treatment status
-enum TreatmentStatus { started, inProgress, completed, abandoned }
+enum TreatmentStatus { started, inProgress, completed, paused }
 
 // Extension to convert enum to string for Firestore
 extension TreatmentStatusExtension on TreatmentStatus {
@@ -189,8 +190,8 @@ extension TreatmentStatusExtension on TreatmentStatus {
         return 'in_progress';
       case TreatmentStatus.completed:
         return 'completed';
-      case TreatmentStatus.abandoned:
-        return 'abandoned';
+      case TreatmentStatus.paused:
+        return 'paused';
     }
   }
 }
@@ -343,7 +344,6 @@ class DeepBreathingState extends Equatable {
     InstructionPhase? currentPhase,
     bool? isAnimating,
     String? userTreatmentId,
-
   }) {
     return DeepBreathingState(
       isLoading: isLoading ?? this.isLoading,
@@ -362,7 +362,6 @@ class DeepBreathingState extends Equatable {
       currentPhase: currentPhase ?? this.currentPhase,
       isAnimating: isAnimating ?? this.isAnimating,
       userTreatmentId: userTreatmentId ?? this.userTreatmentId,
-
     );
   }
 
@@ -383,7 +382,6 @@ class DeepBreathingState extends Equatable {
         currentPhase,
         isAnimating,
         userTreatmentId,
-
       ];
 }
 
@@ -401,7 +399,7 @@ class DeepBreathingBloc extends Bloc<DeepBreathingEvent, DeepBreathingState> {
   // Constants defined in code, not from database
   static const int totalRepetitions = 10;
   static const int transitionTimePerRepetition = 6; // seconds
-  static const int progressUpdateInterval = 10; 
+  static const int progressUpdateInterval = 10;
 
   DeepBreathingBloc() : super(DeepBreathingState.initial()) {
     on<LoadTreatmentEvent>(_onLoadTreatment);
@@ -421,113 +419,116 @@ class DeepBreathingBloc extends Bloc<DeepBreathingEvent, DeepBreathingState> {
     on<CompleteTrackingTreatmentEvent>(_onCompleteTrackingTreatment);
     on<UpdateTreatmentProgressEvent>(_onUpdateTreatmentProgress);
     on<LoadUserTreatmentEvent>(_onLoadUserTreatment);
-
   }
- Future<void> _onStartTrackingTreatment(
-    StartTrackingTreatmentEvent event,
-    Emitter<DeepBreathingState> emit) async {
-  if (state.treatment == null) return;
+  Future<void> _onStartTrackingTreatment(StartTrackingTreatmentEvent event,
+      Emitter<DeepBreathingState> emit) async {
+    if (state.treatment == null) return;
 
-  try {
-    final userTreatmentId = await _repository.trackUserTreatment(
-      treatmentId: state.treatment!.id,
-      status: TreatmentStatus.started,
-      emotionFeedback: "angry", // Add constant "angry" emotion when starting
-      progress: 0.0,
-    );
-    
-    emit(state.copyWith(userTreatmentId: userTreatmentId));
-    developer.log('Treatment tracking started with ID: $userTreatmentId');
-  } catch (e) {
-    developer.log('Error starting treatment tracking: $e');
+    try {
+      final userTreatmentId = await _repository.trackUserTreatment(
+        treatmentId: state.treatment!.id,
+        status: TreatmentStatus.started,
+        emotionFeedback: "angry", // Add constant "angry" emotion when starting
+        progress: 0.0,
+      );
+
+      emit(state.copyWith(userTreatmentId: userTreatmentId));
+      developer.log('Treatment tracking started with ID: $userTreatmentId');
+    } catch (e) {
+      developer.log('Error starting treatment tracking: $e');
+    }
   }
-}
 
-Future<void> _onCompleteTrackingTreatment(
-    CompleteTrackingTreatmentEvent event,
-    Emitter<DeepBreathingState> emit) async {
-  if (state.treatment == null || state.userTreatmentId == null) return;
+  Future<void> _onCompleteTrackingTreatment(
+      CompleteTrackingTreatmentEvent event,
+      Emitter<DeepBreathingState> emit) async {
+    if (state.treatment == null || state.userTreatmentId == null) return;
 
-  try {
-    await _repository.trackUserTreatment(
-      treatmentId: state.treatment!.id,
-      status: TreatmentStatus.completed,
-      userTreatmentId: state.userTreatmentId,
-      progress: 100.0, // Completed means 100%
-    );
-  } catch (e) {
-    developer.log('Error completing treatment tracking: $e');
+    try {
+      await _repository.trackUserTreatment(
+        treatmentId: state.treatment!.id,
+        status: TreatmentStatus.completed,
+        userTreatmentId: state.userTreatmentId,
+        progress: 100.0, // Completed means 100%
+      );
+    } catch (e) {
+      developer.log('Error completing treatment tracking: $e');
+    }
   }
-}
 
-Future<void> _onUpdateTreatmentProgress(
-    UpdateTreatmentProgressEvent event,
-    Emitter<DeepBreathingState> emit) async {
-  if (state.treatment == null || state.userTreatmentId == null) return;
+  Future<void> _onUpdateTreatmentProgress(UpdateTreatmentProgressEvent event,
+      Emitter<DeepBreathingState> emit) async {
+    if (state.treatment == null || state.userTreatmentId == null) return;
 
-  try {
-    await _repository.trackUserTreatment(
-      treatmentId: state.treatment!.id,
-      status: TreatmentStatus.inProgress,
-      userTreatmentId: state.userTreatmentId,
-      progress: event.progress,
-    );
-  } catch (e) {
-    developer.log('Error updating treatment progress: $e');
+    try {
+      await _repository.trackUserTreatment(
+        treatmentId: state.treatment!.id,
+        status: TreatmentStatus.inProgress,
+        userTreatmentId: state.userTreatmentId,
+        progress: event.progress,
+      );
+    } catch (e) {
+      developer.log('Error updating treatment progress: $e');
+    }
   }
-}
 
 // Add new method to load a specific user treatment
-Future<void> _onLoadUserTreatment(
-    LoadUserTreatmentEvent event,
-    Emitter<DeepBreathingState> emit) async {
-  try {
-    emit(DeepBreathingState.loading());
+  Future<void> _onLoadUserTreatment(
+      LoadUserTreatmentEvent event, Emitter<DeepBreathingState> emit) async {
+    try {
+      emit(DeepBreathingState.loading());
 
-    // First, get the treatment details
-    final treatment = await _repository.getTreatmentWithSteps(event.treatmentId);
+      // First, get the treatment details
+      final treatment =
+          await _repository.getTreatmentWithSteps(event.treatmentId);
 
-    // Then get the user treatment details
-    final userTreatment = await _repository.getUserTreatmentById(event.userTreatmentId);
-    
-    if (userTreatment == null) {
-      throw Exception("Couldn't find the specific treatment session");
+      // Calculate total exercise time
+      int totalStepsDuration = 0;
+      for (var step in treatment.steps) {
+        totalStepsDuration += step.duration;
+      }
+      final totalExerciseTime =
+          totalRepetitions * (totalStepsDuration + transitionTimePerRepetition);
+
+      // Determine initial phase based on first step
+      InstructionPhase initialPhase = InstructionPhase.inhale;
+      if (treatment.steps.isNotEmpty) {
+        final firstStepNumber = treatment.steps.first.stepNumber;
+        if (firstStepNumber == 1) {
+          initialPhase = InstructionPhase.inhale;
+        } else if (firstStepNumber == 2) {
+          initialPhase = InstructionPhase.hold;
+        } else if (firstStepNumber == 3) {
+          initialPhase = InstructionPhase.exhale;
+        }
+      }
+
+      // Always start from the beginning but keep the user treatment ID
+      emit(state.copyWith(
+        isLoading: false,
+        treatment: treatment,
+        totalExerciseSeconds: totalExerciseTime,
+        userTreatmentId: event.userTreatmentId,
+        currentPhase: initialPhase,
+        currentInstructionIndex: 0,
+        currentRepetition: 1,
+        countdownSeconds:
+            treatment.steps.isNotEmpty ? treatment.steps.first.duration : 0,
+        instructionOpacity: 1.0,
+        countdownOpacity: 0.0,
+        isAnimating: false,
+        isPlaying: false,
+        isCompleting: false,
+      ));
+
+      developer.log(
+          'Loaded user treatment: ${event.userTreatmentId} - restarting from beginning');
+    } catch (e) {
+      developer.log('Error loading user treatment: $e');
+      emit(DeepBreathingState.error(
+          'Failed to load treatment session: ${e.toString()}'));
     }
-    
-    // Calculate total exercise time
-    int totalStepsDuration = 0;
-    for (var step in treatment.steps) {
-      totalStepsDuration += step.duration;
-    }
-    final totalExerciseTime = totalRepetitions * (totalStepsDuration + transitionTimePerRepetition);
-    
-    // Get stored progress
-    final progress = userTreatment['progress'] as double? ?? 0.0;
-    
-    // Calculate where we are in the exercise based on progress
-    final completedTime = (totalExerciseTime * (progress / 100)).round();
-    final remainingTime = totalExerciseTime - completedTime;
-    
-    // Determine initial phase (simplified - you might want to store more state info)
-    InstructionPhase initialPhase = InstructionPhase.inhale;
-    
-    emit(state.copyWith(
-      isLoading: false,
-      treatment: treatment,
-      totalExerciseSeconds: remainingTime,
-      userTreatmentId: event.userTreatmentId,
-      currentPhase: initialPhase,
-      // You might want to restore more state from the saved userTreatment
-      // such as currentRepetition, currentInstructionIndex, etc.
-    ));
-    
-    developer.log('Loaded user treatment: ${event.userTreatmentId} with progress: $progress%');
-  } catch (e) {
-    developer.log('Error loading user treatment: $e');
-    emit(DeepBreathingState.error('Failed to load treatment session: ${e.toString()}'));
   }
-}
-
 
   Future<void> _onLoadTreatment(
       LoadTreatmentEvent event, Emitter<DeepBreathingState> emit) async {
@@ -575,16 +576,17 @@ Future<void> _onLoadUserTreatment(
     }
   }
 
-   void _onStartExercise(StartExerciseEvent event, Emitter<DeepBreathingState> emit) {
+  void _onStartExercise(
+      StartExerciseEvent event, Emitter<DeepBreathingState> emit) {
     developer.log('Starting exercise');
     if (state.treatment == null) {
       developer.log('Cannot start exercise: No treatment loaded');
       return;
     }
-    
+
     // Cancel any existing timers
     _cancelTimers();
-    
+
     emit(state.copyWith(
       isPlaying: true,
       isCompleting: false,
@@ -593,25 +595,28 @@ Future<void> _onLoadUserTreatment(
       instructionOpacity: 1.0,
       countdownOpacity: 0.0, // Start with instruction visible first
       isAnimating: false, // Start with animation off
-      countdownSeconds: state.treatment!.steps.isNotEmpty ? state.treatment!.steps.first.duration : 0,
+      countdownSeconds: state.treatment!.steps.isNotEmpty
+          ? state.treatment!.steps.first.duration
+          : 0,
     ));
-    
+
     // Start the total exercise timer
     _startTotalTimer();
-    
+
     // Start tracking treatment
     add(const StartTrackingTreatmentEvent());
-    
+
     // Start progress update timer
     _startProgressUpdateTimer();
-    
+
     // After 2 seconds, show countdown and start countdown timer
     _delayTimer = Timer(const Duration(seconds: 2), () {
       add(const ShowCountdownEvent());
     });
   }
-  
-  void _onCompleteExercise(CompleteExerciseEvent event, Emitter<DeepBreathingState> emit) {
+
+  void _onCompleteExercise(
+      CompleteExerciseEvent event, Emitter<DeepBreathingState> emit) {
     developer.log('Exercise completed');
     _cancelTimers();
     emit(state.copyWith(
@@ -619,56 +624,57 @@ Future<void> _onLoadUserTreatment(
       isCompleting: true,
       isAnimating: false, // Stop animation when exercise completes
     ));
-    
+
     // Complete tracking with no emotion (emotion will be added later if provided)
     add(const CompleteTrackingTreatmentEvent());
   }
-  
-  void _onPauseExercise(PauseExerciseEvent event, Emitter<DeepBreathingState> emit) {
+
+  void _onPauseExercise(
+      PauseExerciseEvent event, Emitter<DeepBreathingState> emit) {
     developer.log('Pausing exercise');
     _cancelTimers();
     emit(state.copyWith(
       isPlaying: false,
       isAnimating: false, // Stop animation when paused
     ));
-    
+
     // Update progress when paused
     if (state.treatment != null && state.totalExerciseTime > 0) {
-      final completedTime = state.totalExerciseTime - state.totalExerciseSeconds;
-      final progressPercentage = (completedTime / state.totalExerciseTime) * 100;
+      final completedTime =
+          state.totalExerciseTime - state.totalExerciseSeconds;
+      final progressPercentage =
+          (completedTime / state.totalExerciseTime) * 100;
       add(UpdateTreatmentProgressEvent(progress: progressPercentage));
     }
   }
-  
+
   // Helper method to start progress update timer
   void _startProgressUpdateTimer() {
     _progressUpdateTimer?.cancel();
     _progressUpdateTimer = Timer.periodic(
-      const Duration(seconds: progressUpdateInterval), 
-      (timer) {
-        if (state.treatment != null && state.totalExerciseTime > 0) {
-          final completedTime = state.totalExerciseTime - state.totalExerciseSeconds;
-          final progressPercentage = (completedTime / state.totalExerciseTime) * 100;
-          add(UpdateTreatmentProgressEvent(progress: progressPercentage));
-        }
+        const Duration(seconds: progressUpdateInterval), (timer) {
+      if (state.treatment != null && state.totalExerciseTime > 0) {
+        final completedTime =
+            state.totalExerciseTime - state.totalExerciseSeconds;
+        final progressPercentage =
+            (completedTime / state.totalExerciseTime) * 100;
+        add(UpdateTreatmentProgressEvent(progress: progressPercentage));
       }
-    );
+    });
   }
-  
+
   void _cancelTimers() {
     developer.log('Cancelling all timers');
     _countdownTimer?.cancel();
     _totalExerciseTimer?.cancel();
     _delayTimer?.cancel();
     _progressUpdateTimer?.cancel();
-    
+
     _countdownTimer = null;
     _totalExerciseTimer = null;
     _delayTimer = null;
     _progressUpdateTimer = null;
   }
-
-
 
   void _onFadeInNextInstruction(
       FadeInNextInstructionEvent event, Emitter<DeepBreathingState> emit) {
@@ -737,7 +743,6 @@ Future<void> _onLoadUserTreatment(
     add(const ShowCountdownEvent());
   }
 
-  
   void _onShowCountdown(
       ShowCountdownEvent event, Emitter<DeepBreathingState> emit) {
     developer.log('ShowCountdownEvent triggered');
@@ -920,7 +925,7 @@ Future<void> _onLoadUserTreatment(
     });
   }
 
-    @override
+  @override
   Future<void> close() {
     _cancelTimers();
     return super.close();
