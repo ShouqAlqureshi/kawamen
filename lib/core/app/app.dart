@@ -79,6 +79,7 @@ class _AppState extends State<App> with WidgetsBindingObserver {
   Future<void> _initializeUser() async {
     if (currentUserId != null) {
       await _userCache.initializeUser(currentUserId!);
+      
     }
   }
 

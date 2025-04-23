@@ -46,19 +46,35 @@ class _HomePageContent extends StatelessWidget {
         ),
         centerTitle: true,
       ),
-      body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20.0),
-        child: BlocBuilder<HomeBloc, HomeState>(
-          builder: (context, state) {
-            if (state is LoadingHomeState) {
-              return const LoadingScreen();
-            } else if (state is ErrorHomeState) {
-              return Center(child: Text(state.message));
-            } else if (state is TreatmentHistoryLoaded) {
-              return _buildMainContent(context, state.treatments);
-            }
-            return _buildMainContent(context, []);
-          },
+      //  refresh scroll to force refresh from network
+      body: RefreshIndicator(
+        onRefresh: () async {
+          context
+              .read<HomeBloc>()
+              .add(const FetchTreatmentHistory(forceRefresh: true));
+          // Show a snackbar to inform the user
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Refreshing treatment data...'),
+              duration: Duration(seconds: 1),
+            ),
+          );
+
+        },
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20.0),
+          child: BlocBuilder<HomeBloc, HomeState>(
+            builder: (context, state) {
+              if (state is LoadingHomeState) {
+                return const LoadingScreen();
+              } else if (state is ErrorHomeState) {
+                return Center(child: Text(state.message));
+              } else if (state is TreatmentHistoryLoaded) {
+                return _buildMainContent(context, state.treatments);
+              }
+              return _buildMainContent(context, []);
+            },
+          ),
         ),
       ),
       bottomNavigationBar: showBottomNav

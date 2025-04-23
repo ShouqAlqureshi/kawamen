@@ -86,6 +86,42 @@ class TreatmentData extends Equatable {
       rethrow;
     }
   }
+  factory TreatmentData.fromMap(Map<String, dynamic> data) {
+    // Handle all timestamp cases
+    DateTime parseFirestoreDate(dynamic date) {
+      if (date == null) return DateTime.now();
+
+      if (date is Timestamp) return date.toDate();
+      if (date is String) return DateTime.parse(date);
+      if (date is DateTime) return date;
+
+      // Handle Firebase-style serialized timestamp
+      if (date is Map<String, dynamic>) {
+        if (date.containsKey('__type__') && date['__type__'] == 'timestamp') {
+          final seconds = date['seconds'];
+          if (seconds is int) {
+            return DateTime.fromMillisecondsSinceEpoch(seconds * 1000);
+          }
+        }
+      }
+
+      throw Exception('Invalid date format: $date');
+    }
+
+    return TreatmentData(
+      userTreatmentId: data['id'] ?? '',
+      treatmentId: data['treatmentId'] ?? '',
+      emotion: data['emotion'] ?? '',
+      progress: (data['progress'] as num?)?.toDouble() ?? 0.0,
+      status: data['status'] ?? '',
+      completedAt: data['completedAt'] != null
+          ? parseFirestoreDate(data['completedAt'])
+          : null,
+      date: parseFirestoreDate(data['date']),
+      updatedAt: parseFirestoreDate(data['updatedAt']),
+    );
+  }
+
   @override
   List<Object?> get props => [
         userTreatmentId,
