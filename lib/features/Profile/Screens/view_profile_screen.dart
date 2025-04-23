@@ -514,97 +514,104 @@ class ViewProfileScreen extends StatelessWidget {
   }
 
   Widget _buildCard({
-    required BuildContext context,
-    required String title,
-    required ThemeData theme,
-    IconData? icon,
-    bool isSelected = false,
-    Color? color,
-    Color? iconColor,
-    Color? iconBackground,
-    required VoidCallback onTap,
-  }) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 14),
-      decoration: BoxDecoration(
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.06),
-            blurRadius: 12,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
-      child: Material(
-        color: color ??
-            (isSelected
-                ? theme.colorScheme.primaryContainer
-                : theme.colorScheme.surface),
-        borderRadius: BorderRadius.circular(16),
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: onTap,
-          splashColor: theme.colorScheme.primary.withOpacity(0.1),
-          highlightColor: theme.colorScheme.primary.withOpacity(0.05),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-            child: Row(
-              children: [
-                if (icon != null)
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: iconBackground ??
-                          (iconColor ?? theme.colorScheme.primary)
-                              .withOpacity(0.15),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      icon,
-                      color: iconColor ?? theme.colorScheme.primary,
-                      size: 20,
-                    ),
+  required BuildContext context,
+  required String title,
+  required ThemeData theme,
+  IconData? icon,
+  bool isSelected = false,
+  Color? color,
+  Color? iconColor,
+  Color? iconBackground,
+  required VoidCallback onTap,
+}) {
+  // Define colors that will ensure good contrast when selected
+  final effectiveIconColor = isSelected 
+      ? theme.colorScheme.onPrimaryContainer 
+      : (iconColor ?? theme.colorScheme.primary);
+  
+  final effectiveIconBackground = isSelected
+      ? theme.colorScheme.onPrimaryContainer.withOpacity(0.15)
+      : (iconBackground ?? (effectiveIconColor).withOpacity(0.15));
+
+  return Container(
+    margin: const EdgeInsets.only(bottom: 14),
+    decoration: BoxDecoration(
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withOpacity(0.06),
+          blurRadius: 12,
+          offset: const Offset(0, 3),
+        ),
+      ],
+    ),
+    child: Material(
+      color: color ??
+          (isSelected
+              ? theme.colorScheme.primaryContainer
+              : theme.colorScheme.surface),
+      borderRadius: BorderRadius.circular(16),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        splashColor: theme.colorScheme.primary.withOpacity(0.1),
+        highlightColor: theme.colorScheme.primary.withOpacity(0.05),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          child: Row(
+            children: [
+              if (icon != null)
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: effectiveIconBackground,
+                    shape: BoxShape.circle,
                   ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Text(
-                    title,
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      color: isSelected
-                          ? theme.colorScheme.onPrimaryContainer
-                          : theme.colorScheme.onSurface,
-                      fontWeight:
-                          isSelected ? FontWeight.w600 : FontWeight.w500,
-                    ),
+                  child: Icon(
+                    icon,
+                    color: effectiveIconColor,
+                    size: 20,
                   ),
                 ),
-                AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 200),
-                  transitionBuilder:
-                      (Widget child, Animation<double> animation) {
-                    return ScaleTransition(
-                      scale: animation,
-                      child: child,
-                    );
-                  },
-                  child: Icon(
-                    key: ValueKey<bool>(isSelected),
-                    isSelected
-                        ? Icons.keyboard_arrow_down_rounded
-                        : Icons.arrow_forward_ios_rounded,
+              const SizedBox(width: 16),
+              Expanded(
+                child: Text(
+                  title,
+                  style: theme.textTheme.titleMedium?.copyWith(
                     color: isSelected
                         ? theme.colorScheme.onPrimaryContainer
-                        : theme.colorScheme.onSurface.withOpacity(0.6),
-                    size: isSelected ? 22 : 18,
+                        : theme.colorScheme.onSurface,
+                    fontWeight:
+                        isSelected ? FontWeight.w600 : FontWeight.w500,
                   ),
                 ),
-              ],
-            ),
+              ),
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: 200),
+                transitionBuilder:
+                    (Widget child, Animation<double> animation) {
+                  return ScaleTransition(
+                    scale: animation,
+                    child: child,
+                  );
+                },
+                child: Icon(
+                  key: ValueKey<bool>(isSelected),
+                  isSelected
+                      ? Icons.keyboard_arrow_down_rounded
+                      : Icons.arrow_forward_ios_rounded,
+                  color: isSelected
+                      ? theme.colorScheme.onPrimaryContainer
+                      : theme.colorScheme.onSurface.withOpacity(0.6),
+                  size: isSelected ? 22 : 18,
+                ),
+              ),
+            ],
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildControlCenter(
     BuildContext context,
