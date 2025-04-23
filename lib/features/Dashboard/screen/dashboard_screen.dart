@@ -1,3 +1,6 @@
+import 'dart:developer';
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:kawamen/core/utils/Loadingscreen.dart';
@@ -23,7 +26,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   final GlobalKey _boundaryKey = GlobalKey();
-  
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -74,6 +77,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         MaterialPageRoute(
                             builder: (context) => const LoginView()),
                         (_) => false);
+                  } else if (state is DashboardPreviewReady) {
+                    final bloc = context.read<DashboardBloc>();
+                    // Show preview dialog
+                    _showPreviewDialog(context, state.imageBytes, bloc, theme);
                   }
                 },
               ))),
@@ -94,8 +101,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
             child: RefreshIndicator(
               onRefresh: () async {
                 // Force refresh data
-                context.read<DashboardBloc>().add(FetchDashboard(forceRefresh: true));
-                
+                context
+                    .read<DashboardBloc>()
+                    .add(FetchDashboard(forceRefresh: true));
+
                 // Show a snackbar to inform the user
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
@@ -103,7 +112,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     duration: Duration(seconds: 1),
                   ),
                 );
-                
+
                 // Wait a moment to simulate network request
                 await Future.delayed(const Duration(milliseconds: 800));
               },
@@ -117,15 +126,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
                         IconButton(
-                            onPressed: () {
-                              context
-                                  .read<DashboardBloc>()
-                                  .add(ExportDashboard(_boundaryKey));
-                            },
-                            icon: const Icon(
-                              Icons.share,
-                              color: Colors.greenAccent,
-                            )),
+                          onPressed: () {
+                            // Trigger the capture process
+                            context
+                                .read<DashboardBloc>()
+                                .add(CaptureScreenshot(_boundaryKey));
+                          },
+                          icon: const Icon(
+                            Icons.share,
+                            color: Colors.greenAccent,
+                          ),
+                        ),
                       ],
                     ),
                     const SizedBox(height: 2),
@@ -251,6 +262,158 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  void _showPreviewDialog(BuildContext context, Uint8List imageBytes,
+      DashboardBloc bloc, ThemeData theme) {
+    bool _shareIsLoading = false;
+
+    showDialog(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return Dialog(
+          backgroundColor: const Color(0xFF241c2e),
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.grey[900]?.withOpacity(0.95),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: Colors.white.withOpacity(0.1),
+              ),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Padding(
+                  padding: EdgeInsets.all(16),
+                  child: Text(
+                    'معاينة',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                Container(
+                  constraints: BoxConstraints(
+                    maxHeight: MediaQuery.of(context).size.height * 0.6,
+                  ),
+                  child: SingleChildScrollView(
+                    child: Image.memory(imageBytes),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      TextButton(
+                        style: TextButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 24, vertical: 12),
+                          backgroundColor:
+                              Theme.of(dialogContext).colorScheme.surface,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            side: BorderSide(
+                              color: Theme.of(dialogContext)
+                                  .colorScheme
+                                  .outline
+                                  .withOpacity(0.5),
+                            ),
+                          ),
+                        ),
+                        onPressed: () {
+                          Navigator.pop(dialogContext);
+                          // Refresh dashboard after closing dialog
+                          bloc.add(FetchDashboard());
+                        },
+                        child: Text(
+                          'إلغاء', // Arabic for "Cancel"
+                          style: Theme.of(dialogContext)
+                              .textTheme
+                              .labelLarge
+                              ?.copyWith(
+                                color:
+                                    Theme.of(dialogContext).colorScheme.primary,
+                              ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      StatefulBuilder(
+                        builder: (context, setState) {
+                          return ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor:
+                                  Theme.of(dialogContext).primaryColor,
+                              foregroundColor: Colors.black,
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 24, vertical: 12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            onPressed: () async {
+                              setState(() {
+                                _shareIsLoading = true;
+                              });
+                              try {
+                                // Close the preview dialog first
+                                Navigator.of(dialogContext).pop();
+
+                                // Share the image bytes directly without re-capturing
+                                bloc.add(ShareScreenshot(imageBytes));
+                              } catch (e) {
+                                log('Error sharing image: $e');
+                                if (mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text('Failed to share image'),
+                                      backgroundColor: Colors.red,
+                                    ),
+                                  );
+                                }
+                              } finally {
+                                if (mounted) {
+                                  setState(() {
+                                    _shareIsLoading = false;
+                                  });
+                                }
+                              }
+                            },
+                            child: _shareIsLoading
+                                ? const SizedBox(
+                                    width: 24,
+                                    height: 24,
+                                    child: CircularProgressIndicator(
+                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                          Colors.white),
+                                      strokeWidth: 2.0,
+                                    ),
+                                  )
+                                : Text(
+                                    'شارك', // Arabic for "Share"
+                                    style: Theme.of(dialogContext)
+                                        .textTheme
+                                        .labelLarge
+                                        ?.copyWith(
+                                          color: Colors.black,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                  ),
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }

@@ -24,6 +24,15 @@ class DashboardError extends DashboardState {
   DashboardError(this.message);
 }
 
-class DashboardExporting extends DashboardState {}
 class DashboardExported extends DashboardState {}
 class UsernNotAuthenticated extends DashboardState {}
+// Add these states to your dashboard_state.dart
+class DashboardPreviewReady extends DashboardState {
+  final Uint8List imageBytes;
+  DashboardPreviewReady(this.imageBytes);
+}
+
+class DashboardExporting extends DashboardState {
+  final Uint8List imageBytes;
+  DashboardExporting(this.imageBytes);
+}
