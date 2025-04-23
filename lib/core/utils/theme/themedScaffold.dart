@@ -17,7 +17,7 @@ class ThemedScaffold extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final glowColor = Theme.of(context).colorScheme.primary;
+    final glowColor = Color(0xFF5D4EE6);
 
     return Scaffold(
       appBar: appBar,
