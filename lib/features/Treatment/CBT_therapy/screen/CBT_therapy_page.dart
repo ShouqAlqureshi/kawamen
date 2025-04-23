@@ -453,7 +453,7 @@ class _CBTTherapyViewState extends State<_CBTTherapyView>
                               style: TextStyle(
                                 color: theme.colorScheme.onBackground,
                                 fontWeight: FontWeight.bold,
-                                fontSize: screenWidth < 360 ? 18 : 20,
+                                fontSize: screenWidth < 360 ? 18 : screenWidth*0.06,
                               ),
                               textDirection: TextDirection.rtl,
                             );
