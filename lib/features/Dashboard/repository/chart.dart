@@ -11,16 +11,47 @@ class EmotionalTrendGraph extends StatelessWidget {
       required this.sadEmotionalData})
       : super(key: key);
 
-  // Helper method to convert from Dart weekday (1=Monday, 7=Sunday)
-  // to display weekday (1=Sunday, 2=Monday, ..., 7=Saturday)
-  int _convertWeekday(int dartWeekday) {
-    // Convert from Dart weekday to display weekday
-    if (dartWeekday == 7) {
-      // Sunday in Dart is 7
-      return 1; // Sunday should be 1 in our display
-    } else {
-      return dartWeekday + 1; // Monday(1) becomes 2, Tuesday(2) becomes 3, etc.
-    }
+  // Create spots with explicit sorting to ensure points are in order
+  List<FlSpot> _createSortedSpots(Map<int, int> data) {
+    // Convert to list of entries and sort by display position
+    final entries = data.entries.map((entry) {
+      // Convert Dart weekday to chart position (1-7 where 1=Sunday)
+      int displayDay;
+      switch (entry.key) {
+        case 1:
+          displayDay = 2;
+          break; // Monday -> 2
+        case 2:
+          displayDay = 3;
+          break; // Tuesday -> 3
+        case 3:
+          displayDay = 4;
+          break; // Wednesday -> 4
+        case 4:
+          displayDay = 5;
+          break; // Thursday -> 5
+        case 5:
+          displayDay = 6;
+          break; // Friday -> 6
+        case 6:
+          displayDay = 7;
+          break; // Saturday -> 7
+        case 7:
+          displayDay = 1;
+          break; // Sunday -> 1
+        default:
+          displayDay = 1;
+      }
+      return MapEntry(displayDay, entry.value);
+    }).toList();
+
+    // Sort by display day to ensure correct order
+    entries.sort((a, b) => a.key.compareTo(b.key));
+
+    // Convert to FlSpot list
+    return entries
+        .map((e) => FlSpot(e.key.toDouble(), e.value.toDouble()))
+        .toList();
   }
 
   @override
@@ -80,30 +111,65 @@ class EmotionalTrendGraph extends StatelessWidget {
               gridData: const FlGridData(show: false),
               titlesData: titlesData,
               borderData: FlBorderData(show: false),
+              minX: 1,
+              maxX: 7,
+              minY: 0,
+              lineTouchData: LineTouchData(
+                touchTooltipData: LineTouchTooltipData(
+                  getTooltipColor: (LineBarSpot touchedSpot) => Colors.black,
+                ),
+                handleBuiltInTouches: true,
+              ),
               lineBarsData: [
                 LineChartBarData(
-                  //sad
-                  spots: sadEmotionalData.entries.map((e) {
-                    // Convert the weekday number before creating the FlSpot
-                    return FlSpot(
-                        _convertWeekday(e.key).toDouble(), e.value.toDouble());
-                  }).toList(),
+                  // Sad - blue line
+                  spots: _createSortedSpots(sadEmotionalData),
                   isCurved: true,
+                  curveSmoothness: 0.3, // Reduce curviness
+                  preventCurveOverShooting: true, // Prevent loops
                   isStrokeCapRound: true,
                   color: Colors.blue,
-                  dotData: const FlDotData(show: false),
+                  barWidth: 3,
+                  dotData: FlDotData(
+                    show: true,
+                    getDotPainter: (spot, percent, barData, index) {
+                      return FlDotCirclePainter(
+                        radius: 4,
+                        color: Colors.blue,
+                        strokeWidth: 2,
+                        strokeColor: Colors.transparent,
+                      );
+                    },
+                  ),
+                  belowBarData: BarAreaData(
+                    show: true,
+                    color: Colors.blue.withOpacity(0.1),
+                  ),
                 ),
                 LineChartBarData(
-                  //anger
-                  spots: angerEmotionalData.entries.map((e) {
-                    // Convert the weekday number before creating the FlSpot
-                    return FlSpot(
-                        _convertWeekday(e.key).toDouble(), e.value.toDouble());
-                  }).toList(),
+                  // Anger - red line
+                  spots: _createSortedSpots(angerEmotionalData),
                   isCurved: true,
+                  curveSmoothness: 0.3, // Reduce curviness
+                  preventCurveOverShooting: true, // Prevent loops
                   isStrokeCapRound: true,
                   color: Colors.red,
-                  dotData: const FlDotData(show: false),
+                  barWidth: 3,
+                  dotData: FlDotData(
+                    show: true,
+                    getDotPainter: (spot, percent, barData, index) {
+                      return FlDotCirclePainter(
+                        radius: 4,
+                        color: Colors.red,
+                        strokeWidth: 2,
+                        strokeColor: Colors.transparent,
+                      );
+                    },
+                  ),
+                  belowBarData: BarAreaData(
+                    show: true,
+                    color: Colors.red.withOpacity(0.1),
+                  ),
                 ),
               ],
             ),
