@@ -1,67 +1,50 @@
 import 'dart:io';
 import 'package:flutter_sound/flutter_sound.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 class AudioRecorderService {
   final FlutterSoundRecorder _recorder = FlutterSoundRecorder();
-  bool isRecording = false;
-  bool _isInitialized = false;
+  bool _isRecorderInitialized = false;
+  String? _recordingPath;
 
-  /// Initializes the recorder and requests microphone permissions.
   Future<void> init() async {
-    if (_isInitialized) return;
-
     final micStatus = await Permission.microphone.request();
     if (!micStatus.isGranted) {
-      throw Exception("Microphone permission not granted");
+      throw RecordingPermissionException('Microphone permission not granted');
     }
 
     await _recorder.openRecorder();
-    _isInitialized = true;
+    _isRecorderInitialized = true;
   }
 
-  /// Starts recording a 5-second audio session and saves it as a .wav file.
-  Future<File> recordThirtySecondSession() async {
-    await init(); // Ensure the recorder is initialized
+  Future<void> startRecording() async {
+    if (!_isRecorderInitialized) await init();
 
-    final tempDir = await getTemporaryDirectory();
-    final filePath = '${tempDir.path}/kawamen_session.wav';
+    final dir = await getApplicationDocumentsDirectory();
+    final filePath =
+        '${dir.path}/audio_${DateTime.now().millisecondsSinceEpoch}.aac';
+    _recordingPath = filePath;
 
     await _recorder.startRecorder(
       toFile: filePath,
-      codec: Codec.pcm16WAV, // PCM WAV format
-      sampleRate: 16000, // Required by Audeering
-      numChannels: 1, // Mono channel is required
+      codec: Codec.aacADTS,
     );
+  }
 
-    isRecording = true;
-
-    // Record for 5 seconds (you can increase to 30 if needed)
-    await Future.delayed(const Duration(seconds: 5));
+  Future<String?> stopRecording() async {
+    if (!_isRecorderInitialized) return null;
 
     await _recorder.stopRecorder();
-    isRecording = false;
-
-    return File(filePath);
-  }
-
-  /// Stops recording manually if needed before timeout.
-  Future<void> stopRecording() async {
-    if (_recorder.isRecording) {
-      await _recorder.stopRecorder();
-      isRecording = false;
-    }
-  }
-
-  /// Checks if the audio file likely contains speech by checking file size.
-  Future<bool> containsSpeech(String filePath) async {
-    final file = File(filePath);
-    final sizeInKB = await file.length() / 1024;
-    return sizeInKB > 10; // Rough threshold for speech presence
+    return _recordingPath;
   }
 
   void dispose() {
-    _recorder.closeRecorder();
+    if (_isRecorderInitialized) {
+      _recorder.closeRecorder();
+      _isRecorderInitialized = false;
+    }
   }
+
+  bool get isRecording => _recorder.isRecording;
 }
