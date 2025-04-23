@@ -147,7 +147,8 @@ class ViewProfileScreen extends StatelessWidget {
                 const SizedBox(height: 8),
                 // Email with custom styling
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                   decoration: BoxDecoration(
                     color: theme.colorScheme.surfaceVariant.withOpacity(0.3),
                     borderRadius: BorderRadius.circular(20),
@@ -163,9 +164,11 @@ class ViewProfileScreen extends StatelessWidget {
                 // Age info with badge styling if available
                 if (userAge.isNotEmpty)
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                     decoration: BoxDecoration(
-                      color: theme.colorScheme.tertiaryContainer.withOpacity(0.4),
+                      color:
+                          theme.colorScheme.tertiaryContainer.withOpacity(0.4),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
@@ -176,7 +179,7 @@ class ViewProfileScreen extends StatelessWidget {
                       ),
                     ),
                   ),
-                
+
                 const SizedBox(height: 28),
                 // Cards section with improved spacing and animations
                 SizedBox(
@@ -204,9 +207,11 @@ class ViewProfileScreen extends StatelessWidget {
                               ),
                             ),
                           );
-      
+
                           if (result == true) {
-                            context.read<ProfileBloc>().add(FetchToggleStates());
+                            context
+                                .read<ProfileBloc>()
+                                .add(FetchToggleStates());
                           }
                         },
                       ),
@@ -228,13 +233,16 @@ class ViewProfileScreen extends StatelessWidget {
                         icon: Icons.settings_outlined,
                         isSelected: state.showControlCenter,
                         onTap: () {
-                          context.read<ProfileBloc>().add(ToggleControlCenter());
+                          context
+                              .read<ProfileBloc>()
+                              .add(ToggleControlCenter());
                         },
                       ),
                       // Control center with enhanced animation
                       AnimatedSwitcher(
                         duration: const Duration(milliseconds: 300),
-                        transitionBuilder: (Widget child, Animation<double> animation) {
+                        transitionBuilder:
+                            (Widget child, Animation<double> animation) {
                           return SizeTransition(
                             sizeFactor: animation,
                             child: FadeTransition(
@@ -254,7 +262,8 @@ class ViewProfileScreen extends StatelessWidget {
                         theme: theme,
                         icon: Icons.logout_rounded,
                         color: Colors.red.withOpacity(0.7),
-                        iconColor: const Color.fromARGB(255, 255, 255, 255).withOpacity(0.7),
+                        iconColor: const Color.fromARGB(255, 255, 255, 255)
+                            .withOpacity(0.7),
                         iconBackground: Colors.red.withOpacity(0.7),
                         onTap: () {
                           _showLogoutConfirmationDialog(context, theme);
@@ -262,8 +271,8 @@ class ViewProfileScreen extends StatelessWidget {
                       ),
                       const SizedBox(height: 24),
                       const SizedBox(height: 28),
-                // Enhanced mood selector with visual feedback
-                _buildMoodSelector(context, theme),
+                      // Enhanced mood selector with visual feedback
+                      _buildMoodSelector(context, theme),
                     ],
                   ),
                 ),
@@ -276,7 +285,8 @@ class ViewProfileScreen extends StatelessWidget {
   }
 
   // Enhanced logout confirmation dialog
-  Future<void> _showLogoutConfirmationDialog(BuildContext context, ThemeData theme) async {
+  Future<void> _showLogoutConfirmationDialog(
+      BuildContext context, ThemeData theme) async {
     return showDialog<void>(
       context: context,
       barrierDismissible: true,
@@ -306,7 +316,8 @@ class ViewProfileScreen extends StatelessWidget {
               children: [
                 TextButton(
                   style: TextButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 24, vertical: 12),
                     backgroundColor: theme.colorScheme.surface,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -328,7 +339,8 @@ class ViewProfileScreen extends StatelessWidget {
                 const SizedBox(width: 16),
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 24, vertical: 12),
                     backgroundColor: Colors.red,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -342,8 +354,10 @@ class ViewProfileScreen extends StatelessWidget {
                     ),
                   ),
                   onPressed: () {
-                    Navigator.of(context).pop();
+                    // First dispatch the Logout event
                     context.read<ProfileBloc>().add(Logout());
+                    // Then close the dialog
+                    Navigator.of(context).pop();
                   },
                 ),
               ],
@@ -540,8 +554,9 @@ class ViewProfileScreen extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: iconBackground ?? 
-                          (iconColor ?? theme.colorScheme.primary).withOpacity(0.15),
+                      color: iconBackground ??
+                          (iconColor ?? theme.colorScheme.primary)
+                              .withOpacity(0.15),
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
@@ -558,13 +573,15 @@ class ViewProfileScreen extends StatelessWidget {
                       color: isSelected
                           ? theme.colorScheme.onPrimaryContainer
                           : theme.colorScheme.onSurface,
-                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                      fontWeight:
+                          isSelected ? FontWeight.w600 : FontWeight.w500,
                     ),
                   ),
                 ),
                 AnimatedSwitcher(
                   duration: const Duration(milliseconds: 200),
-                  transitionBuilder: (Widget child, Animation<double> animation) {
+                  transitionBuilder:
+                      (Widget child, Animation<double> animation) {
                     return ScaleTransition(
                       scale: animation,
                       child: child,
@@ -649,7 +666,8 @@ class ViewProfileScreen extends StatelessWidget {
                   context.read<MicrophoneBloc>().add(ToggleMicrophone());
                   await Future.delayed(const Duration(milliseconds: 200));
                   if (context.mounted &&
-                      context.read<MicrophoneBloc>().state is MicrophoneEnabled) {
+                      context.read<MicrophoneBloc>().state
+                          is MicrophoneEnabled) {
                     context.read<ProfileBloc>().add(
                           UpdateToggleState(
                             toggleName: 'microphoneToggle',
@@ -727,7 +745,8 @@ class ViewProfileScreen extends StatelessWidget {
                         subtitle,
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: subtitleColor ??
-                              theme.colorScheme.onSurfaceVariant.withOpacity(0.8),
+                              theme.colorScheme.onSurfaceVariant
+                                  .withOpacity(0.8),
                         ),
                       ),
                     ),
@@ -744,7 +763,8 @@ class ViewProfileScreen extends StatelessWidget {
               activeColor: theme.colorScheme.primary,
               activeTrackColor: theme.colorScheme.primaryContainer,
               inactiveThumbColor: theme.colorScheme.onSurfaceVariant,
-              inactiveTrackColor: theme.colorScheme.surfaceVariant.withOpacity(0.6),
+              inactiveTrackColor:
+                  theme.colorScheme.surfaceVariant.withOpacity(0.6),
             ),
           ),
         ],
