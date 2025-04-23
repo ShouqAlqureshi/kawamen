@@ -1,5 +1,3 @@
-// File: emotion_detection/model/emotion_model.dart
-
 class EmotionModel {
   final String emotionId; // unique ID for this emotion record
   final String emotion; // dominant emotion detected (e.g., "sad", "happy")

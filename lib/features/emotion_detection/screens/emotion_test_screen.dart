@@ -1,12 +1,11 @@
 import 'dart:async';
-import 'package:kawamen/core/utils/Loadingscreen.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:kawamen/core/utils/Loadingscreen.dart';
+import 'package:kawamen/core/utils/permission_handler.dart';
 import '../Bloc/emotion_detection_bloc.dart';
 import '../Bloc/emotion_detection_event.dart';
 import '../Bloc/emotion_detection_state.dart';
-import 'package:kawamen/core/utils/permission_handler.dart';
 
 class EmotionTestScreen extends StatefulWidget {
   const EmotionTestScreen({Key? key}) : super(key: key);
@@ -18,7 +17,6 @@ class EmotionTestScreen extends StatefulWidget {
 class _EmotionTestScreenState extends State<EmotionTestScreen> {
   bool micEnabled = false;
   bool detectionEnabled = false;
-  String resultMessage = '';
   bool isRecording = false;
   Timer? micStatusTimer;
 
@@ -31,6 +29,7 @@ class _EmotionTestScreenState extends State<EmotionTestScreen> {
   @override
   void dispose() {
     micStatusTimer?.cancel();
+    context.read<EmotionDetectionBloc>().recorderService.dispose();
     super.dispose();
   }
 
@@ -49,29 +48,38 @@ class _EmotionTestScreenState extends State<EmotionTestScreen> {
 
     if (granted) {
       setState(() => micEnabled = true);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Microphone access granted.")),
+      );
     } else {
       final permanentlyDenied =
           await AppPermissionHandler.isMicPermanentlyDenied();
       if (permanentlyDenied) {
         await AppPermissionHandler.openSettings();
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Microphone permission is required.")),
+        );
       }
     }
   }
 
   void _handleDetectionToggle(bool value) {
     final bloc = context.read<EmotionDetectionBloc>();
+
     if (!micEnabled) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Enable microphone access first.")),
       );
       return;
     }
+
     setState(() => detectionEnabled = value);
+
     if (value) {
       bloc.add(StartEmotionDetection());
     } else {
       bloc.add(StopEmotionDetection());
-      setState(() => resultMessage = '');
     }
   }
 
@@ -124,8 +132,6 @@ class _EmotionTestScreenState extends State<EmotionTestScreen> {
 
                 if (state is DetectionSuccess) {
                   final result = state.categoricalResult;
-
-                  // Extract top emotion from the result map
                   final topEmotion = result.entries
                       .reduce((a, b) => a.value > b.value ? a : b)
                       .key;
