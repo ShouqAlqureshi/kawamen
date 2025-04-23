@@ -432,7 +432,7 @@ class DeepBreathingBloc extends Bloc<DeepBreathingEvent, DeepBreathingState> {
     final userTreatmentId = await _repository.trackUserTreatment(
       treatmentId: state.treatment!.id,
       status: TreatmentStatus.started,
-      emotionFeedback: "anger", // Add constant "anger" emotion when starting
+      emotionFeedback: "angry", // Add constant "angry" emotion when starting
       progress: 0.0,
     );
     

@@ -297,7 +297,7 @@ class _HomePageContent extends StatelessWidget {
         return 'الحزن';
       case 'anxiety':
         return 'القلق';
-      case 'anger':
+      case 'angry':
         return 'الغضب';
       case 'fear':
         return 'الخوف';
