@@ -59,7 +59,6 @@ class _HomePageContent extends StatelessWidget {
               duration: Duration(seconds: 1),
             ),
           );
-
         },
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20.0),
@@ -241,17 +240,26 @@ class _HomePageContent extends StatelessWidget {
                   onPressed: () {
                     if (treatment != null) {
                       final sessionId = treatment.userTreatmentId;
+                      // In HomePage._buildSessionCard method
                       if (treatment.treatmentId == "CBTtherapy") {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                              builder: (context) => const CBTTherapyPage()),
+                            builder: (context) => CBTTherapyPage(
+                              userTreatmentId: treatment.userTreatmentId,
+                              treatmentId: treatment.treatmentId,
+                            ),
+                          ),
                         );
                       } else if (treatment.treatmentId == 'DeepBreathing') {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                              builder: (context) => const DeepBreathingPage()),
+                            builder: (context) => DeepBreathingPage(
+                              userTreatmentId: treatment.userTreatmentId,
+                              treatmentId: treatment.treatmentId,
+                            ),
+                          ),
                         );
                       }
                       log("Session ID: $sessionId, Treatment: ${treatment.treatmentId}, Emotion: ${treatment.emotion}");
@@ -283,8 +291,6 @@ class _HomePageContent extends StatelessWidget {
         return 'إعادة التركيز وتحدي الأفكار السلبية';
       case 'DeepBreathing':
         return 'التنفس العميق والاسترخاء العضلي';
-      case 'JournalTherapy':
-        return 'الكتابة التأملية';
       default:
         return treatmentId;
     }

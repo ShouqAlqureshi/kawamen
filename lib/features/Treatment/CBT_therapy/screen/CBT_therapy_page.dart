@@ -7,19 +7,30 @@ import 'dart:math';
 import 'package:kawamen/features/Treatment/CBT_therapy/bloc/CBT_therapy_bloc.dart';
 
 class CBTTherapyPage extends StatelessWidget {
-  const CBTTherapyPage({Key? key}) : super(key: key);
+  final String? userTreatmentId;
+  final String? treatmentId;
+  const CBTTherapyPage({ 
+    Key? key, 
+    this.userTreatmentId, 
+    this.treatmentId = 'CBTtherapy'
+    }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (_) => CBTTherapyBloc(),
-      child: const _CBTTherapyView(),
+      child: _CBTTherapyView(
+      userTreatmentId: userTreatmentId,
+      treatmentId: treatmentId,),
     );
   }
 }
 
 class _CBTTherapyView extends StatefulWidget {
-  const _CBTTherapyView();
+  final String? userTreatmentId;
+  final String? treatmentId;
+  
+  const _CBTTherapyView({this.userTreatmentId, this.treatmentId});
 
   @override
   State<_CBTTherapyView> createState() => _CBTTherapyViewState();
@@ -46,7 +57,21 @@ class _CBTTherapyViewState extends State<_CBTTherapyView>
   @override
   void initState() {
     super.initState();
-
+   // Load existing treatment or new treatment
+  if (widget.userTreatmentId != null && widget.treatmentId != null) {
+    // Load existing treatment
+    context.read<CBTTherapyBloc>().add(
+      LoadUserCBTTreatmentEvent(
+        userTreatmentId: widget.userTreatmentId!,
+        treatmentId: widget.treatmentId!,
+      ),
+    );
+  } else {
+    // Load new treatment
+    context.read<CBTTherapyBloc>().add(
+      const LoadCBTDataEvent(treatmentId: 'CBTtherapy'),
+    );
+  }
     // Initialize pulse animation controller (for the thought bubble)
     _pulseAnimationController = AnimationController(
       vsync: this,
@@ -157,216 +182,87 @@ class _CBTTherapyViewState extends State<_CBTTherapyView>
   void _hideKeyboard() {
     FocusScope.of(context).unfocus();
   }
-
-  // Show congratulations popup when exercise is completed
-  void _showCongratulationsPopup(BuildContext context) {
-    // Get reference to the bloc before showing the dialog
-    final cbtTherapyBloc = context.read<CBTTherapyBloc>();
-    final theme = Theme.of(context);
-
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (BuildContext dialogContext) {
-        // Reset and start animations
-        _scaleController.reset();
-        _confettiController.reset();
-        _scaleController.forward();
-        _confettiController.forward();
-
-        return Dialog(
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          child: Directionality(
-            textDirection: TextDirection.rtl,
-            child: Stack(
-              clipBehavior: Clip.none,
-              alignment: Alignment.center,
-              children: [
-                // Confetti animation overlay
-                Positioned.fill(
-                  child: AnimatedBuilder(
-                    animation: _confettiAnimation,
-                    builder: (context, child) {
-                      return CustomPaint(
-                        painter: ConfettiPainter(
-                          progress: _confettiAnimation.value,
-                        ),
-                        size: Size.infinite,
-                      );
-                    },
-                  ),
-                ),
-
-                // Main popup card with scale animation
-                ScaleTransition(
-                  scale: _scaleAnimation,
-                  child: Container(
-                    width: 300,
-                    padding: const EdgeInsets.all(24),
-                    decoration: BoxDecoration(
-                      color: theme.cardColor,
-                      borderRadius: BorderRadius.circular(20),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.3),
-                          blurRadius: 15,
-                          offset: const Offset(0, 5),
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        // Trophy icon with glow effect
-                        Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: Colors.amber.withOpacity(0.2),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            Icons.psychology_alt_rounded,
-                            color: Colors.amber,
-                            size: 60,
-                          ),
-                        ),
-                        const SizedBox(height: 24),
-
-                        // Congratulations text
-                        Text(
-                          'تهانينا!',
-                          style: TextStyle(
-                            color: theme.colorScheme.onSurface,
-                            fontSize: 28,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        Text(
-                          'لقد أكملت جلسة العلاج المعرفي السلوكي بنجاح',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            color: theme.colorScheme.onSurface.withOpacity(0.8),
-                            fontSize: 16,
-                          ),
-                        ),
-                        const SizedBox(height: 30),
-
-                        // Buttons
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                          children: [
-                            // Repeat button - Now with outlined style
-                            OutlinedButton.icon(
-                              onPressed: () {
-                                Navigator.of(dialogContext).pop();
-                                cbtTherapyBloc.add(ResetCBTExerciseEvent());
-                                cbtTherapyBloc.add(StartCBTExerciseEvent());
-                              },
-                              icon: Icon(
-                                Icons.replay_rounded,
-                                color: theme.colorScheme
-                                    .secondary, // Explicitly set icon color to match text
-                              ),
-                              label: const Text('إعادة'),
-                              style: OutlinedButton.styleFrom(
-                                foregroundColor: theme.colorScheme.secondary,
-                                side: BorderSide(
-                                    color: theme.colorScheme.secondary),
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 16, vertical: 12),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                              ),
-                            ),
-
-                            // Okay button - Now with filled style
-                            ElevatedButton(
-                              onPressed: () {
-                                Navigator.pushReplacement(
-                                  dialogContext,
-                                  MaterialPageRoute(
-                                      builder: (_) => const MainNavigator()),
-                                );
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: theme.colorScheme.secondary,
-                                foregroundColor: theme.colorScheme.onSecondary,
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 24, vertical: 12),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                              ),
-                              child: const Text('حسنا'),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
+void _updateTextControllers(CBTTherapyState state) {
+  // Only update if text is not empty to avoid overwriting user edits
+  if (state.userThought.isNotEmpty && 
+      _thoughtController.text != state.userThought) {
+    _thoughtController.text = state.userThought;
   }
+  
+  if (state.alternativeThought.isNotEmpty && 
+      _alternativeController.text != state.alternativeThought) {
+    _alternativeController.text = state.alternativeThought;
+  }
+  
+  if (state.supportingEvidence.isNotEmpty && 
+      _supportingEvidenceController.text != state.supportingEvidence) {
+    _supportingEvidenceController.text = state.supportingEvidence;
+  }
+  
+  if (state.contradictingEvidence.isNotEmpty && 
+      _contradictingEvidenceController.text != state.contradictingEvidence) {
+    _contradictingEvidenceController.text = state.contradictingEvidence;
+  }
+}
 
-  Future<bool> _showExitConfirmationDialog(BuildContext context) async {
-    final theme = Theme.of(context);
+Future<bool> _showExitConfirmationDialog(BuildContext context) async {
+  final theme = Theme.of(context);
+  final bloc = context.read<CBTTherapyBloc>();
 
-    return await showDialog<bool>(
-          context: context,
-          builder: (BuildContext dialogContext) {
-            return Directionality(
-              textDirection: TextDirection.rtl,
-              child: AlertDialog(
-                title: const Text(
-                  'هل أنت متأكد؟',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                content: const Text(
-                  'إذا غادرت الآن، ستفقد التقدم في جلسة العلاج الحالية.',
-                  textAlign: TextAlign.right,
-                ),
-                actions: [
-                  TextButton(
-                    onPressed: () {
-                      Navigator.of(dialogContext).pop(false); // Don't exit
-                    },
-                    style: TextButton.styleFrom(
-                      foregroundColor: theme.colorScheme.secondary,
-                    ),
-                    child: const Text('البقاء'),
-                  ),
-                  FilledButton(
-                    onPressed: () {
-                      Navigator.of(dialogContext).pop(true); // Confirm exit
-                    },
-                    style: FilledButton.styleFrom(
-                      backgroundColor: Colors.red,
-                      foregroundColor: Colors.white,
-                    ),
-                    child: const Text('مغادرة'),
-                  ),
-                ],
-                backgroundColor: theme.cardColor,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(15),
+  return await showDialog<bool>(
+        context: context,
+        builder: (BuildContext dialogContext) {
+          return Directionality(
+            textDirection: TextDirection.rtl,
+            child: AlertDialog(
+              title: const Text(
+                'هل أنت متأكد؟',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
                 ),
               ),
-            );
-          },
-        ) ??
-        false; // Default to false (don't exit) if dialog is dismissed
-  }
-
+              content: const Text(
+                'إذا غادرت الآن، ستفقد التقدم في جلسة العلاج الحالية.',
+                textAlign: TextAlign.right,
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(dialogContext).pop(false); // Don't exit
+                  },
+                  style: TextButton.styleFrom(
+                    foregroundColor: theme.colorScheme.secondary,
+                  ),
+                  child: const Text('البقاء'),
+                ),
+                FilledButton(
+                  onPressed: () {
+                    // IMPORTANT FIX: Save progress before exiting, by using PauseCBTTreatmentEvent
+                    // This event will handle the database update
+                    bloc.add(const PauseCBTTreatmentEvent());
+                    
+                    // Add a small delay to ensure database operation completes
+                    Future.delayed(const Duration(milliseconds: 100), () {
+                      Navigator.of(dialogContext).pop(true); // Confirm exit
+                    });
+                  },
+                  style: FilledButton.styleFrom(
+                    backgroundColor: Colors.red,
+                    foregroundColor: Colors.white,
+                  ),
+                  child: const Text('مغادرة'),
+                ),
+              ],
+              backgroundColor: theme.cardColor,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(15),
+              ),
+            ),
+          );
+        },
+      ) ??
+      false; // Default to false (don't exit) if dialog is dismissed
+}
   @override
   Widget build(BuildContext context) {
     return BlocConsumer<CBTTherapyBloc, CBTTherapyState>(
@@ -378,11 +274,13 @@ class _CBTTherapyViewState extends State<_CBTTherapyView>
         if (state.isCompleting) {
           _showCongratulationsPopup(context);
         }
+        _updateTextControllers(state);
       },
       builder: (context, state) {
         // Get theme colors from context
         final theme = Theme.of(context);
         final colorScheme = theme.colorScheme;
+
         return WillPopScope(
           onWillPop: () async {
             // Show confirmation dialog if the session is active
@@ -1346,6 +1244,165 @@ class _CBTTherapyViewState extends State<_CBTTherapyView>
       ),
     );
   }
+
+// Show congratulations popup when exercise is completed
+  void _showCongratulationsPopup(BuildContext context) {
+    // Get reference to the bloc before showing the dialog
+    final cbtTherapyBloc = context.read<CBTTherapyBloc>();
+    final theme = Theme.of(context);
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext dialogContext) {
+        // Reset and start animations
+        _scaleController.reset();
+        _confettiController.reset();
+        _scaleController.forward();
+        _confettiController.forward();
+
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          child: Directionality(
+            textDirection: TextDirection.rtl,
+            child: Stack(
+              clipBehavior: Clip.none,
+              alignment: Alignment.center,
+              children: [
+                // Confetti animation overlay
+                Positioned.fill(
+                  child: AnimatedBuilder(
+                    animation: _confettiAnimation,
+                    builder: (context, child) {
+                      return CustomPaint(
+                        painter: ConfettiPainter(
+                          progress: _confettiAnimation.value,
+                        ),
+                        size: Size.infinite,
+                      );
+                    },
+                  ),
+                ),
+
+                // Main popup card with scale animation
+                ScaleTransition(
+                  scale: _scaleAnimation,
+                  child: Container(
+                    width: 300,
+                    padding: const EdgeInsets.all(24),
+                    decoration: BoxDecoration(
+                      color: theme.cardColor,
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.3),
+                          blurRadius: 15,
+                          offset: const Offset(0, 5),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Trophy icon with glow effect
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.amber.withOpacity(0.2),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.psychology_alt_rounded,
+                            color: Colors.amber,
+                            size: 60,
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+
+                        // Congratulations text
+                        Text(
+                          'تهانينا!',
+                          style: TextStyle(
+                            color: theme.colorScheme.onSurface,
+                            fontSize: 28,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          'لقد أكملت جلسة العلاج المعرفي السلوكي بنجاح',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: theme.colorScheme.onSurface.withOpacity(0.8),
+                            fontSize: 16,
+                          ),
+                        ),
+                        const SizedBox(height: 30),
+
+                        // Buttons
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            // Repeat button - Now with outlined style
+                            OutlinedButton.icon(
+                              onPressed: () {
+                                Navigator.of(dialogContext).pop();
+                                cbtTherapyBloc.add(ResetCBTExerciseEvent());
+                                cbtTherapyBloc.add(StartCBTExerciseEvent());
+                              },
+                              icon: Icon(
+                                Icons.replay_rounded,
+                                color: theme.colorScheme
+                                    .secondary, // Explicitly set icon color to match text
+                              ),
+                              label: const Text('إعادة'),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: theme.colorScheme.secondary,
+                                side: BorderSide(
+                                    color: theme.colorScheme.secondary),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 16, vertical: 12),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                            ),
+
+                            // Okay button - Now with filled style
+                            ElevatedButton(
+                              onPressed: () {
+                                Navigator.pushReplacement(
+                                  dialogContext,
+                                  MaterialPageRoute(
+                                      builder: (_) => const MainNavigator()),
+                                );
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: theme.colorScheme.secondary,
+                                foregroundColor: theme.colorScheme.onSecondary,
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 24, vertical: 12),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                              child: const Text('حسنا'),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
 }
 
 // Confetti painter for celebration animation

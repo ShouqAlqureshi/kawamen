@@ -6,7 +6,11 @@ import 'package:kawamen/features/Treatment/deep_breathing/bloc/deep_breathing_bl
 import 'dart:math';
 
 class DeepBreathingPage extends StatelessWidget {
-  const DeepBreathingPage({Key? key}) : super(key: key);
+  final String? userTreatmentId;
+  final String? treatmentId;
+  const DeepBreathingPage({Key? key, 
+    this.userTreatmentId, 
+    this.treatmentId = 'DeepBreathing'}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
