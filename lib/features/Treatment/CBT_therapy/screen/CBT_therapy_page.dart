@@ -443,14 +443,21 @@ class _CBTTherapyViewState extends State<_CBTTherapyView>
                         appBar: AppBar(
                           backgroundColor: Colors.transparent,
                           elevation: 0,
-                          title: Text(
-                            'جلسة العلاج المعرفي السلوكي',
-                            style: TextStyle(
-                              color: theme.colorScheme.onBackground,
-                              fontWeight: FontWeight.bold,
-                            ),
-                            textDirection: TextDirection.rtl,
-                          ),
+                          title: LayoutBuilder(builder: (context, constraints) {
+                            final screenWidth =
+                                MediaQuery.of(context).size.width;
+                            return Text(
+                              screenWidth < 320
+                                  ? 'العلاج المعرفي السلوكي'
+                                  : 'جلسة العلاج المعرفي السلوكي',
+                              style: TextStyle(
+                                color: theme.colorScheme.onBackground,
+                                fontWeight: FontWeight.bold,
+                                fontSize: screenWidth < 360 ? 18 : 20,
+                              ),
+                              textDirection: TextDirection.rtl,
+                            );
+                          }),
                           centerTitle: true,
                         ),
                         backgroundColor: Colors.transparent,

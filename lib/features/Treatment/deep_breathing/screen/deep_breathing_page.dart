@@ -439,12 +439,20 @@ class _DeepBreathingViewState extends State<_DeepBreathingView>
                       appBar: AppBar(
                         backgroundColor: Colors.transparent,
                         elevation: 0,
-                        title: Text(
-                          state.treatment?.name ?? 'جلسة التنفس العميق',
-                          style:
-                              TextStyle(color: theme.colorScheme.onBackground),
-                          textDirection: TextDirection.rtl,
-                        ),
+                        title: LayoutBuilder(builder: (context, constraints) {
+                          final screenWidth = MediaQuery.of(context).size.width;
+                          return Text(
+                            screenWidth < 320
+                                ? 'التنفس العميق'
+                                : 'جلسة التنفس العميق',
+                            style: TextStyle(
+                              color: theme.colorScheme.onBackground,
+                              fontWeight: FontWeight.bold,
+                              fontSize: screenWidth < 360 ? 18 : 20,
+                            ),
+                            textDirection: TextDirection.rtl,
+                          );
+                        }),
                         centerTitle: true,
                       ),
                       backgroundColor: Colors.transparent,
