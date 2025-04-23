@@ -20,6 +20,17 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
+  //for demo only
+  final Map<int, int> angerEmotions = {
+    1: 0,
+    2: 2,
+    3: 1,
+    4: 0,
+    5: 4,
+    6: 1,
+    7: 0
+  };
+  final Map<int, int> sadEmotions = {1: 1, 2: 1, 3: 3, 4: 0, 5: 4, 6: 2, 7: 1};
   @override
   void initState() {
     super.initState();
@@ -200,9 +211,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                     padding: const EdgeInsets.only(
                                         right: 16, left: 6),
                                     child: EmotionalTrendGraph(
-                                      angerEmotionalData:
-                                          state.angerEmotionalData,
-                                      sadEmotionalData: state.sadEmotionalData,
+                                      angerEmotionalData: angerEmotions,
+                                      sadEmotionalData: sadEmotions,
                                     ),
                                   ),
                                 ),
