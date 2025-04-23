@@ -3,6 +3,7 @@ import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:kawamen/core/utils/Loadingscreen.dart';
+import 'package:kawamen/core/utils/theme/ThemedScaffold.dart';
 import 'package:kawamen/core/utils/theme/theme.dart';
 import 'package:kawamen/features/Treatment/CBT_therapy/screen/CBT_therapy_page.dart';
 import 'package:kawamen/features/Treatment/deep_breathing/screen/deep_breathing_page.dart';
@@ -34,8 +35,7 @@ class _HomePageContent extends StatelessWidget {
     // Access the theme from the context
     final theme = Theme.of(context);
 
-    return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
+    return ThemedScaffold(
       appBar: AppBar(
         backgroundColor: theme.appBarTheme.backgroundColor,
         elevation: theme.appBarTheme.elevation,
