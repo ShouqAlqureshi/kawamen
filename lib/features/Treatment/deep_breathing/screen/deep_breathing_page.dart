@@ -8,21 +8,27 @@ import 'dart:math';
 class DeepBreathingPage extends StatelessWidget {
   final String? userTreatmentId;
   final String? treatmentId;
-  const DeepBreathingPage({Key? key, 
-    this.userTreatmentId, 
-    this.treatmentId = 'DeepBreathing'}) : super(key: key);
+  const DeepBreathingPage(
+      {Key? key, this.userTreatmentId, this.treatmentId = 'DeepBreathing'})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (_) => DeepBreathingBloc(),
-      child: const _DeepBreathingView(),
+      child: _DeepBreathingView(
+        userTreatmentId: userTreatmentId,
+        treatmentId: treatmentId,
+      ),
     );
   }
 }
 
 class _DeepBreathingView extends StatefulWidget {
-  const _DeepBreathingView();
+  final String? userTreatmentId;
+  final String? treatmentId;
+
+  const _DeepBreathingView({this.userTreatmentId, this.treatmentId});
 
   @override
   State<_DeepBreathingView> createState() => _DeepBreathingViewState();
@@ -94,10 +100,19 @@ class _DeepBreathingViewState extends State<_DeepBreathingView>
     _breathingAnimationController.value = 0.5;
     _glowAnimationController.value = 0.3;
 
-    // Load the DeepBreathing treatment
-    context
-        .read<DeepBreathingBloc>()
-        .add(const LoadTreatmentEvent(treatmentId: 'DeepBreathing'));
+    // Load the appropriate treatment
+    if (widget.userTreatmentId != null) {
+      // Load existing user treatment session
+      context.read<DeepBreathingBloc>().add(LoadUserTreatmentEvent(
+            userTreatmentId: widget.userTreatmentId!,
+            treatmentId: widget.treatmentId!,
+          ));
+    } else {
+      // Load a fresh treatment
+      context
+          .read<DeepBreathingBloc>()
+          .add(LoadTreatmentEvent(treatmentId: widget.treatmentId!));
+    }
   }
 
   @override
@@ -452,7 +467,8 @@ class _DeepBreathingViewState extends State<_DeepBreathingView>
                             style: TextStyle(
                               color: theme.colorScheme.onBackground,
                               fontWeight: FontWeight.bold,
-                                fontSize: screenWidth < 360 ? 18 : screenWidth*0.06,
+                              fontSize:
+                                  screenWidth < 360 ? 18 : screenWidth * 0.06,
                             ),
                             textDirection: TextDirection.rtl,
                           );
