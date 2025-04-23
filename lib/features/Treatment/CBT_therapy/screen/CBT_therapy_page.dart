@@ -316,6 +316,57 @@ class _CBTTherapyViewState extends State<_CBTTherapyView>
     );
   }
 
+  Future<bool> _showExitConfirmationDialog(BuildContext context) async {
+    final theme = Theme.of(context);
+
+    return await showDialog<bool>(
+          context: context,
+          builder: (BuildContext dialogContext) {
+            return Directionality(
+              textDirection: TextDirection.rtl,
+              child: AlertDialog(
+                title: const Text(
+                  'هل أنت متأكد؟',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                content: const Text(
+                  'إذا غادرت الآن، ستفقد التقدم في جلسة العلاج الحالية.',
+                  textAlign: TextAlign.right,
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () {
+                      Navigator.of(dialogContext).pop(false); // Don't exit
+                    },
+                    style: TextButton.styleFrom(
+                      foregroundColor: theme.colorScheme.secondary,
+                    ),
+                    child: const Text('البقاء'),
+                  ),
+                  FilledButton(
+                    onPressed: () {
+                      Navigator.of(dialogContext).pop(true); // Confirm exit
+                    },
+                    style: FilledButton.styleFrom(
+                      backgroundColor: Colors.red,
+                      foregroundColor: Colors.white,
+                    ),
+                    child: const Text('مغادرة'),
+                  ),
+                ],
+                backgroundColor: theme.cardColor,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(15),
+                ),
+              ),
+            );
+          },
+        ) ??
+        false; // Default to false (don't exit) if dialog is dismissed
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocConsumer<CBTTherapyBloc, CBTTherapyState>(
@@ -332,295 +383,311 @@ class _CBTTherapyViewState extends State<_CBTTherapyView>
         // Get theme colors from context
         final theme = Theme.of(context);
         final colorScheme = theme.colorScheme;
-
-        return GestureDetector(
-          // Add this GestureDetector to dismiss keyboard when tapping outside
-          onTap: _hideKeyboard,
-          child: Scaffold(
-            backgroundColor: theme.scaffoldBackgroundColor,
-            body: Stack(
-              children: [
-                // Background animation
-                Center(
-                  child: AnimatedBuilder(
-                    animation: _glowAnimation,
-                    builder: (context, child) {
-                      return Container(
-                        width: 300,
-                        height: 300,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          gradient: RadialGradient(
-                            colors: [
-                              colorScheme.primary
-                                  .withOpacity(_glowAnimation.value * 0.6),
-                              colorScheme.primary
-                                  .withOpacity(_glowAnimation.value * 0.2),
-                              Colors.transparent,
-                            ],
-                            stops: const [0.0, 0.5, 1.0],
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: colorScheme.primary
-                                  .withOpacity(_glowAnimation.value * 0.3),
-                              blurRadius: 60,
-                              spreadRadius: 20,
+        return WillPopScope(
+          onWillPop: () async {
+            // Show confirmation dialog if the session is active
+            if (state.isPlaying) {
+              bool shouldPop = await _showExitConfirmationDialog(context);
+              return shouldPop;
+            }
+            // If not playing, allow normal back navigation
+            return true;
+          },
+          child: GestureDetector(
+            // Add this GestureDetector to dismiss keyboard when tapping outside
+            onTap: _hideKeyboard,
+            child: Scaffold(
+              backgroundColor: theme.scaffoldBackgroundColor,
+              body: Stack(
+                children: [
+                  // Background animation
+                  Center(
+                    child: AnimatedBuilder(
+                      animation: _glowAnimation,
+                      builder: (context, child) {
+                        return Container(
+                          width: 300,
+                          height: 300,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            gradient: RadialGradient(
+                              colors: [
+                                colorScheme.primary
+                                    .withOpacity(_glowAnimation.value * 0.6),
+                                colorScheme.primary
+                                    .withOpacity(_glowAnimation.value * 0.2),
+                                Colors.transparent,
+                              ],
+                              stops: const [0.0, 0.5, 1.0],
                             ),
-                          ],
-                        ),
-                      );
-                    },
-                  ),
-                ),
-
-                // Main UI content
-                Opacity(
-                  opacity: 0.95,
-                  child: Directionality(
-                    textDirection: TextDirection.rtl,
-                    child: Scaffold(
-                      appBar: AppBar(
-                        backgroundColor: Colors.transparent,
-                        elevation: 0,
-                        title: Text(
-                          'جلسة العلاج المعرفي السلوكي',
-                          style: TextStyle(
-                            color: theme.colorScheme.onBackground,
-                            fontWeight: FontWeight.bold,
+                            boxShadow: [
+                              BoxShadow(
+                                color: colorScheme.primary
+                                    .withOpacity(_glowAnimation.value * 0.3),
+                                blurRadius: 60,
+                                spreadRadius: 20,
+                              ),
+                            ],
                           ),
-                          textDirection: TextDirection.rtl,
+                        );
+                      },
+                    ),
+                  ),
+
+                  // Main UI content
+                  Opacity(
+                    opacity: 0.95,
+                    child: Directionality(
+                      textDirection: TextDirection.rtl,
+                      child: Scaffold(
+                        appBar: AppBar(
+                          backgroundColor: Colors.transparent,
+                          elevation: 0,
+                          title: Text(
+                            'جلسة العلاج المعرفي السلوكي',
+                            style: TextStyle(
+                              color: theme.colorScheme.onBackground,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            textDirection: TextDirection.rtl,
+                          ),
+                          centerTitle: true,
                         ),
-                        centerTitle: true,
-                      ),
-                      backgroundColor: Colors.transparent,
-                      body: SingleChildScrollView(
-                        child: Padding(
-                          padding: const EdgeInsets.all(20.0),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.psychology_rounded,
-                                color: colorScheme.primary,
-                                size: 70,
-                              ),
-                              const SizedBox(height: 20),
-
-                              // Step counter
-                              Text(
-                                '${state.currentStep} / ${state.totalSteps}',
-                                style: TextStyle(
-                                  color: theme.colorScheme.onBackground
-                                      .withOpacity(0.7),
-                                  fontSize: 18,
+                        backgroundColor: Colors.transparent,
+                        body: SingleChildScrollView(
+                          child: Padding(
+                            padding: const EdgeInsets.all(20.0),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.psychology_rounded,
+                                  color: colorScheme.primary,
+                                  size: 70,
                                 ),
-                              ),
+                                const SizedBox(height: 20),
 
-                              const SizedBox(height: 20),
+                                // Step counter
+                                Text(
+                                  '${state.currentStep} / ${state.totalSteps}',
+                                  style: TextStyle(
+                                    color: theme.colorScheme.onBackground
+                                        .withOpacity(0.7),
+                                    fontSize: 18,
+                                  ),
+                                ),
 
-                              // Instruction text with fixed height container
-                              Container(
-                                height: 60,
-                                alignment: Alignment.center,
-                                child: state.isLoading
-                                    ? const LoadingScreen()
-                                    : AnimatedOpacity(
-                                        duration:
-                                            const Duration(milliseconds: 500),
-                                        opacity: state.instructionOpacity,
-                                        child: state.instructions.isEmpty
-                                            ? const Text(
-                                                "لا توجد تعليمات متاحة",
-                                                style: TextStyle(
-                                                  color: Colors.red,
-                                                  fontSize: 22,
-                                                  fontWeight: FontWeight.bold,
+                                const SizedBox(height: 20),
+
+                                // Instruction text with fixed height container
+                                Container(
+                                  height: 60,
+                                  alignment: Alignment.center,
+                                  child: state.isLoading
+                                      ? const LoadingScreen()
+                                      : AnimatedOpacity(
+                                          duration:
+                                              const Duration(milliseconds: 500),
+                                          opacity: state.instructionOpacity,
+                                          child: state.instructions.isEmpty
+                                              ? const Text(
+                                                  "لا توجد تعليمات متاحة",
+                                                  style: TextStyle(
+                                                    color: Colors.red,
+                                                    fontSize: 22,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                  textAlign: TextAlign.center,
+                                                )
+                                              : Text(
+                                                  state.instructions[state
+                                                      .currentInstructionIndex],
+                                                  style: TextStyle(
+                                                    color: theme.colorScheme
+                                                        .onBackground,
+                                                    fontSize: 22,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                  textAlign: TextAlign.center,
                                                 ),
-                                                textAlign: TextAlign.center,
-                                              )
-                                            : Text(
-                                                state.instructions[state
-                                                    .currentInstructionIndex],
-                                                style: TextStyle(
-                                                  color: theme
-                                                      .colorScheme.onBackground,
-                                                  fontSize: 22,
-                                                  fontWeight: FontWeight.bold,
-                                                ),
-                                                textAlign: TextAlign.center,
-                                              ),
-                                      ),
-                              ),
+                                        ),
+                                ),
 
-                              const SizedBox(height: 20),
+                                const SizedBox(height: 20),
 
-                              // Content based on current step
-                              AnimatedSwitcher(
-                                duration: const Duration(milliseconds: 500),
-                                child: _buildCurrentStepContent(
-                                    context, state, colorScheme),
-                              ),
+                                // Content based on current step
+                                AnimatedSwitcher(
+                                  duration: const Duration(milliseconds: 500),
+                                  child: _buildCurrentStepContent(
+                                      context, state, colorScheme),
+                                ),
 
-                              const SizedBox(height: 30),
+                                const SizedBox(height: 30),
 
-                              // Next/Prev Button Row
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  // Back button (only show when not on first step)
-                                  if (state.currentStep > 1)
-                                    Padding(
-                                      padding: const EdgeInsets.only(left: 16.0),
-                                      child: OutlinedButton.icon(
-                                        onPressed: () {
-                                          _hideKeyboard(); // Hide keyboard when navigating
-                                          context
-                                              .read<CBTTherapyBloc>()
-                                              .add(PreviousCBTStepEvent());
-                                        },
-                                        icon: const Icon(Icons.arrow_back),
-                                        label: const Text('السابق'),
-                                        style: OutlinedButton.styleFrom(
-                                          foregroundColor: colorScheme.primary,
-                                          side: BorderSide(
-                                              color: colorScheme.primary),
-                                          padding: const EdgeInsets.symmetric(
-                                              horizontal: 16, vertical: 12),
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius:
-                                                BorderRadius.circular(12),
+                                // Next/Prev Button Row
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    // Back button (only show when not on first step)
+                                    if (state.currentStep > 1)
+                                      Padding(
+                                        padding:
+                                            const EdgeInsets.only(left: 16.0),
+                                        child: OutlinedButton.icon(
+                                          onPressed: () {
+                                            _hideKeyboard(); // Hide keyboard when navigating
+                                            context
+                                                .read<CBTTherapyBloc>()
+                                                .add(PreviousCBTStepEvent());
+                                          },
+                                          icon: const Icon(Icons.arrow_back),
+                                          label: const Text('السابق'),
+                                          style: OutlinedButton.styleFrom(
+                                            foregroundColor:
+                                                colorScheme.primary,
+                                            side: BorderSide(
+                                                color: colorScheme.primary),
+                                            padding: const EdgeInsets.symmetric(
+                                                horizontal: 16, vertical: 12),
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(12),
+                                            ),
                                           ),
                                         ),
                                       ),
-                                    ),
-                                  // Next/Check Button (now using FilledButton instead of OutlinedButton)
-                                  FilledButton.icon(
-                                    onPressed: () {
-                                      _hideKeyboard(); // Hide keyboard when pressing next
-                                      if (!state.isPlaying) {
-                                        context
-                                            .read<CBTTherapyBloc>()
-                                            .add(StartCBTExerciseEvent());
-                                      } else if (state.currentStep ==
-                                          state.totalSteps) {
-                                        // If on the last step, complete the exercise
-                                        context
-                                            .read<CBTTherapyBloc>()
-                                            .add(CompleteCBTExerciseEvent());
-                                      } else {
-                                        // For step 1, validate the negative thought input
-                                        if (state.currentStep == 1 &&
-                                            !_validateInput(
-                                                _thoughtController.text)) {
-                                          // Show a snackbar or toast message
-                                          ScaffoldMessenger.of(context)
-                                              .showSnackBar(
-                                            const SnackBar(
-                                              content: Text(
-                                                  'الرجاء إدخال فكرتك قبل المتابعة',
-                                                  textDirection:
-                                                      TextDirection.rtl),
-                                              backgroundColor: Colors.red,
-                                            ),
-                                          );
-                                          return; // Don't proceed if validation fails
-                                        }
+                                    // Next/Check Button (now using FilledButton instead of OutlinedButton)
+                                    FilledButton.icon(
+                                      onPressed: () {
+                                        _hideKeyboard(); // Hide keyboard when pressing next
+                                        if (!state.isPlaying) {
+                                          context
+                                              .read<CBTTherapyBloc>()
+                                              .add(StartCBTExerciseEvent());
+                                        } else if (state.currentStep ==
+                                            state.totalSteps) {
+                                          // If on the last step, complete the exercise
+                                          context
+                                              .read<CBTTherapyBloc>()
+                                              .add(CompleteCBTExerciseEvent());
+                                        } else {
+                                          // For step 1, validate the negative thought input
+                                          if (state.currentStep == 1 &&
+                                              !_validateInput(
+                                                  _thoughtController.text)) {
+                                            // Show a snackbar or toast message
+                                            ScaffoldMessenger.of(context)
+                                                .showSnackBar(
+                                              const SnackBar(
+                                                content: Text(
+                                                    'الرجاء إدخال فكرتك قبل المتابعة',
+                                                    textDirection:
+                                                        TextDirection.rtl),
+                                                backgroundColor: Colors.red,
+                                              ),
+                                            );
+                                            return; // Don't proceed if validation fails
+                                          }
 
-                                        // For step 3, validate both evidence fields
-                                        if (state.currentStep == 3 &&
-                                            (!_validateInput(
+                                          // For step 3, validate both evidence fields
+                                          if (state.currentStep == 3 &&
+                                              (!_validateInput(
+                                                      _supportingEvidenceController
+                                                          .text) ||
+                                                  !_validateInput(
+                                                      _contradictingEvidenceController
+                                                          .text))) {
+                                            // Show a snackbar or toast message
+                                            ScaffoldMessenger.of(context)
+                                                .showSnackBar(
+                                              const SnackBar(
+                                                content: Text(
+                                                    'الرجاء إدخال الأدلة في كلا الحقلين قبل المتابعة',
+                                                    textDirection:
+                                                        TextDirection.rtl),
+                                                backgroundColor: Colors.red,
+                                              ),
+                                            );
+                                            return; // Don't proceed if validation fails
+                                          }
+
+                                          // For step 4, validate the alternative thought input
+                                          if (state.currentStep == 4 &&
+                                              !_validateInput(
+                                                  _alternativeController
+                                                      .text)) {
+                                            // Show a snackbar or toast message
+                                            ScaffoldMessenger.of(context)
+                                                .showSnackBar(
+                                              const SnackBar(
+                                                content: Text(
+                                                    'الرجاء إدخال الفكرة البديلة قبل المتابعة',
+                                                    textDirection:
+                                                        TextDirection.rtl),
+                                                backgroundColor: Colors.red,
+                                              ),
+                                            );
+                                            return; // Don't proceed if validation fails
+                                          }
+
+                                          // Otherwise, move to the next step
+                                          context
+                                              .read<CBTTherapyBloc>()
+                                              .add(NextCBTStepEvent(
+                                                userThought:
+                                                    _thoughtController.text,
+                                                alternativeThought:
+                                                    _alternativeController.text,
+                                                // Add supporting and contradicting evidence
+                                                supportingEvidence:
                                                     _supportingEvidenceController
-                                                        .text) ||
-                                                !_validateInput(
+                                                        .text,
+                                                contradictingEvidence:
                                                     _contradictingEvidenceController
-                                                        .text))) {
-                                          // Show a snackbar or toast message
-                                          ScaffoldMessenger.of(context)
-                                              .showSnackBar(
-                                            const SnackBar(
-                                              content: Text(
-                                                  'الرجاء إدخال الأدلة في كلا الحقلين قبل المتابعة',
-                                                  textDirection:
-                                                      TextDirection.rtl),
-                                              backgroundColor: Colors.red,
-                                            ),
-                                          );
-                                          return; // Don't proceed if validation fails
+                                                        .text,
+                                              ));
                                         }
-
-                                        // For step 4, validate the alternative thought input
-                                        if (state.currentStep == 4 &&
-                                            !_validateInput(
-                                                _alternativeController.text)) {
-                                          // Show a snackbar or toast message
-                                          ScaffoldMessenger.of(context)
-                                              .showSnackBar(
-                                            const SnackBar(
-                                              content: Text(
-                                                  'الرجاء إدخال الفكرة البديلة قبل المتابعة',
-                                                  textDirection:
-                                                      TextDirection.rtl),
-                                              backgroundColor: Colors.red,
-                                            ),
-                                          );
-                                          return; // Don't proceed if validation fails
-                                        }
-
-                                        // Otherwise, move to the next step
-                                        context
-                                            .read<CBTTherapyBloc>()
-                                            .add(NextCBTStepEvent(
-                                              userThought:
-                                                  _thoughtController.text,
-                                              alternativeThought:
-                                                  _alternativeController.text,
-                                              // Add supporting and contradicting evidence
-                                              supportingEvidence:
-                                                  _supportingEvidenceController
-                                                      .text,
-                                              contradictingEvidence:
-                                                  _contradictingEvidenceController
-                                                      .text,
-                                            ));
-                                      }
-                                    },
-                                    icon: Icon(
-                                      !state.isPlaying
-                                          ? Icons.play_arrow
-                                          : (state.currentStep == state.totalSteps
-                                              ? Icons.check
-                                              : Icons.arrow_forward),
-                                    ),
-                                    label: Text(
-                                      !state.isPlaying
-                                          ? 'البدء'
-                                          : (state.currentStep == state.totalSteps
-                                              ? 'إنهاء'
-                                              : 'التالي'),
-                                    ),
-                                    style: FilledButton.styleFrom(
-                                      foregroundColor: Colors.white,
-                                      backgroundColor: colorScheme.primary,
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 16, vertical: 12),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(12),
+                                      },
+                                      icon: Icon(
+                                        !state.isPlaying
+                                            ? Icons.play_arrow
+                                            : (state.currentStep ==
+                                                    state.totalSteps
+                                                ? Icons.check
+                                                : Icons.arrow_forward),
                                       ),
-                                    ),
-                                  )
-                                ],
-                              ),
+                                      label: Text(
+                                        !state.isPlaying
+                                            ? 'البدء'
+                                            : (state.currentStep ==
+                                                    state.totalSteps
+                                                ? 'إنهاء'
+                                                : 'التالي'),
+                                      ),
+                                      style: FilledButton.styleFrom(
+                                        foregroundColor: Colors.white,
+                                        backgroundColor: colorScheme.primary,
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 16, vertical: 12),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(12),
+                                        ),
+                                      ),
+                                    )
+                                  ],
+                                ),
 
-                              const SizedBox(height: 24),
-                            ],
+                                const SizedBox(height: 24),
+                              ],
+                            ),
                           ),
                         ),
                       ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         );
