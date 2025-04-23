@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:kawamen/features/Profile/Screens/view_profile_screen.dart';
 import 'package:kawamen/features/emotion_detection/screens/emotion_test_screen.dart';
 import 'package:kawamen/features/login/view/login_page.dart';
-import 'package:kawamen/home_page.dart';
+import 'package:kawamen/features/home/home_page.dart';
 import 'package:kawamen/intro_screen.dart';
 
 import '../../features/Treatment/CBT_therapy/screen/CBT_therapy_page.dart';

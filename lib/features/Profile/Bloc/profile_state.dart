@@ -25,6 +25,7 @@ class UsernNotAuthenticated extends ProfileState {}
 
 class ToggleStatesLoaded extends ProfileState {
   final Map<String, dynamic> userData;
+  final String userId;
   final bool emotionDetectionToggle;
   final bool notificationToggle;
   final bool microphoneToggle;
@@ -35,6 +36,7 @@ class ToggleStatesLoaded extends ProfileState {
     required this.emotionDetectionToggle,
     required this.notificationToggle,
     required this.microphoneToggle,
+    required this.userId,
     this.showControlCenter = false,
   });
 
@@ -44,9 +46,11 @@ class ToggleStatesLoaded extends ProfileState {
     bool? notificationToggle,
     bool? microphoneToggle,
     bool? showControlCenter,
+    String? userId,
   }) {
     return ToggleStatesLoaded(
       userData: userData ?? this.userData,
+      userId: userId ?? this.userId, // Use the parameter here
       emotionDetectionToggle:
           emotionDetectionToggle ?? this.emotionDetectionToggle,
       notificationToggle: notificationToggle ?? this.notificationToggle,

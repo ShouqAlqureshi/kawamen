@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:developer';
 import 'dart:io';
 import 'dart:typed_data';
@@ -12,10 +13,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
 part 'dashboard_event.dart';
 part 'dashboard_state.dart';
 
 class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
+  // Cache expiration time (in minutes)
+  final int cacheExpirationMinutes = 15;
+  
   DashboardBloc() : super(DashboardInitial()) {
     on<FetchDashboard>(_onFetchDashboard);
     on<ExportDashboard>(_onExportDashboard);
@@ -32,24 +38,21 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
         return;
       }
 
+      // Check cache first if not forcing refresh
+      if (!event.forceRefresh) {
+        final cachedData = await _getCachedData(userId);
+        if (cachedData != null) {
+          emit(cachedData);
+          return;
+        }
+      }
+
       // Initialize maps to store emotion counts by day (1=Monday, 7=Sunday in Dart)
       final Map<int, int> angerEmotions = {
-        1: 0,
-        2: 0,
-        3: 0,
-        4: 0,
-        5: 0,
-        6: 0,
-        7: 0
+        1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0
       };
       final Map<int, int> sadEmotions = {
-        1: 0,
-        2: 0,
-        3: 0,
-        4: 0,
-        5: 0,
-        6: 0,
-        7: 0
+        1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0
       };
 
       // Calculate start date (beginning of current week - Sunday)
@@ -58,8 +61,7 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
       final startDate = DateTime(now.year, now.month, now.day - daysToSubtract);
 
       // Debug log
-      print(
-          'Fetching emotions from: ${startDate.toIso8601String()} to current date');
+      print('Fetching emotions from: ${startDate.toIso8601String()} to current date');
 
       // Get the end date (7 days after start date)
       final endDate = startDate.add(const Duration(days: 7));
@@ -79,7 +81,9 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
 
       if (emotionsSnapshot.docs.isEmpty) {
         print('No emotion data found for the current week');
-        emit(DashboardLoaded(angerEmotions, sadEmotions));
+        final loadedState = DashboardLoaded(angerEmotions, sadEmotions);
+        await _cacheData(userId, loadedState);
+        emit(loadedState);
         return;
       }
 
@@ -136,7 +140,9 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
       print('Final anger counts: $angerEmotions');
       print('Final sadness counts: $sadEmotions');
 
-      emit(DashboardLoaded(angerEmotions, sadEmotions));
+      final loadedState = DashboardLoaded(angerEmotions, sadEmotions);
+      await _cacheData(userId, loadedState);
+      emit(loadedState);
     } catch (e, stackTrace) {
       print('Error in dashboard data fetching: $e');
       print('Stack trace: $stackTrace');
@@ -179,7 +185,7 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
     }
   }
 
-// Function to capture the widget as an image
+  // Function to capture the widget as an image
   Future<Uint8List?> _captureWidget(GlobalKey boundaryKey) async {
     try {
       final RenderRepaintBoundary boundary = boundaryKey.currentContext!
@@ -227,6 +233,68 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
     } catch (e) {
       log(e.toString());
       log('Error capturing widget: $e');
+      return null;
+    }
+  }
+
+  // Cache the dashboard data
+  Future<void> _cacheData(String userId, DashboardLoaded data) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      
+      // Convert maps to a format that can be stored in SharedPreferences
+      final Map<String, dynamic> cacheData = {
+        'angerEmotionalData': data.angerEmotionalData.map((key, value) => 
+            MapEntry(key.toString(), value)),
+        'sadEmotionalData': data.sadEmotionalData.map((key, value) => 
+            MapEntry(key.toString(), value)),
+        'lastUpdated': DateTime.now().toIso8601String(),
+      };
+      
+      final jsonData = jsonEncode(cacheData);
+      await prefs.setString('dashboard_data_$userId', jsonData);
+    } catch (e) {
+      // Silently fail on cache errors (non-critical)
+      print('Cache error: $e');
+    }
+  }
+
+  // Get cached dashboard data if valid
+  Future<DashboardLoaded?> _getCachedData(String userId) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final jsonString = prefs.getString('dashboard_data_$userId');
+      
+      if (jsonString == null) {
+        return null;
+      }
+
+      final Map<String, dynamic> decodedData = jsonDecode(jsonString);
+      
+      // Check if cache is expired
+      final lastUpdated = DateTime.parse(decodedData['lastUpdated']);
+      final now = DateTime.now();
+      final cacheAge = now.difference(lastUpdated).inMinutes;
+      
+      if (cacheAge > cacheExpirationMinutes) {
+        return null; // Cache expired
+      }
+      
+      // Convert the stored data back to the required format
+      final Map<int, int> angerEmotionalData = Map<int, int>.from(
+        decodedData['angerEmotionalData'].map((key, value) => 
+            MapEntry(int.parse(key), value))
+      );
+      
+      final Map<int, int> sadEmotionalData = Map<int, int>.from(
+        decodedData['sadEmotionalData'].map((key, value) => 
+            MapEntry(int.parse(key), value))
+      );
+      
+      return DashboardLoaded(angerEmotionalData, sadEmotionalData);
+    } catch (e) {
+      // Return null on any error reading cache
+      print('Cache read error: $e');
       return null;
     }
   }

@@ -1,6 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:kawamen/core/utils/Loadingscreen.dart';
-import 'package:kawamen/features/Dashboard/bloc/progress_bar_bloc.dart';
+import 'package:kawamen/features/Dashboard/bloc/treatment_progress_bloc.dart';
 import 'package:percent_indicator/percent_indicator.dart';
 import 'package:flutter/material.dart';
 
@@ -16,37 +16,30 @@ class TreatmentProgressTracker extends StatelessWidget {
         builder: (context, state) {
           if (state is TreatmentProgressLoading ||
               state is TreatmentProgressInitial) {
-            return _buildProgressContainer(
-              0.0,
-              const Center(
-                child: LoadingScreen(),
-              ),
+            return Center(
+              child: LoadingScreen(),
             );
           } else if (state is TreatmentProgressLoaded) {
             // Check if the user has any treatments
             if (state.totalTreatments == 0) {
-              return _buildProgressContainer(
-                0.0,
-                const Center(
-                  child: Padding(
-                    padding: EdgeInsets.all(16.0),
-                    child: Text(
-                      "لا تملك جلسات لهذا الاسبوع",
-                      style: TextStyle(
-                        fontSize: 18,
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
-                      textAlign: TextAlign.center,
+              return Center(
+                child: Padding(
+                  padding: EdgeInsets.all(16.0),
+                  child: Text(
+                    "لا تملك جلسات لهذا الاسبوع",
+                    style: TextStyle(
+                      fontSize: 18,
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
                     ),
+                    textAlign: TextAlign.center,
                   ),
                 ),
               );
             }
 
-            return _buildProgressContainer(
-              state.progress.clamp(0.0, 1.0),
-              CircularPercentIndicator(
+            return Center(
+              child: CircularPercentIndicator(
                 radius: 60.0,
                 lineWidth: 10.0,
                 percent: state.progress
@@ -75,54 +68,29 @@ class TreatmentProgressTracker extends StatelessWidget {
               ),
             );
           } else if (state is TreatmentProgressError) {
-            return _buildProgressContainer(
-              0.0,
-              Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Text(
-                      "خطأ في تحميل البيانات",
-                      style: TextStyle(fontSize: 16, color: Colors.white),
-                    ),
-                    IconButton(
-                      icon:
-                          const Icon(Icons.refresh, color: Colors.greenAccent),
-                      onPressed: () {
-                        context
-                            .read<TreatmentProgressBloc>()
-                            .add(FetchTreatmentProgress());
-                      },
-                    ),
-                  ],
-                ),
+            return Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    "خطأ في تحميل البيانات",
+                    style: TextStyle(fontSize: 16, color: Colors.white),
+                  ),
+                  IconButton(
+                    icon:
+                        const Icon(Icons.refresh, color: Colors.greenAccent),
+                    onPressed: () {
+                      context
+                          .read<TreatmentProgressBloc>()
+                          .add(FetchTreatmentProgress());
+                    },
+                  ),
+                ],
               ),
             );
           }
           return const SizedBox();
         },
-      ),
-    );
-  }
-
-  Widget _buildProgressContainer(double progress, Widget child) {
-    // Ensure container has valid constraints
-    return SizedBox(
-      width: 330,
-      child: Container(
-        padding: const EdgeInsets.all(10),
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [
-              Color(0xFF2B2B2B),
-              Color.fromARGB(255, 24, 24, 24),
-            ],
-            begin: Alignment.bottomCenter,
-            end: Alignment.topCenter,
-          ),
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: child,
       ),
     );
   }

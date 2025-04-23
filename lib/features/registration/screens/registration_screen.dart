@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:kawamen/features/Profile/Screens/view_profile_screen.dart';
+import 'package:kawamen/core/navigation/MainNavigator.dart';
+import 'package:kawamen/features/LogIn/view/login_view.dart';
+import 'package:kawamen/core/utils/theme/ThemedScaffold.dart';
+import 'package:kawamen/core/utils/Loadingscreen.dart';
 import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
 import '../bloc/auth_state.dart';
@@ -34,204 +37,256 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
   bool _confirmPasswordVisible = false;
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.black,
-      appBar: AppBar(
-        title: Center(
-            child: Text("حساب جديد", style: TextStyle(color: Colors.white))),
-        backgroundColor: Colors.black,
-        elevation: 0,
-        iconTheme: IconThemeData(color: Colors.white),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: BlocConsumer<AuthBloc, AuthState>(
-          listener: (context, state) {
-            if (state is AuthFailure) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content:
-                      Text(state.error, style: TextStyle(color: Colors.white)),
-                  backgroundColor: Colors.red,
-                ),
-              );
-            } else if (state is AuthSuccess) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text("تم التسجيل بنجاح!",
-                      style: TextStyle(color: Colors.white)),
-                  backgroundColor: Colors.green,
-                ),
-              );
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (context) => ViewProfileScreen()),
-              );
-            }
-          },
-          builder: (context, state) {
-            return Directionality(
-              textDirection: TextDirection.rtl,
-              child: SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Name Field
-                    _buildTextField(
-                      nameController,
-                      "الاسم الكامل",
-                      errorText: _nameError,
-                    ),
-                    SizedBox(height: 16),
-                    // Email Field
-                    _buildTextField(
-                      emailController,
-                      "البريد الإلكتروني",
-                      errorText: _emailError,
-                    ),
-                    SizedBox(height: 16),
-                    // Age Field
-                    _buildTextField(
-                      ageController,
-                      "العمر",
-                      isNumber: true,
-                      errorText: _ageError,
-                    ),
-                    SizedBox(height: 16),
-                    // Password Field with toggle icon
-                    _buildTextField(
-                      passwordController,
-                      "كلمة المرور",
-                      obscureText: !_passwordVisible,
-                      errorText: _passwordError,
-                      suffixIcon: IconButton(
-                        icon: Icon(
-                          _passwordVisible
-                              ? Icons.visibility
-                              : Icons.visibility_off,
-                          color: Colors.white,
-                        ),
-                        onPressed: () {
-                          setState(() {
-                            _passwordVisible = !_passwordVisible;
-                          });
-                        },
-                      ),
-                    ),
-                    SizedBox(height: 16),
-                    // Confirm Password Field with toggle icon
-                    _buildTextField(
-                      confirmPasswordController,
-                      "تأكيد كلمة المرور",
-                      obscureText: !_confirmPasswordVisible,
-                      errorText: _confirmPasswordError,
-                      suffixIcon: IconButton(
-                        icon: Icon(
-                          _confirmPasswordVisible
-                              ? Icons.visibility
-                              : Icons.visibility_off,
-                          color: Colors.white,
-                        ),
-                        onPressed: () {
-                          setState(() {
-                            _confirmPasswordVisible = !_confirmPasswordVisible;
-                          });
-                        },
-                      ),
-                    ),
-                    SizedBox(height: 20),
-                    // Terms & Conditions Checkbox
-                    Padding(
-                      padding: const EdgeInsets.only(right: 8.0),
-                      child: Row(
-                        children: [
-                          Checkbox(
-                            value: agreeToTerms,
-                            onChanged: (value) {
-                              setState(() {
-                                agreeToTerms = value!;
-                              });
-                            },
-                            activeColor: Colors.purple,
-                          ),
-                          Expanded(
-                            child: Text(
-                              "من خلال إنشاء حساب، فإنك توافق على الشروط والأحكام الخاصة بنا",
-                              style: TextStyle(color: Colors.white),
-                              textAlign: TextAlign.right,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    SizedBox(height: 30),
-                    // Registration Button (centered and full width)
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: (agreeToTerms && state is! AuthLoading)
-                            ? _registerUser
-                            : null,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.purple,
-                          disabledBackgroundColor: Colors.grey,
-                          padding: EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          elevation: 4,
-                        ),
-                        child: state is AuthLoading
-                            ? CircularProgressIndicator(
-                                valueColor:
-                                    AlwaysStoppedAnimation<Color>(Colors.white),
-                              )
-                            : Text("إنشاء حساب جديد",
-                                style: TextStyle(
-                                    fontSize: 16, color: Colors.white)),
-                      ),
-                    ),
-                    SizedBox(height: 30), // Extra spacing at the bottom
-                  ],
-                ),
-              ),
-            );
-          },
-        ),
-      ),
-    );
+  void dispose() {
+    nameController.dispose();
+    emailController.dispose();
+    passwordController.dispose();
+    confirmPasswordController.dispose();
+    ageController.dispose();
+    super.dispose();
   }
 
-  /// Builds a text field with right-to-left alignment and an optional error message.
-  /// The [obscureText] parameter determines if the field should hide its text.
-  /// [isNumber] sets the keyboard type to number.
-  /// [suffixIcon] allows you to attach a widget (like a visibility toggle) at the end of the field.
-  Widget _buildTextField(
-    TextEditingController controller,
-    String label, {
-    bool obscureText = false,
-    bool isNumber = false,
-    String? errorText,
-    Widget? suffixIcon,
-  }) {
-    return TextField(
-      controller: controller,
-      obscureText: obscureText,
-      keyboardType: isNumber ? TextInputType.number : TextInputType.text,
-      style: TextStyle(color: Colors.white),
-      textAlign: TextAlign.right,
-      decoration: InputDecoration(
-        labelText: label,
-        errorText: errorText,
-        errorStyle: TextStyle(color: Colors.redAccent),
-        labelStyle: TextStyle(color: Colors.white),
-        filled: true,
-        fillColor: Colors.grey[800],
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8.0),
-        ),
-        suffixIcon: suffixIcon,
+  @override
+  Widget build(BuildContext context) {
+    return ThemedScaffold(
+      body: BlocConsumer<AuthBloc, AuthState>(
+        listener: (context, state) {
+          if (state is AuthFailure) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content:
+                    Text(state.error, style: TextStyle(color: Colors.white)),
+                backgroundColor: Colors.red,
+              ),
+            );
+          } else if (state is AuthSuccess) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text("تم التسجيل بنجاح!",
+                    style: TextStyle(color: Colors.white)),
+                backgroundColor: Colors.green,
+              ),
+            );
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => MainNavigator()),
+            );
+          }
+        },
+        builder: (context, state) {
+          return SafeArea(
+            child: SingleChildScrollView(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  minHeight: MediaQuery.of(context).size.height -
+                      MediaQuery.of(context).padding.top -
+                      MediaQuery.of(context).padding.bottom,
+                ),
+                child: Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Text(
+                          'حساب جديد',
+                          style: Theme.of(context).textTheme.headlineMedium,
+                          textAlign: TextAlign.right,
+                        ),
+                        const SizedBox(height: 32),
+                        // Name Field
+                        TextField(
+                          controller: nameController,
+                          decoration: InputDecoration(
+                            hintText: 'الاسم الكامل',
+                            errorText: _nameError,
+                            filled: true,
+                            fillColor: Theme.of(context).cardColor,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(16),
+                              borderSide: BorderSide.none,
+                            ),
+                          ),
+                          textAlign: TextAlign.right,
+                        ),
+                        const SizedBox(height: 16),
+                        // Email Field
+                        TextField(
+                          controller: emailController,
+                          decoration: InputDecoration(
+                            hintText: 'البريد الإلكتروني',
+                            errorText: _emailError,
+                            filled: true,
+                            fillColor: Theme.of(context).cardColor,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(16),
+                              borderSide: BorderSide.none,
+                            ),
+                          ),
+                          textAlign: TextAlign.right,
+                        ),
+                        const SizedBox(height: 16),
+                        // Age Field
+                        TextField(
+                          controller: ageController,
+                          keyboardType: TextInputType.number,
+                          decoration: InputDecoration(
+                            hintText: 'العمر',
+                            errorText: _ageError,
+                            filled: true,
+                            fillColor: Theme.of(context).cardColor,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(16),
+                              borderSide: BorderSide.none,
+                            ),
+                          ),
+                          textAlign: TextAlign.right,
+                        ),
+                        const SizedBox(height: 16),
+                        // Password Field
+                        TextField(
+                          controller: passwordController,
+                          obscureText: !_passwordVisible,
+                          decoration: InputDecoration(
+                            hintText: 'كلمة المرور',
+                            errorText: _passwordError,
+                            filled: true,
+                            fillColor: Theme.of(context).cardColor,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(16),
+                              borderSide: BorderSide.none,
+                            ),
+                            suffixIcon: IconButton(
+                              icon: Icon(
+                                _passwordVisible
+                                    ? Icons.visibility_off
+                                    : Icons.visibility,
+                                color: Colors.grey,
+                              ),
+                              onPressed: () {
+                                setState(() {
+                                  _passwordVisible = !_passwordVisible;
+                                });
+                              },
+                            ),
+                          ),
+                          textAlign: TextAlign.right,
+                        ),
+                        const SizedBox(height: 16),
+                        // Confirm Password Field
+                        TextField(
+                          controller: confirmPasswordController,
+                          obscureText: !_confirmPasswordVisible,
+                          decoration: InputDecoration(
+                            hintText: 'تأكيد كلمة المرور',
+                            errorText: _confirmPasswordError,
+                            filled: true,
+                            fillColor: Theme.of(context).cardColor,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(16),
+                              borderSide: BorderSide.none,
+                            ),
+                            suffixIcon: IconButton(
+                              icon: Icon(
+                                _confirmPasswordVisible
+                                    ? Icons.visibility_off
+                                    : Icons.visibility,
+                                color: Colors.grey,
+                              ),
+                              onPressed: () {
+                                setState(() {
+                                  _confirmPasswordVisible = !_confirmPasswordVisible;
+                                });
+                              },
+                            ),
+                          ),
+                          textAlign: TextAlign.right,
+                        ),
+                        const SizedBox(height: 16),
+                        // Terms & Conditions Checkbox
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            Expanded(
+                              child: Text(
+                                "من خلال إنشاء حساب، فإنك توافق على الشروط والأحكام الخاصة بنا",
+                                style: TextStyle(color: Colors.white),
+                                textAlign: TextAlign.right,
+                              ),
+                            ),
+                            Checkbox(
+                              value: agreeToTerms,
+                              onChanged: (value) {
+                                setState(() {
+                                  agreeToTerms = value!;
+                                });
+                              },
+                              activeColor: Colors.purple,
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        // Registration Button
+                        ElevatedButton(
+                          onPressed: (agreeToTerms && state is! AuthLoading)
+                              ? _registerUser
+                              : null,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor:
+                                Theme.of(context).colorScheme.secondary,
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                          child: state is AuthLoading
+                              ? const SizedBox(
+                                  height: 30,
+                                  width: 30,
+                                  child: FittedBox(
+                                    fit: BoxFit.contain,
+                                    child: LoadingScreen(),
+                                  ),
+                                )
+                              : const Text(
+                                  'إنشاء حساب',
+                                  style: TextStyle(color: Colors.white),
+                                ),
+                        ),
+                        const SizedBox(height: 16),
+                        // Added Text to route to Login Page
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            TextButton(
+                              onPressed: () {
+                                Navigator.pushReplacement(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => const LoginView(),
+                                  ),
+                                );
+                              },
+                              child: const Text(
+                                'تسجيل دخول',
+                                style: TextStyle(color: Colors.purple),
+                              ),
+                            ),
+                            const Text(
+                              'لديك حساب بالفعل؟',
+                              style: TextStyle(color: Colors.white),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          );
+        },
       ),
     );
   }

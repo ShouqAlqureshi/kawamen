@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:kawamen/core/navigation/app_routes.dart';
+import 'package:kawamen/core/services/cache_service.dart';
 import 'package:kawamen/features/registration/bloc/auth_bloc.dart';
 import 'package:kawamen/features/registration/bloc/auth_event.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -46,16 +47,17 @@ otherwise if it already fetche just copy it and send
         emit(UsernNotAuthenticated());
         return;
       } else {
-        final userDoc = await _firestore.collection('users').doc(userId).get();
-
-        if (userDoc.exists) {
-          final userData = userDoc.data() as Map<String, dynamic>;
+        //cached data if available, otherwise fetch fresh
+        final userData = await UserCacheService().getUserData(userId);
+        if (userData != null) {
           if (state is ToggleStatesLoaded) {
-            final currentState = state as ToggleStatesLoaded;
-            emit(currentState.copyWith(userData: userData));
+            emit((state as ToggleStatesLoaded)
+                .copyWith(userData: userData, userId: userId));
           } else {
             add(FetchToggleStates());
           }
+        } else {
+          emit(ProfileError('User data not found'));
         }
       }
     } catch (e) {
@@ -92,20 +94,15 @@ otherwise if it already fetche just copy it and send
         emit(UsernNotAuthenticated());
         return;
       } else {
-        DocumentSnapshot userDoc = await FirebaseFirestore.instance
-            .collection('users')
-            .doc(userId)
-            .get();
+        final userDoc = await UserCacheService().getUserData(userId);
 
-        if (userDoc.exists) {
-          Map<String, dynamic> userData =
-              userDoc.data() as Map<String, dynamic>;
+        if (userDoc != null) {
           emit(ToggleStatesLoaded(
-            userData: userData,
-            emotionDetectionToggle: emotionDetectionToggle,
-            notificationToggle: notificationToggle,
-            microphoneToggle: microphoneToggle,
-          ));
+              userData: userDoc,
+              emotionDetectionToggle: emotionDetectionToggle,
+              notificationToggle: notificationToggle,
+              microphoneToggle: microphoneToggle,
+              userId: userId));
         }
       }
     } catch (e) {
@@ -145,6 +142,9 @@ otherwise if it already fetche just copy it and send
       // Check if email is being changed
       final bool isEmailChange = user.email != event.email;
       await _updateBasicProfile(userId, event);
+
+      // Force refresh cache
+      await UserCacheService().getUserData(userId, forceRefresh: true);
 
       if (isEmailChange) {
         await user.verifyBeforeUpdateEmail(event.email);
@@ -225,36 +225,33 @@ otherwise if it already fetche just copy it and send
     }
   }
 
-  Future<void> _onLogout(Logout event, Emitter<ProfileState> emit) async {
+Future<void> _onLogout(Logout event, Emitter<ProfileState> emit) async {
   emit(ProfileLoading());
   try {
     final user = FirebaseAuth.instance.currentUser;
 
     // Check if the user is logged in
     if (user == null) {
-      showErrorDialog(context, "User is not logged in");
+      emit(UsernNotAuthenticated()); // Just emit this state instead of showing dialog
       return;
     }
 
-    final shouldLogout = await showLogOutDialog(context);
-    if (shouldLogout) {
-      await FirebaseAuth.instance.signOut();
+    // Remove the second confirmation dialog
+    await FirebaseAuth.instance.signOut();
 
-      // Clear shared preferences if needed
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.clear();
+    // Clear shared preferences if needed
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.clear();
 
-      emit(ProfileInitial()); // Reset the profile state to initial
-      
-      // Notify AuthBloc about logout
-      BlocProvider.of<AuthBloc>(context).add(LogoutUser());
-      
-      // Navigate to login page directly
-      Navigator.of(context).pushNamedAndRemoveUntil(
-        AppRoutes.login, // Make sure this route exists in your AppRoutes
-        (route) => false
-      );
-    }
+    emit(ProfileInitial()); // Reset the profile state to initial
+
+    // Notify AuthBloc about logout
+    BlocProvider.of<AuthBloc>(context).add(LogoutUser());
+
+    // Navigate to login page directly
+    Navigator.of(context).pushNamedAndRemoveUntil(
+        AppRoutes.login,
+        (route) => false);
   } catch (e) {
     emit(ProfileError('Error logging out: ${e.toString()}'));
   }
