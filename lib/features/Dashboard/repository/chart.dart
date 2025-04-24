@@ -189,25 +189,25 @@ class EmotionalTrendGraph extends StatelessWidget {
     String text;
     switch (value.toInt()) {
       case 1:
-        text = 'SUN';
+        text = 'الأحد';
         break;
       case 2:
-        text = 'MON';
+        text = 'الاثنين';
         break;
       case 3:
-        text = 'TUE';
+        text = 'الثلاثاء';
         break;
       case 4:
-        text = 'WED';
+        text = 'الاربعاء';
         break;
       case 5:
-        text = 'THU';
+        text = 'الخميس';
         break;
       case 6:
-        text = 'FRI';
+        text = 'الجمعة';
         break;
       case 7:
-        text = 'SAT';
+        text = 'السبت';
         break;
       default:
         text = '';
