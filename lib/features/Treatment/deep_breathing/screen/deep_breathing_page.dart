@@ -160,6 +160,8 @@ class _DeepBreathingViewState extends State<_DeepBreathingView>
   void _showCongratulationsPopup(BuildContext context) {
     // Get reference to the bloc before showing the dialog
     final deepBreathingBloc = context.read<DeepBreathingBloc>();
+    // First, explicitly ensure the treatment is marked as completed in the database
+    deepBreathingBloc.add(const CompleteTrackingTreatmentEvent());
     final theme = Theme.of(context);
 
     showDialog(
