@@ -36,11 +36,6 @@ class TreatmentStatsBoxes extends StatelessWidget {
   }
 
   Widget _buildStatsBoxes(BuildContext context, TreatmentStatsLoaded state) {
-    // Get chart colors from theme
-    final customColors = Theme.of(context).extension<CustomColors>();
-    final chartColors = customColors?.chartColors ??
-        [Colors.orange, Colors.purple, Colors.green, Colors.red];
-
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 0),
       child: Column(
@@ -54,18 +49,18 @@ class TreatmentStatsBoxes extends StatelessWidget {
                   context: context,
                   title: "إجمالي الجلسات",
                   value: state.allTreatments.toString(),
-                  icon: Icons.medical_services,
-                  color: chartColors[1], // Purple from theme
+                  icon: Icons.medical_services, 
+                  color: const Color(0xFF4A2882), // Darker purple color
                 ),
               ),
               const SizedBox(width: 10),
               Expanded(
                 child: _buildStatsBox(
                   context: context,
-                  title: "الجلسات المكتملة",
-                  value: state.completedTreatments.toString(),
-                  icon: Icons.check_circle,
-                  color: chartColors[2], // Green from theme
+                  title: "الجلسات المرفوضة",
+                  value: state.rejectedTreatments.toString(),
+                  icon: Icons.cancel_outlined,
+                  color: const Color(0xFF4A2882), // Darker purple color
                 ),
               ),
             ],
@@ -77,22 +72,20 @@ class TreatmentStatsBoxes extends StatelessWidget {
               Expanded(
                 child: _buildStatsBox(
                   context: context,
-                  title: "الجلسات المقبولة",
-                  value: state.acceptedTreatments.toString(),
-                  icon: Icons.thumb_up,
-                  color: Theme.of(context)
-                      .colorScheme
-                      .secondary, // Secondary color from theme
+                  title: "الجلسات المكتملة",
+                  value: state.completedTreatments.toString(),
+                  icon: Icons.check_circle_outline,
+                  color: const Color(0xFF4A2882), // Darker purple color
                 ),
               ),
               const SizedBox(width: 10),
               Expanded(
                 child: _buildStatsBox(
                   context: context,
-                  title: "الجلسات المرفوضة",
-                  value: state.rejectedTreatments.toString(),
-                  icon: Icons.thumb_down,
-                  color: chartColors[3], // Red from theme
+                  title: "الجلسات المقبولة",
+                  value: state.acceptedTreatments.toString(),
+                  icon: Icons.thumb_up_outlined,
+                  color: const Color(0xFF4A2882), // Darker purple color
                 ),
               ),
             ],
@@ -112,31 +105,48 @@ class TreatmentStatsBoxes extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Container(
-      height: 56, // Reduced height
+      height: 75,
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            color.withOpacity(0.6),
-            color.withOpacity(0.3),
+            color.withOpacity(0.7), // Darker start color
+            color.withOpacity(0.55), // Mid gradient
+            color.withOpacity(0.0), // Lighter end color
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
+          stops: const [0.0, 0.6, 1.0], // Controls gradient distribution
         ),
-        borderRadius: BorderRadius.circular(12), // Slightly tighter corners
+        borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: theme.colorScheme.background.withOpacity(0.1),
-            blurRadius: 3,
-            offset: const Offset(0, 1),
+            color: Colors.black.withOpacity(0.15),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
           ),
         ],
       ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(
-            horizontal: 0, vertical: 0), // Smaller padding
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         child: Row(
-          mainAxisAlignment: MainAxisAlignment.end,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
+            // Left side: Icon
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.15), // Slightly more transparent
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                icon,
+                color: Colors.white,
+                size: 20,
+              ),
+            ),
+
+            // Right side: Text content - right aligned for Arabic
             Expanded(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -145,30 +155,30 @@ class TreatmentStatsBoxes extends StatelessWidget {
                   Text(
                     title,
                     style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onPrimary,
+                      color: Colors.white,
                       fontWeight: FontWeight.w500,
-                      fontSize: 11, // Smaller font
+                      fontSize: 12,
                     ),
                     textAlign: TextAlign.right,
                   ),
                   const SizedBox(height: 2),
-                  Text(
-                    value,
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.onPrimary,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16, // Smaller font
-                    ),
-                    textAlign: TextAlign.right,
-                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      Text(
+                        value,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: Colors.greenAccent.shade200, // Slightly adjusted color
+                          fontWeight: FontWeight.bold,
+                          fontSize: 20,
+                        ),
+                        textAlign: TextAlign.right,
+                      ),
+                      const SizedBox(width: 8),
+                    ],
+                  )
                 ],
               ),
-            ),
-            const SizedBox(width: 6),
-            Icon(
-              icon,
-              color: theme.colorScheme.onPrimary,
-              size: 20, // Smaller icon
             ),
           ],
         ),
