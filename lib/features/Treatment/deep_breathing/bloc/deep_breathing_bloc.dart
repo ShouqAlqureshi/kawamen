@@ -420,24 +420,40 @@ class DeepBreathingBloc extends Bloc<DeepBreathingEvent, DeepBreathingState> {
     on<UpdateTreatmentProgressEvent>(_onUpdateTreatmentProgress);
     on<LoadUserTreatmentEvent>(_onLoadUserTreatment);
   }
-  Future<void> _onStartTrackingTreatment(StartTrackingTreatmentEvent event,
-      Emitter<DeepBreathingState> emit) async {
-    if (state.treatment == null) return;
 
-    try {
-      final userTreatmentId = await _repository.trackUserTreatment(
+Future<void> _onStartTrackingTreatment(StartTrackingTreatmentEvent event,
+    Emitter<DeepBreathingState> emit) async {
+  if (state.treatment == null) return;
+
+  try {
+    // If we already have a userTreatmentId, use it instead of creating a new one
+    final String userTreatmentId;
+    if (state.userTreatmentId != null) {
+      // Update the existing treatment record instead of creating a new one
+      await _repository.trackUserTreatment(
+        treatmentId: state.treatment!.id,
+        status: TreatmentStatus.started, // Changed from inProgress to started when restarting
+        userTreatmentId: state.userTreatmentId,
+        progress: 0.0, // Reset progress when restarting
+      );
+      userTreatmentId = state.userTreatmentId!;
+      developer.log('Reusing existing treatment tracking ID: $userTreatmentId');
+    } else {
+      // Create a new treatment tracking record
+      userTreatmentId = await _repository.trackUserTreatment(
         treatmentId: state.treatment!.id,
         status: TreatmentStatus.started,
         emotionFeedback: "angry", // Add constant "angry" emotion when starting
         progress: 0.0,
       );
-
-      emit(state.copyWith(userTreatmentId: userTreatmentId));
-      developer.log('Treatment tracking started with ID: $userTreatmentId');
-    } catch (e) {
-      developer.log('Error starting treatment tracking: $e');
+      developer.log('Created new treatment tracking ID: $userTreatmentId');
     }
+
+    emit(state.copyWith(userTreatmentId: userTreatmentId));
+  } catch (e) {
+    developer.log('Error starting treatment tracking: $e');
   }
+}
 
   Future<void> _onCompleteTrackingTreatment(
       CompleteTrackingTreatmentEvent event,
@@ -884,26 +900,28 @@ class DeepBreathingBloc extends Bloc<DeepBreathingEvent, DeepBreathingState> {
     });
   }
 
-  void _onResetExercise(
-      ResetExerciseEvent event, Emitter<DeepBreathingState> emit) {
-    developer.log('Exercise reset');
-    _cancelTimers();
+void _onResetExercise(
+    ResetExerciseEvent event, Emitter<DeepBreathingState> emit) {
+  developer.log('Exercise reset');
+  _cancelTimers();
 
-    // Keep the loaded treatment but reset other fields
-    final treatment = state.treatment;
-    final initialState = DeepBreathingState.initial();
+  // Keep the loaded treatment and userTreatmentId but reset other fields
+  final treatment = state.treatment;
+  final userTreatmentId = state.userTreatmentId; // Preserve the userTreatmentId
+  final initialState = DeepBreathingState.initial();
 
-    // If we have a treatment, recalculate the total exercise time
-    int totalExerciseTime = initialState.totalExerciseSeconds;
-    if (treatment != null && treatment.steps.isNotEmpty) {
-      totalExerciseTime = calculateTotalExerciseTime(treatment);
-    }
-
-    emit(initialState.copyWith(
-      treatment: treatment,
-      totalExerciseSeconds: totalExerciseTime,
-    ));
+  // If we have a treatment, recalculate the total exercise time
+  int totalExerciseTime = initialState.totalExerciseSeconds;
+  if (treatment != null && treatment.steps.isNotEmpty) {
+    totalExerciseTime = calculateTotalExerciseTime(treatment);
   }
+
+  emit(initialState.copyWith(
+    treatment: treatment,
+    totalExerciseSeconds: totalExerciseTime,
+    userTreatmentId: userTreatmentId, // Keep the userTreatmentId
+  ));
+}
 
   // Helper method to calculate total exercise time (fixed in code)
   int calculateTotalExerciseTime(Treatment treatment) {
