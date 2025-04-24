@@ -76,26 +76,47 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
       final daysToSubtract = now.weekday == 7 ? 0 : now.weekday;
       final startDate = DateTime(now.year, now.month, now.day - daysToSubtract);
 
-      // Debug log
-      log('Fetching emotions from: ${startDate.toIso8601String()} to current date');
-
-      // Get the end date (7 days after start date)
+      // Format dates as strings for string timestamp comparison
+      final startDateString = startDate
+          .toIso8601String()
+          .split('.')[0]; // Remove fractional seconds
       final endDate = startDate.add(const Duration(days: 7));
+      final endDateString =
+          endDate.toIso8601String().split('.')[0]; // Remove fractional seconds
 
-      // Fetch emotions from Firestore for the current week
+      // Debug log
+      log('Fetching emotions from: $startDateString to $endDateString');
+
+      // Get all emotional data first, then filter in memory
+      // This avoids issues with string comparisons in Firestore queries
       final emotionsQuery = FirebaseFirestore.instance
           .collection('users')
           .doc(userId)
-          .collection('emotionalData')
-          .where('date', isGreaterThanOrEqualTo: startDate)
-          .where('date', isLessThan: endDate);
+          .collection('emotionalData');
 
       final emotionsSnapshot = await emotionsQuery.get();
 
-      // Debug log
-      log('Found ${emotionsSnapshot.docs.length} emotion records');
+      log('Total emotion records found: ${emotionsSnapshot.docs.length}');
 
-      if (emotionsSnapshot.docs.isEmpty) {
+      // Filter documents by timestamp string comparison
+      final filteredDocs = emotionsSnapshot.docs.where((doc) {
+        final data = doc.data();
+        if (data.containsKey('timestamp') && data['timestamp'] is String) {
+          final timestamp = data['timestamp'] as String;
+          // Remove fractional seconds for comparison if present
+          final timestampForComparison =
+              timestamp.contains('.') ? timestamp.split('.')[0] : timestamp;
+
+          // Compare as strings
+          return timestampForComparison.compareTo(startDateString) >= 0 &&
+              timestampForComparison.compareTo(endDateString) < 0;
+        }
+        return false;
+      }).toList();
+
+      log('Filtered emotion records for current week: ${filteredDocs.length}');
+
+      if (filteredDocs.isEmpty) {
         log('No emotion data found for the current week');
         final loadedState = DashboardLoaded(angerEmotions, sadEmotions);
         await _setCacheData(userId, loadedState);
@@ -104,51 +125,67 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
       }
 
       // Process each emotion document
-      for (var doc in emotionsSnapshot.docs) {
+      for (var doc in filteredDocs) {
         final data = doc.data();
         String? emotion;
         DateTime? date;
 
-        // Handle different possible date formats
+        // Get the emotion
         if (data.containsKey('emotion')) {
           emotion = data['emotion'] as String?;
+          log('Found emotion: $emotion');
         }
 
-        // Handle different possible date formats in Firestore
-        if (data.containsKey('date')) {
-          final dateField = data['date'];
-          if (dateField is Timestamp) {
-            date = dateField.toDate();
-          } else if (dateField is String) {
-            // Try to parse date from string
+        // Parse timestamp string
+        if (data.containsKey('timestamp') && data['timestamp'] is String) {
+          final timestampStr = data['timestamp'] as String;
+          log('Processing timestamp: $timestampStr');
+
+          try {
+            date = DateTime.parse(timestampStr);
+            log('Successfully parsed timestamp to: ${date.toString()}');
+          } catch (e) {
+            log('Failed to parse timestamp directly: $e');
+
+            // Alternative parsing approach
             try {
-              date = DateTime.parse(dateField);
-            } catch (e) {
-              log('Failed to parse date string: $dateField');
+              if (timestampStr.contains('T')) {
+                final parts = timestampStr.split('T');
+                if (parts.length == 2) {
+                  final datePart = parts[0];
+                  // Handle microseconds in the time part
+                  final timePart = parts[1].contains('.')
+                      ? parts[1].split('.')[0]
+                      : parts[1];
+
+                  date = DateTime.parse('$datePart $timePart');
+                  log('Alternative parse successful: $datePart $timePart -> ${date.toString()}');
+                }
+              }
+            } catch (e2) {
+              log('Alternative parsing also failed: $e2');
             }
           }
         }
-
-        // Debug log
-        log('Processing emotion: $emotion, date: $date');
 
         if (emotion != null && date != null) {
           // Get the day of the week (1-7, where 1 is Monday and 7 is Sunday in Dart)
           final dayOfWeek = date.weekday;
 
-          // Debug log
-          log('Day of week: $dayOfWeek, Emotion: $emotion');
+          log('Processing entry: Day of week: $dayOfWeek, Emotion: $emotion');
 
-          // Categorize emotions - be more flexible with emotion names
-          if (emotion.toLowerCase().contains('ang')) {
+          // Categorize emotions - handle both direct and score-based emotion data
+          if ((emotion.toLowerCase() == 'angry')) {
             angerEmotions[dayOfWeek] = (angerEmotions[dayOfWeek] ?? 0) + 1;
             log('Incremented anger for day $dayOfWeek');
-          } else if (emotion.toLowerCase().contains('sad')) {
+          } else if ((emotion.toLowerCase() == 'sad')) {
             sadEmotions[dayOfWeek] = (sadEmotions[dayOfWeek] ?? 0) + 1;
             log('Incremented sadness for day $dayOfWeek');
           }
         } else {
           log('Skipping document due to missing emotion or date: ${doc.id}');
+          if (emotion == null) log('Emotion is null');
+          if (date == null) log('Date is null');
         }
       }
 
@@ -293,6 +330,7 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
             image.width,
             image.height,
           );
+
       final ByteData? byteData = await finalImage.toByteData(
         format: ui.ImageByteFormat.png,
       );
