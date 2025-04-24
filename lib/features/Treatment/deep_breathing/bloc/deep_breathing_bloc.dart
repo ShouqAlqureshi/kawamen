@@ -811,38 +811,43 @@ class DeepBreathingBloc extends Bloc<DeepBreathingEvent, DeepBreathingState> {
     }
   }
 
-  // Modified to match first code: countdown stops at 1 second
-  void _onCountdownTick(
-      CountdownTickEvent event, Emitter<DeepBreathingState> emit) {
-    developer.log('Countdown tick: ${state.countdownSeconds - 1}');
-    if (state.countdownSeconds > 2) {
-      // Change from > 1 to > 2
-      emit(state.copyWith(
-        countdownSeconds: state.countdownSeconds - 1,
-      ));
-    } else if (state.countdownSeconds == 2) {
-      // Stop at 1 instead of going to 0
-      emit(state.copyWith(
-        countdownSeconds: 1, // This ensures we show "1" as the final number
-      ));
+ void _onCountdownTick(CountdownTickEvent event, Emitter<DeepBreathingState> emit) {
+  developer.log('Countdown tick: ${state.countdownSeconds - 1}');
+  if (state.countdownSeconds > 2) {
+    // Normal countdown behavior
+    emit(state.copyWith(
+      countdownSeconds: state.countdownSeconds - 1,
+    ));
+  } else if (state.countdownSeconds == 2) {
+    // Stop at 1 instead of going to 0
+    emit(state.copyWith(
+      countdownSeconds: 1, // This ensures we show "1" as the final number
+    ));
 
-      // Countdown is complete, cancel timer and fade out countdown
-      developer.log('Countdown complete');
-      _countdownTimer?.cancel();
-      _countdownTimer = null;
-
-      emit(state.copyWith(
-        countdownOpacity: 0.0,
-        isAnimating: false, // Stop animation when countdown ends
-      ));
-
-      // After animation delay, move to next instruction
-      _delayTimer = Timer(const Duration(milliseconds: 500), () {
-        add(const NextInstructionEvent());
-      });
-    }
+    _finishCountdown(emit);
+  } else if (state.countdownSeconds == 1) {
+    // Add this case to handle resuming from 1
+    _finishCountdown(emit);
   }
+}
 
+// Extract the countdown completion logic to a separate method
+void _finishCountdown(Emitter<DeepBreathingState> emit) {
+  // Countdown is complete, cancel timer and fade out countdown
+  developer.log('Countdown complete');
+  _countdownTimer?.cancel();
+  _countdownTimer = null;
+
+  emit(state.copyWith(
+    countdownOpacity: 0.0,
+    isAnimating: false, // Stop animation when countdown ends
+  ));
+
+  // After animation delay, move to next instruction
+  _delayTimer = Timer(const Duration(milliseconds: 500), () {
+    add(const NextInstructionEvent());
+  });
+}
   void _onTotalTimerTick(
       TotalTimerTickEvent event, Emitter<DeepBreathingState> emit) {
     if (state.totalExerciseSeconds > 1) {
