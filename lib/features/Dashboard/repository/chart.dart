@@ -128,7 +128,7 @@ class EmotionalTrendGraph extends StatelessWidget {
                   curveSmoothness: 0.3, // Reduce curviness
                   preventCurveOverShooting: true, // Prevent loops
                   isStrokeCapRound: true,
-                  color: Colors.blue,
+                  color: Colors.blue..withOpacity(0.6),
                   barWidth: 3,
                   dotData: FlDotData(
                     show: true,
@@ -153,7 +153,7 @@ class EmotionalTrendGraph extends StatelessWidget {
                   curveSmoothness: 0.3, // Reduce curviness
                   preventCurveOverShooting: true, // Prevent loops
                   isStrokeCapRound: true,
-                  color: Colors.red,
+                  color: Colors.red.withOpacity(0.6),
                   barWidth: 3,
                   dotData: FlDotData(
                     show: true,
