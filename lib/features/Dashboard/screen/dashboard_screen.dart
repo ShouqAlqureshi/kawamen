@@ -211,8 +211,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                     padding: const EdgeInsets.only(
                                         right: 16, left: 6),
                                     child: EmotionalTrendGraph(
-                                      angerEmotionalData: angerEmotions,
-                                      sadEmotionalData: sadEmotions,
+                                      angerEmotionalData:
+                                          state.angerEmotionalData,
+                                      sadEmotionalData: state.sadEmotionalData,
                                     ),
                                   ),
                                 ),
