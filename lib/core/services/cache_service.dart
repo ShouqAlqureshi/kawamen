@@ -492,14 +492,14 @@ class UserCacheService {
     if (!_treatmentsStreamControllers.containsKey(userId)) {
       _treatmentsStreamControllers[userId] =
           StreamController<List<Map<String, dynamic>>>.broadcast();
-      _setupTreatmentsListener(userId);
+      setupTreatmentsListener(userId);
     }
 
     return _treatmentsStreamControllers[userId]!.stream;
   }
 
   /// Set up firestore listener for treatments
-  void _setupTreatmentsListener(String userId) {
+  void setupTreatmentsListener(String userId) {
     FirebaseFirestore.instance
         .collection('users')
         .doc(userId)

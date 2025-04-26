@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:kawamen/core/utils/Loadingscreen.dart';
 import 'package:kawamen/core/utils/theme/ThemedScaffold.dart';
 import 'package:kawamen/core/utils/theme/theme.dart';
+import 'package:kawamen/features/LogIn/view/login_view.dart';
 import 'package:kawamen/features/Treatment/CBT_therapy/screen/CBT_therapy_page.dart';
 import 'package:kawamen/features/Treatment/deep_breathing/screen/deep_breathing_page.dart';
 import 'package:kawamen/features/home/bloc/home_state.dart';
@@ -19,7 +20,13 @@ class HomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => HomeBloc()..add(FetchTreatmentHistory()),
+      create: (context) {
+        // initialize both the data fetch and stream subscription
+        final bloc = HomeBloc();
+        bloc.add(StartTreatmentStreamSubscription()); // Start real-time updates
+        bloc.add(const FetchTreatmentHistory()); // Initial data load
+        return bloc;
+      },
       child: _HomePageContent(showBottomNav: showBottomNav),
     );
   }
@@ -69,7 +76,13 @@ class _HomePageContent extends StatelessWidget {
               } else if (state is ErrorHomeState) {
                 return Center(child: Text(state.message));
               } else if (state is TreatmentHistoryLoaded) {
+                // When we have treatments (either from cache, initial load, or real-time updates)
                 return _buildMainContent(context, state.treatments);
+              } else if (state is UsernNotAuthenticated) {
+                Navigator.pushAndRemoveUntil(
+                    context,
+                    MaterialPageRoute(builder: (context) => const LoginView()),
+                    (_) => false);
               }
               return _buildMainContent(context, []);
             },

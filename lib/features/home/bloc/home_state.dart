@@ -134,3 +134,4 @@ class TreatmentData extends Equatable {
         updatedAt,
       ];
 }
+class UsernNotAuthenticated extends HomeState{}
