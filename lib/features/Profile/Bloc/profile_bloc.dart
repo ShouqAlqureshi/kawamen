@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:kawamen/core/navigation/app_routes.dart';
 import 'package:kawamen/core/services/cache_service.dart';
+import 'package:kawamen/features/emotion_detection/Bloc/emotion_detection_bloc.dart';
+import 'package:kawamen/features/emotion_detection/Bloc/emotion_detection_event.dart';
 import 'package:kawamen/features/registration/bloc/auth_bloc.dart';
 import 'package:kawamen/features/registration/bloc/auth_event.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -81,6 +83,12 @@ otherwise if it already fetche just copy it and send
 //this fetches toggles from cache and firbase info
   Future<void> _onFetchToggleStates(
       FetchToggleStates event, Emitter<ProfileState> emit) async {
+    // If we're already in a loaded state, preserve the showControlCenter value
+    bool keepControlCenterOpen = false;
+    if (state is ToggleStatesLoaded) {
+      keepControlCenterOpen = (state as ToggleStatesLoaded).showControlCenter;
+    }
+
     emit(ProfileLoading());
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -88,6 +96,7 @@ otherwise if it already fetche just copy it and send
           prefs.getBool('emotionDetectionToggle') ?? false;
       final notificationToggle = prefs.getBool('notificationToggle') ?? false;
       final microphoneToggle = prefs.getBool('microphoneToggle') ?? false;
+
       // Fetch user data from Firestore
       final String? userId = FirebaseAuth.instance.currentUser?.uid;
       if (userId == null) {
@@ -98,11 +107,14 @@ otherwise if it already fetche just copy it and send
 
         if (userDoc != null) {
           emit(ToggleStatesLoaded(
-              userData: userDoc,
-              emotionDetectionToggle: emotionDetectionToggle,
-              notificationToggle: notificationToggle,
-              microphoneToggle: microphoneToggle,
-              userId: userId));
+            userData: userDoc,
+            emotionDetectionToggle: emotionDetectionToggle,
+            notificationToggle: notificationToggle,
+            microphoneToggle: microphoneToggle,
+            userId: userId,
+            showControlCenter:
+                keepControlCenterOpen, // Preserve the panel state
+          ));
         }
       }
     } catch (e) {
@@ -110,14 +122,52 @@ otherwise if it already fetche just copy it and send
     }
   }
 
-//this updates toggle in cache
-  Future<void> _onUpdateToggleState(
+  void _onUpdateToggleState(
       UpdateToggleState event, Emitter<ProfileState> emit) async {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool(event.toggleName, event.newValue);
 
-      // Fetch updated toggle states
+      // Keep the control center open by preserving showControlCenter value
+      if (state is ToggleStatesLoaded) {
+        final currentState = state as ToggleStatesLoaded;
+        final bool keepControlCenterOpen = currentState.showControlCenter;
+
+        // Handle specific toggles
+        if (event.toggleName == 'emotionDetectionToggle') {
+          // Rest of your toggle logic here
+        } else if (event.toggleName == 'microphoneToggle') {
+          // Rest of your microphone logic here
+        }
+
+        // Fetch updated toggle states but preserve showControlCenter
+        final prefs = await SharedPreferences.getInstance();
+        final emotionDetectionToggle =
+            prefs.getBool('emotionDetectionToggle') ?? false;
+        final notificationToggle = prefs.getBool('notificationToggle') ?? false;
+        final microphoneToggle = prefs.getBool('microphoneToggle') ?? false;
+
+        // Get updated user data
+        final userId = FirebaseAuth.instance.currentUser?.uid;
+        if (userId != null) {
+          final userDoc = await UserCacheService().getUserData(userId);
+
+          if (userDoc != null) {
+            // Emit updated state with preserved showControlCenter
+            emit(ToggleStatesLoaded(
+              userData: userDoc,
+              emotionDetectionToggle: emotionDetectionToggle,
+              notificationToggle: notificationToggle,
+              microphoneToggle: microphoneToggle,
+              userId: userId,
+              showControlCenter: keepControlCenterOpen, // Keep panel open
+            ));
+            return; // Skip the FetchToggleStates() call
+          }
+        }
+      }
+
+      // If we couldn't preserve the state, fall back to regular update
       add(FetchToggleStates());
     } catch (e) {
       emit(ProfileError('Error updating toggle state: $e'));
@@ -225,37 +275,37 @@ otherwise if it already fetche just copy it and send
     }
   }
 
-Future<void> _onLogout(Logout event, Emitter<ProfileState> emit) async {
-  emit(ProfileLoading());
-  try {
-    final user = FirebaseAuth.instance.currentUser;
+  Future<void> _onLogout(Logout event, Emitter<ProfileState> emit) async {
+    emit(ProfileLoading());
+    try {
+      final user = FirebaseAuth.instance.currentUser;
 
-    // Check if the user is logged in
-    if (user == null) {
-      emit(UsernNotAuthenticated()); // Just emit this state instead of showing dialog
-      return;
+      // Check if the user is logged in
+      if (user == null) {
+        emit(
+            UsernNotAuthenticated()); // Just emit this state instead of showing dialog
+        return;
+      }
+
+      // Remove the second confirmation dialog
+      await FirebaseAuth.instance.signOut();
+
+      // Clear shared preferences if needed
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.clear();
+
+      emit(ProfileInitial()); // Reset the profile state to initial
+
+      // Notify AuthBloc about logout
+      BlocProvider.of<AuthBloc>(context).add(LogoutUser());
+
+      // Navigate to login page directly
+      Navigator.of(context)
+          .pushNamedAndRemoveUntil(AppRoutes.login, (route) => false);
+    } catch (e) {
+      emit(ProfileError('Error logging out: ${e.toString()}'));
     }
-
-    // Remove the second confirmation dialog
-    await FirebaseAuth.instance.signOut();
-
-    // Clear shared preferences if needed
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.clear();
-
-    emit(ProfileInitial()); // Reset the profile state to initial
-
-    // Notify AuthBloc about logout
-    BlocProvider.of<AuthBloc>(context).add(LogoutUser());
-
-    // Navigate to login page directly
-    Navigator.of(context).pushNamedAndRemoveUntil(
-        AppRoutes.login,
-        (route) => false);
-  } catch (e) {
-    emit(ProfileError('Error logging out: ${e.toString()}'));
   }
-}
 
   void showErrorDialog(BuildContext context, String message) {
     showDialog(

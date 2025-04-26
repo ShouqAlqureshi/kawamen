@@ -15,7 +15,7 @@ class EmotionModel {
     return {
       'emotionId': emotionId,
       'emotion': emotion,
-      'timestamp': timestamp.toIso8601String(),
+      'timestamp': timestamp,
       'sessionId': sessionId,
     };
   }

@@ -9,6 +9,8 @@ import 'package:kawamen/features/Profile/Screens/edit_profile_screen.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:kawamen/features/Treatment/CBT_therapy/screen/CBT_therapy_page.dart';
 import 'package:kawamen/features/Treatment/deep_breathing/screen/deep_breathing_page.dart';
+import 'package:kawamen/features/emotion_detection/Bloc/emotion_detection_bloc.dart';
+import 'package:kawamen/features/emotion_detection/Bloc/emotion_detection_event.dart';
 import '../Bloc/profile_bloc.dart';
 
 class ViewProfileScreen extends StatelessWidget {
@@ -215,17 +217,7 @@ class ViewProfileScreen extends StatelessWidget {
                           }
                         },
                       ),
-                      _buildCard(
-                        context: context,
-                        title: "اختبار المشاعر",
-                        theme: theme,
-                        icon: Icons.record_voice_over,
-                        iconBackground: theme.colorScheme.tertiaryContainer,
-                        iconColor: theme.colorScheme.onTertiaryContainer,
-                        onTap: () {
-                          Navigator.pushNamed(context, '/emotion-test');
-                        },
-                      ),
+
                       _buildCard(
                         context: context,
                         title: "لوحة تحكم",
@@ -514,104 +506,104 @@ class ViewProfileScreen extends StatelessWidget {
   }
 
   Widget _buildCard({
-  required BuildContext context,
-  required String title,
-  required ThemeData theme,
-  IconData? icon,
-  bool isSelected = false,
-  Color? color,
-  Color? iconColor,
-  Color? iconBackground,
-  required VoidCallback onTap,
-}) {
-  // Define colors that will ensure good contrast when selected
-  final effectiveIconColor = isSelected 
-      ? theme.colorScheme.onPrimaryContainer 
-      : (iconColor ?? theme.colorScheme.primary);
-  
-  final effectiveIconBackground = isSelected
-      ? theme.colorScheme.onPrimaryContainer.withOpacity(0.15)
-      : (iconBackground ?? (effectiveIconColor).withOpacity(0.15));
+    required BuildContext context,
+    required String title,
+    required ThemeData theme,
+    IconData? icon,
+    bool isSelected = false,
+    Color? color,
+    Color? iconColor,
+    Color? iconBackground,
+    required VoidCallback onTap,
+  }) {
+    // Define colors that will ensure good contrast when selected
+    final effectiveIconColor = isSelected
+        ? theme.colorScheme.onPrimaryContainer
+        : (iconColor ?? theme.colorScheme.primary);
 
-  return Container(
-    margin: const EdgeInsets.only(bottom: 14),
-    decoration: BoxDecoration(
-      boxShadow: [
-        BoxShadow(
-          color: Colors.black.withOpacity(0.06),
-          blurRadius: 12,
-          offset: const Offset(0, 3),
-        ),
-      ],
-    ),
-    child: Material(
-      color: color ??
-          (isSelected
-              ? theme.colorScheme.primaryContainer
-              : theme.colorScheme.surface),
-      borderRadius: BorderRadius.circular(16),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onTap,
-        splashColor: theme.colorScheme.primary.withOpacity(0.1),
-        highlightColor: theme.colorScheme.primary.withOpacity(0.05),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-          child: Row(
-            children: [
-              if (icon != null)
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: effectiveIconBackground,
-                    shape: BoxShape.circle,
+    final effectiveIconBackground = isSelected
+        ? theme.colorScheme.onPrimaryContainer.withOpacity(0.15)
+        : (iconBackground ?? (effectiveIconColor).withOpacity(0.15));
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 14),
+      decoration: BoxDecoration(
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.06),
+            blurRadius: 12,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Material(
+        color: color ??
+            (isSelected
+                ? theme.colorScheme.primaryContainer
+                : theme.colorScheme.surface),
+        borderRadius: BorderRadius.circular(16),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          splashColor: theme.colorScheme.primary.withOpacity(0.1),
+          highlightColor: theme.colorScheme.primary.withOpacity(0.05),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+            child: Row(
+              children: [
+                if (icon != null)
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: effectiveIconBackground,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      icon,
+                      color: effectiveIconColor,
+                      size: 20,
+                    ),
                   ),
-                  child: Icon(
-                    icon,
-                    color: effectiveIconColor,
-                    size: 20,
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Text(
+                    title,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      color: isSelected
+                          ? theme.colorScheme.onPrimaryContainer
+                          : theme.colorScheme.onSurface,
+                      fontWeight:
+                          isSelected ? FontWeight.w600 : FontWeight.w500,
+                    ),
                   ),
                 ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Text(
-                  title,
-                  style: theme.textTheme.titleMedium?.copyWith(
+                AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 200),
+                  transitionBuilder:
+                      (Widget child, Animation<double> animation) {
+                    return ScaleTransition(
+                      scale: animation,
+                      child: child,
+                    );
+                  },
+                  child: Icon(
+                    key: ValueKey<bool>(isSelected),
+                    isSelected
+                        ? Icons.keyboard_arrow_down_rounded
+                        : Icons.arrow_forward_ios_rounded,
                     color: isSelected
                         ? theme.colorScheme.onPrimaryContainer
-                        : theme.colorScheme.onSurface,
-                    fontWeight:
-                        isSelected ? FontWeight.w600 : FontWeight.w500,
+                        : theme.colorScheme.onSurface.withOpacity(0.6),
+                    size: isSelected ? 22 : 18,
                   ),
                 ),
-              ),
-              AnimatedSwitcher(
-                duration: const Duration(milliseconds: 200),
-                transitionBuilder:
-                    (Widget child, Animation<double> animation) {
-                  return ScaleTransition(
-                    scale: animation,
-                    child: child,
-                  );
-                },
-                child: Icon(
-                  key: ValueKey<bool>(isSelected),
-                  isSelected
-                      ? Icons.keyboard_arrow_down_rounded
-                      : Icons.arrow_forward_ios_rounded,
-                  color: isSelected
-                      ? theme.colorScheme.onPrimaryContainer
-                      : theme.colorScheme.onSurface.withOpacity(0.6),
-                  size: isSelected ? 22 : 18,
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   Widget _buildControlCenter(
     BuildContext context,
@@ -637,17 +629,46 @@ class ViewProfileScreen extends StatelessWidget {
       ),
       child: Column(
         children: [
+// In your _buildSwitchTile for emotion detection
           _buildSwitchTile(
             title: 'اكتشاف المشاعر',
             subtitle: "ايقاف هذه الخاصيه لن يسمح للتطبيق توفير اقتراحات العلاج",
             value: state.emotionDetectionToggle,
             onChanged: (value) {
+              // Check microphone status
+              final isMicEnabled =
+                  context.read<MicrophoneBloc>().state is MicrophoneEnabled;
+
+              if (value && !isMicEnabled) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text("يجب تفعيل المايكروفون أولاً"),
+                    backgroundColor: theme.colorScheme.error,
+                  ),
+                );
+                return;
+              }
+
+              // Update the toggle
               context.read<ProfileBloc>().add(
                     UpdateToggleState(
                       toggleName: 'emotionDetectionToggle',
                       newValue: value,
                     ),
                   );
+
+              // Directly trigger emotion detection if turning on
+              if (value && isMicEnabled) {
+                print("DIRECTLY TRIGGERING EMOTION DETECTION");
+                // Get the emotion detection bloc and start detection
+                final emotionBloc = context.read<EmotionDetectionBloc>();
+                emotionBloc.add(StartEmotionDetection());
+              } else if (!value) {
+                // Stop detection if turning off
+                print("DIRECTLY STOPPING EMOTION DETECTION");
+                final emotionBloc = context.read<EmotionDetectionBloc>();
+                emotionBloc.add(StopEmotionDetection());
+              }
             },
             icon: Icons.psychology_outlined,
             theme: theme,
@@ -670,17 +691,47 @@ class ViewProfileScreen extends StatelessWidget {
                     : "ايقاف هذه الخاصيه لن يسمح للتطبيق من تحليل المشاعر",
                 value: isMicEnabled,
                 onChanged: (value) async {
+                  // Toggle microphone state
                   context.read<MicrophoneBloc>().add(ToggleMicrophone());
+
                   await Future.delayed(const Duration(milliseconds: 200));
-                  if (context.mounted &&
-                      context.read<MicrophoneBloc>().state
-                          is MicrophoneEnabled) {
-                    context.read<ProfileBloc>().add(
-                          UpdateToggleState(
-                            toggleName: 'microphoneToggle',
-                            newValue: value,
-                          ),
-                        );
+
+                  if (context.mounted) {
+                    final micState = context.read<MicrophoneBloc>().state;
+
+                    if (micState is MicrophoneEnabled) {
+                      // Microphone was enabled successfully
+                      context.read<ProfileBloc>().add(
+                            UpdateToggleState(
+                              toggleName: 'microphoneToggle',
+                              newValue: true,
+                            ),
+                          );
+                    } else {
+                      // Microphone was disabled or permission denied
+                      // Also turn off emotion detection
+                      context.read<ProfileBloc>().add(
+                            UpdateToggleState(
+                              toggleName: 'microphoneToggle',
+                              newValue: false,
+                            ),
+                          );
+
+                      // Turn off emotion detection if it was on
+                      if (state.emotionDetectionToggle) {
+                        context.read<ProfileBloc>().add(
+                              UpdateToggleState(
+                                toggleName: 'emotionDetectionToggle',
+                                newValue: false,
+                              ),
+                            );
+
+                        // Stop detection
+                        context
+                            .read<EmotionDetectionBloc>()
+                            .add(StopEmotionDetection());
+                      }
+                    }
                   }
                 },
                 icon: Icons.mic_outlined,
@@ -766,7 +817,10 @@ class ViewProfileScreen extends StatelessWidget {
             scale: 0.9,
             child: Switch.adaptive(
               value: value,
-              onChanged: onChanged,
+              onChanged: (newValue) {
+                print("Switch changed: $title -> $newValue");
+                onChanged(newValue);
+              },
               activeColor: theme.colorScheme.primary,
               activeTrackColor: theme.colorScheme.primaryContainer,
               inactiveThumbColor: theme.colorScheme.onSurfaceVariant,

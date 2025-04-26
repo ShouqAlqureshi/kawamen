@@ -9,8 +9,8 @@ import 'core/services/Notification_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
-   try {
+
+  try {
     await dotenv.load(fileName: ".env");
   } catch (e) {
     print("Error loading .env file: $e");
@@ -19,9 +19,9 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-  
+
   await NotificationService().initialize();
-  listenForEmailVerification();  // Call this once at app startup
-  
+  listenForEmailVerification(); // Call this once at app startup
+
   runApp(App());
 }
