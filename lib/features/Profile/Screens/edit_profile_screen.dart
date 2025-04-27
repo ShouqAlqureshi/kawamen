@@ -301,6 +301,10 @@ class _EditProfileScreenContentState extends State<_EditProfileScreenContent> {
                       maxLength: 30,
                       fieldId: 0,
                       errorText: errors['name'],
+                      inputFormatters: [
+                        // Prevent spaces at the beginning
+                        FilteringTextInputFormatter.deny(RegExp(r'^\s')),
+                      ],
                     ),
 
                     const SizedBox(height: 16),
@@ -313,6 +317,10 @@ class _EditProfileScreenContentState extends State<_EditProfileScreenContent> {
                       maxLength: 50,
                       fieldId: 1,
                       errorText: errors['email'],
+                      // Prevent spaces in email
+                      inputFormatters: [
+                        FilteringTextInputFormatter.deny(RegExp(r'\s')),
+                      ],
                     ),
 
                     const SizedBox(height: 16),
@@ -324,7 +332,11 @@ class _EditProfileScreenContentState extends State<_EditProfileScreenContent> {
                       theme: theme,
                       maxLength: 3,
                       keyboardType: TextInputType.number,
-                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                      // Allow only digits and no spaces
+                      inputFormatters: [
+                        FilteringTextInputFormatter.digitsOnly,
+                        FilteringTextInputFormatter.deny(RegExp(r'\s')),
+                      ],
                       fieldId: 2,
                       errorText: errors['age'],
                     ),

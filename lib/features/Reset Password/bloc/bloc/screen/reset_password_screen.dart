@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:kawamen/core/utils/Loadingscreen.dart';
 import 'package:kawamen/core/utils/theme/ThemedScaffold.dart';
@@ -317,6 +318,9 @@ class _ResetPasswordFormState extends State<_ResetPasswordForm> {
                               ),
                               keyboardType: TextInputType.emailAddress,
                               autocorrect: false,
+                              inputFormatters: [
+                                FilteringTextInputFormatter.deny(RegExp(r'\s')),
+                              ],
                               validator: (_) {
                                 // We're handling validation manually via _emailError
                                 return null;
