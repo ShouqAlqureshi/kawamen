@@ -110,6 +110,37 @@ class _ResetPasswordForm extends StatefulWidget {
 class _ResetPasswordFormState extends State<_ResetPasswordForm> {
   final _emailController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
+  bool _isEmailValid = false;
+  bool _isFocused = false;
+  String? _emailError;
+
+  @override
+  void initState() {
+    super.initState();
+    _emailController.addListener(_validateEmail);
+  }
+
+  void _validateEmail() {
+    final email = _emailController.text.trim();
+
+    setState(() {
+      if (email.isEmpty) {
+        _emailError = 'الرجاء ادخال البريد الالكتروني';
+        _isEmailValid = false;
+      } else {
+        // Regular expression for email validation
+        final emailRegExp = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
+
+        if (!emailRegExp.hasMatch(email)) {
+          _emailError = 'الرجاء ادخال بريد الكتروني صحيح';
+          _isEmailValid = false;
+        } else {
+          _emailError = null;
+          _isEmailValid = true;
+        }
+      }
+    });
+  }
 
   @override
   void dispose() {
@@ -127,6 +158,9 @@ class _ResetPasswordFormState extends State<_ResetPasswordForm> {
           onTap: () {
             // Hide keyboard when tapping outside text fields
             FocusScope.of(context).unfocus();
+            setState(() {
+              _isFocused = false;
+            });
           },
           child: Form(
             key: _formKey,
@@ -191,79 +225,120 @@ class _ResetPasswordFormState extends State<_ResetPasswordForm> {
 
                     const SizedBox(height: 32),
 
-                    // Enhanced email field
-                    Container(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(16),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.05),
-                            blurRadius: 10,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: TextFormField(
-                        controller: _emailController,
-                        decoration: InputDecoration(
-                          labelText: 'البريد الالكتروني',
-                          hintText: 'أدخل البريد الالكتروني هنا',
-                          prefixIcon: Icon(
-                            Icons.email_outlined,
-                            color: theme.colorScheme.primary,
-                          ),
-                          border: OutlineInputBorder(
+                    // Enhanced email field with visual feedback
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(16),
-                            borderSide: BorderSide(
-                              color: theme.colorScheme.outline,
-                              width: 1.5,
-                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: _emailError != null
+                                    ? theme.colorScheme.error.withOpacity(0.1)
+                                    : Colors.black.withOpacity(0.05),
+                                blurRadius: 10,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
                           ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(16),
-                            borderSide: BorderSide(
-                              color: theme.colorScheme.outline.withOpacity(0.7),
-                              width: 1.5,
+                          child: Focus(
+                            onFocusChange: (hasFocus) {
+                              setState(() {
+                                _isFocused = hasFocus;
+                                if (!hasFocus) {
+                                  _validateEmail();
+                                }
+                              });
+                            },
+                            child: TextFormField(
+                              controller: _emailController,
+                              decoration: InputDecoration(
+                                labelText: 'البريد الالكتروني',
+                                hintText: 'أدخل البريد الالكتروني هنا',
+                                prefixIcon: Icon(
+                                  Icons.email_outlined,
+                                  color: _emailError != null
+                                      ? theme.colorScheme.error
+                                      : _isFocused
+                                          ? theme.colorScheme.primary
+                                          : theme.colorScheme.primary
+                                              .withOpacity(0.7),
+                                ),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                  borderSide: BorderSide(
+                                    color: theme.colorScheme.outline,
+                                    width: 1.5,
+                                  ),
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                  borderSide: BorderSide(
+                                    color: _emailError != null
+                                        ? theme.colorScheme.error
+                                        : theme.colorScheme.outline
+                                            .withOpacity(0.7),
+                                    width: 1.5,
+                                  ),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                  borderSide: BorderSide(
+                                    color: _emailError != null
+                                        ? theme.colorScheme.error
+                                        : theme.colorScheme.primary,
+                                    width: 2,
+                                  ),
+                                ),
+                                errorBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                  borderSide: BorderSide(
+                                    color: theme.colorScheme.error,
+                                    width: 1.5,
+                                  ),
+                                ),
+                                filled: true,
+                                fillColor: theme.colorScheme.surface,
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 20,
+                                  vertical: 16,
+                                ),
+                                labelStyle: TextStyle(
+                                  color: _emailError != null
+                                      ? theme.colorScheme.error
+                                      : _isFocused
+                                          ? theme.colorScheme.primary
+                                          : theme.colorScheme.onSurfaceVariant,
+                                ),
+                                // Remove default error message display since we have our own
+                                errorStyle:
+                                    const TextStyle(height: 0, fontSize: 0),
+                              ),
+                              keyboardType: TextInputType.emailAddress,
+                              autocorrect: false,
+                              validator: (_) {
+                                // We're handling validation manually via _emailError
+                                return null;
+                              },
                             ),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(16),
-                            borderSide: BorderSide(
-                              color: theme.colorScheme.primary,
-                              width: 2,
-                            ),
-                          ),
-                          errorBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(16),
-                            borderSide: BorderSide(
-                              color: theme.colorScheme.error,
-                              width: 1.5,
-                            ),
-                          ),
-                          filled: true,
-                          fillColor: theme.colorScheme.surface,
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 20,
-                            vertical: 16,
                           ),
                         ),
-                        keyboardType: TextInputType.emailAddress,
-                        autocorrect: false,
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'الرجاد ادخال البريد الالكتروني';
-                          }
-                          // Regular expression for email validation
-                          final emailRegExp =
-                              RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
 
-                          if (!emailRegExp.hasMatch(value)) {
-                            return 'الرجاء ادخال بريد الكتروني صحيح';
-                          }
-
-                          return null;
-                        },
-                      ),
+                        // Custom error message
+                        if (_emailError != null)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 8, right: 16),
+                            child: Text(
+                              _emailError!,
+                              style: TextStyle(
+                                color: theme.colorScheme.error,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                      ],
                     ),
 
                     const SizedBox(height: 16),
@@ -289,45 +364,48 @@ class _ResetPasswordFormState extends State<_ResetPasswordForm> {
 
                     const SizedBox(height: 36),
 
-                    // Enhanced button
+                    // Enhanced button with active/inactive state
                     Container(
                       width: 300,
                       height: 56,
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(16),
-                        boxShadow: [
-                          BoxShadow(
-                            color: theme.colorScheme.primary.withOpacity(0.3),
-                            blurRadius: 12,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
+                        boxShadow: _isEmailValid
+                            ? [
+                                BoxShadow(
+                                  color: theme.colorScheme.primary
+                                      .withOpacity(0.3),
+                                  blurRadius: 12,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ]
+                            : [], // No shadow when button is inactive
                       ),
                       child: ElevatedButton(
-                        onPressed:
-                            state.status == ResetPasswordStatus.submitting
-                                ? null
-                                : () {
-                                    if (_formKey.currentState?.validate() ??
-                                        false) {
-                                      context.read<ResetPasswordBloc>().add(
-                                            ResetPasswordSubmitted(
-                                                _emailController.text),
-                                          );
-                                    }
-                                  },
+                        onPressed: (_isEmailValid &&
+                                state.status != ResetPasswordStatus.submitting)
+                            ? () {
+                                FocusScope.of(context).unfocus();
+                                context.read<ResetPasswordBloc>().add(
+                                      ResetPasswordSubmitted(
+                                          _emailController.text.trim()),
+                                    );
+                              }
+                            : null, // Button disabled when email invalid or submitting
                         style: ElevatedButton.styleFrom(
                           backgroundColor: theme.colorScheme.primary,
                           foregroundColor: theme.colorScheme.onPrimary,
                           disabledBackgroundColor:
-                              theme.colorScheme.primary.withOpacity(0.6),
+                              theme.colorScheme.primary.withOpacity(0.3),
                           disabledForegroundColor:
-                              theme.colorScheme.onPrimary.withOpacity(0.8),
+                              theme.colorScheme.onPrimary.withOpacity(0.5),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(16),
                           ),
                           padding: const EdgeInsets.symmetric(vertical: 16),
-                          elevation: 0,
+                          elevation: _isEmailValid
+                              ? 0
+                              : 0, // No elevation when disabled
                         ),
                         child: state.status == ResetPasswordStatus.submitting
                             ? const SizedBox(
@@ -336,19 +414,27 @@ class _ResetPasswordFormState extends State<_ResetPasswordForm> {
                                 child: LoadingScreen(),
                               )
                             : Center(
-                                // Using Center widget to ensure everything is centered
                                 child: Row(
-                                  mainAxisSize: MainAxisSize
-                                      .min, // This makes the Row take minimum space
+                                  mainAxisSize: MainAxisSize.min,
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    const Icon(Icons.send_rounded, size: 20),
+                                    Icon(
+                                      Icons.send_rounded,
+                                      size: 20,
+                                      color: _isEmailValid
+                                          ? theme.colorScheme.onPrimary
+                                          : theme.colorScheme.onPrimary
+                                              .withOpacity(0.5),
+                                    ),
                                     const SizedBox(width: 10),
                                     Text(
                                       'اعادة تعيين الرقم السري',
                                       style:
                                           theme.textTheme.titleMedium?.copyWith(
-                                        color: theme.colorScheme.onPrimary,
+                                        color: _isEmailValid
+                                            ? theme.colorScheme.onPrimary
+                                            : theme.colorScheme.onPrimary
+                                                .withOpacity(0.5),
                                         fontWeight: FontWeight.bold,
                                       ),
                                     ),
