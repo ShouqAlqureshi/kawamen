@@ -349,12 +349,8 @@ class _SessionCard extends StatelessWidget {
     switch (emotion.toLowerCase()) {
       case 'sad':
         return 'الحزن';
-      case 'anxiety':
-        return 'القلق';
       case 'angry':
         return 'الغضب';
-      case 'fear':
-        return 'الخوف';
       default:
         return emotion;
     }
