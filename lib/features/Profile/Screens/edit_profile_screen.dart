@@ -106,7 +106,7 @@ class _EditProfileScreenContent extends StatelessWidget {
     required this.initialUserInfo,
     required this.onProfileUpdated,
   });
-
+  
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);

@@ -34,61 +34,67 @@ class ResetPasswordView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
-    return ThemedScaffold(
-      appBar: AppBar(
-        centerTitle: true,
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        title: Text(
-          'اعادة تعيين الرقم السري',
-          style: theme.textTheme.headlineMedium?.copyWith(
-            fontWeight: FontWeight.w600,
+
+    return GestureDetector(
+      onTap: () {
+        // Hide keyboard when tapping outside text fields
+        FocusScope.of(context).unfocus();
+      },
+      child: ThemedScaffold(
+        appBar: AppBar(
+          centerTitle: true,
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          title: Text(
+            'اعادة تعيين الرقم السري',
+            style: theme.textTheme.headlineMedium?.copyWith(
+              fontWeight: FontWeight.w600,
+            ),
+            textAlign: TextAlign.right,
           ),
-          textAlign: TextAlign.right,
         ),
-      ),
-      body: BlocListener<ResetPasswordBloc, ResetPasswordState>(
-        listener: (context, state) {
-          if (state.status == ResetPasswordStatus.success) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: const Text(
-                  'تم ارسال بريد الكتروني لاعادة تعييت الرقم السري بنجاح !',
+        body: BlocListener<ResetPasswordBloc, ResetPasswordState>(
+          listener: (context, state) {
+            if (state.status == ResetPasswordStatus.success) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: const Text(
+                    'تم ارسال بريد الكتروني لاعادة تعييت الرقم السري بنجاح !',
+                  ),
+                  backgroundColor: Colors.green,
+                  behavior: SnackBarBehavior.floating,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  margin: const EdgeInsets.all(10),
                 ),
-                backgroundColor: Colors.green,
-                behavior: SnackBarBehavior.floating,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                margin: const EdgeInsets.all(10),
-              ),
-            );
-            Navigator.of(context).pop();
-          }
+              );
+              Navigator.of(context).pop();
+            }
 
-          if (state.status == ResetPasswordStatus.requiresReauth) {
-            onReauthenticationRequired(context);
-          }
+            if (state.status == ResetPasswordStatus.requiresReauth) {
+              onReauthenticationRequired(context);
+            }
 
-          if (state.status == ResetPasswordStatus.error) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(state.errorMessage ?? 'حدث خطاء'),
-                backgroundColor: Colors.red,
-                behavior: SnackBarBehavior.floating,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
+            if (state.status == ResetPasswordStatus.error) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(state.errorMessage ?? 'حدث خطاء'),
+                  backgroundColor: Colors.red,
+                  behavior: SnackBarBehavior.floating,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  margin: const EdgeInsets.all(10),
                 ),
-                margin: const EdgeInsets.all(10),
-              ),
-            );
-          }
-        },
-        child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(20.0),
-            child: _ResetPasswordForm(),
+              );
+            }
+          },
+          child: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: _ResetPasswordForm(),
+            ),
           ),
         ),
       ),
@@ -114,216 +120,240 @@ class _ResetPasswordFormState extends State<_ResetPasswordForm> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return BlocBuilder<ResetPasswordBloc, ResetPasswordState>(
       builder: (context, state) {
-        return Form(
-          key: _formKey,
-          child: Center(
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  // Icon with animated decoration
-                  Container(
-                    padding: const EdgeInsets.all(4),
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: LinearGradient(
-                        colors: [
-                          theme.colorScheme.primary.withOpacity(0.7),
-                          theme.colorScheme.secondary.withOpacity(0.7),
+        return GestureDetector(
+          onTap: () {
+            // Hide keyboard when tapping outside text fields
+            FocusScope.of(context).unfocus();
+          },
+          child: Form(
+            key: _formKey,
+            child: Center(
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    // Icon with animated decoration
+                    Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: LinearGradient(
+                          colors: [
+                            theme.colorScheme.primary.withOpacity(0.7),
+                            theme.colorScheme.secondary.withOpacity(0.7),
+                          ],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: theme.colorScheme.primary.withOpacity(0.3),
+                            spreadRadius: 2,
+                            blurRadius: 12,
+                            offset: const Offset(0, 4),
+                          ),
                         ],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
                       ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: theme.colorScheme.primary.withOpacity(0.3),
-                          spreadRadius: 2,
-                          blurRadius: 12,
-                          offset: const Offset(0, 4),
+                      child: CircleAvatar(
+                        radius: 50,
+                        backgroundColor: theme.colorScheme.secondary,
+                        child: Icon(
+                          Icons.lock_reset,
+                          size: 40,
+                          color: theme.colorScheme.onSecondary,
                         ),
-                      ],
-                    ),
-                    child: CircleAvatar(
-                      radius: 50,
-                      backgroundColor: theme.colorScheme.secondary,
-                      child: Icon(
-                        Icons.lock_reset,
-                        size: 40,
-                        color: theme.colorScheme.onSecondary,
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 36),
-                  
-                  // Title with enhanced styling
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.surfaceVariant.withOpacity(0.3),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      'ادخل بريدك الالكتروني المستخدم للاعادة تعيين الرقم السري',
-                      textAlign: TextAlign.center,
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                        fontWeight: FontWeight.w600,
+                    const SizedBox(height: 36),
+
+                    // Title with enhanced styling
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 8),
+                      decoration: BoxDecoration(
+                        color:
+                            theme.colorScheme.surfaceVariant.withOpacity(0.3),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        'ادخل بريدك الالكتروني المستخدم للاعادة تعيين الرقم السري',
+                        textAlign: TextAlign.center,
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
-                  ),
-                  
-                  const SizedBox(height: 32),
-                  
-                  // Enhanced email field
-                  Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
-                          blurRadius: 10,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: TextFormField(
-                      controller: _emailController,
-                      decoration: InputDecoration(
-                        labelText: 'البريد الالكتروني',
-                        hintText: 'أدخل البريد الالكتروني هنا',
-                        prefixIcon: Icon(
-                          Icons.email_outlined,
-                          color: theme.colorScheme.primary,
-                        ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(16),
-                          borderSide: BorderSide(
-                            color: theme.colorScheme.outline,
-                            width: 1.5,
+
+                    const SizedBox(height: 32),
+
+                    // Enhanced email field
+                    Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.05),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
                           ),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(16),
-                          borderSide: BorderSide(
-                            color: theme.colorScheme.outline.withOpacity(0.7),
-                            width: 1.5,
-                          ),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(16),
-                          borderSide: BorderSide(
+                        ],
+                      ),
+                      child: TextFormField(
+                        controller: _emailController,
+                        decoration: InputDecoration(
+                          labelText: 'البريد الالكتروني',
+                          hintText: 'أدخل البريد الالكتروني هنا',
+                          prefixIcon: Icon(
+                            Icons.email_outlined,
                             color: theme.colorScheme.primary,
-                            width: 2,
                           ),
-                        ),
-                        errorBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(16),
-                          borderSide: BorderSide(
-                            color: theme.colorScheme.error,
-                            width: 1.5,
-                          ),
-                        ),
-                        filled: true,
-                        fillColor: theme.colorScheme.surface,
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 20,
-                          vertical: 16,
-                        ),
-                      ),
-                      keyboardType: TextInputType.emailAddress,
-                      autocorrect: false,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'الرجاد ادخال البريد الالكتروني';
-                        }
-                        return null;
-                      },
-                    ),
-                  ),
-                  
-                  const SizedBox(height: 16),
-                  
-                  // Subtitle with enhanced styling
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.tertiaryContainer.withOpacity(0.4),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      'ادخل البريد الالكتروني المستخدم في تسجيل الدخول',
-                      textAlign: TextAlign.center,
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: theme.colorScheme.onTertiaryContainer,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                  
-                  const SizedBox(height: 36),
-                  
-                  // Enhanced button
-                  Container(
-                    width: 300,
-                    height: 56,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: theme.colorScheme.primary.withOpacity(0.3),
-                          blurRadius: 12,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: ElevatedButton(
-                      onPressed: state.status == ResetPasswordStatus.submitting
-                          ? null
-                          : () {
-                              if (_formKey.currentState?.validate() ?? false) {
-                                context.read<ResetPasswordBloc>().add(
-                                      ResetPasswordSubmitted(_emailController.text),
-                                    );
-                              }
-                            },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: theme.colorScheme.primary,
-                        foregroundColor: theme.colorScheme.onPrimary,
-                        disabledBackgroundColor: theme.colorScheme.primary.withOpacity(0.6),
-                        disabledForegroundColor: theme.colorScheme.onPrimary.withOpacity(0.8),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        elevation: 0,
-                      ),
-                      child: state.status == ResetPasswordStatus.submitting
-                          ? const SizedBox(
-                              height: 24,
-                              width: 24,
-                              child: LoadingScreen(),
-                            )
-                          : Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                const Icon(Icons.send_rounded, size: 20),
-                                const SizedBox(width: 10),
-                                Text(
-                                  'اعادة تعيين الرقم السري',
-                                  style: theme.textTheme.titleMedium?.copyWith(
-                                    color: theme.colorScheme.onPrimary,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ],
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            borderSide: BorderSide(
+                              color: theme.colorScheme.outline,
+                              width: 1.5,
                             ),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            borderSide: BorderSide(
+                              color: theme.colorScheme.outline.withOpacity(0.7),
+                              width: 1.5,
+                            ),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            borderSide: BorderSide(
+                              color: theme.colorScheme.primary,
+                              width: 2,
+                            ),
+                          ),
+                          errorBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            borderSide: BorderSide(
+                              color: theme.colorScheme.error,
+                              width: 1.5,
+                            ),
+                          ),
+                          filled: true,
+                          fillColor: theme.colorScheme.surface,
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 16,
+                          ),
+                        ),
+                        keyboardType: TextInputType.emailAddress,
+                        autocorrect: false,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'الرجاد ادخال البريد الالكتروني';
+                          }
+                          // Regular expression for email validation
+                          final emailRegExp =
+                              RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
+
+                          if (!emailRegExp.hasMatch(value)) {
+                            return 'الرجاء ادخال بريد الكتروني صحيح';
+                          }
+
+                          return null;
+                        },
+                      ),
                     ),
-                  ),
-                ],
+
+                    const SizedBox(height: 16),
+
+                    // Subtitle with enhanced styling
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.tertiaryContainer
+                            .withOpacity(0.4),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        'ادخل البريد الالكتروني المستخدم في تسجيل الدخول',
+                        textAlign: TextAlign.center,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: theme.colorScheme.onTertiaryContainer,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 36),
+
+                    // Enhanced button
+                    Container(
+                      width: 300,
+                      height: 56,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: theme.colorScheme.primary.withOpacity(0.3),
+                            blurRadius: 12,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: ElevatedButton(
+                        onPressed:
+                            state.status == ResetPasswordStatus.submitting
+                                ? null
+                                : () {
+                                    if (_formKey.currentState?.validate() ??
+                                        false) {
+                                      context.read<ResetPasswordBloc>().add(
+                                            ResetPasswordSubmitted(
+                                                _emailController.text),
+                                          );
+                                    }
+                                  },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: theme.colorScheme.primary,
+                          foregroundColor: theme.colorScheme.onPrimary,
+                          disabledBackgroundColor:
+                              theme.colorScheme.primary.withOpacity(0.6),
+                          disabledForegroundColor:
+                              theme.colorScheme.onPrimary.withOpacity(0.8),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          elevation: 0,
+                        ),
+                        child: state.status == ResetPasswordStatus.submitting
+                            ? const SizedBox(
+                                height: 24,
+                                width: 24,
+                                child: LoadingScreen(),
+                              )
+                            : Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const Icon(Icons.send_rounded, size: 20),
+                                  const SizedBox(width: 10),
+                                  Text(
+                                    'اعادة تعيين الرقم السري',
+                                    style:
+                                        theme.textTheme.titleMedium?.copyWith(
+                                      color: theme.colorScheme.onPrimary,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
