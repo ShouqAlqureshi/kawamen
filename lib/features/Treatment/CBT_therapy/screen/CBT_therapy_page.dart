@@ -182,6 +182,7 @@ class _CBTTherapyViewState extends State<_CBTTherapyView>
   void _hideKeyboard() {
     FocusScope.of(context).unfocus();
   }
+  
 void _updateTextControllers(CBTTherapyState state) {
   // Only update if text is not empty to avoid overwriting user edits
   if (state.userThought.isNotEmpty && 

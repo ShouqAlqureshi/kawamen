@@ -350,6 +350,12 @@ class ViewProfileScreen extends StatelessWidget {
                     context.read<ProfileBloc>().add(Logout());
                     // Then close the dialog
                     Navigator.of(context).pop();
+                    // Navigate to login screen and remove all previous routes
+                    Navigator.pushAndRemoveUntil(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => const LoginView()),
+                        (_) => false);
                   },
                 ),
               ],

@@ -178,7 +178,7 @@ class UpdateTreatmentProgressEvent extends DeepBreathingEvent {
 }
 
 // Enum for treatment status
-enum TreatmentStatus { started, inProgress, completed, paused }
+enum TreatmentStatus { started, inProgress, completed, paused, accepted, rejected, pending }
 
 // Extension to convert enum to string for Firestore
 extension TreatmentStatusExtension on TreatmentStatus {
@@ -192,6 +192,12 @@ extension TreatmentStatusExtension on TreatmentStatus {
         return 'completed';
       case TreatmentStatus.paused:
         return 'paused';
+        case TreatmentStatus.accepted:
+        return 'accepted';
+        case TreatmentStatus.rejected:
+        return 'rejected';
+        case TreatmentStatus.pending:
+        return 'pending';
     }
   }
 }
