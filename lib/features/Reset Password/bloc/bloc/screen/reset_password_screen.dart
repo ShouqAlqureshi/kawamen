@@ -335,20 +335,25 @@ class _ResetPasswordFormState extends State<_ResetPasswordForm> {
                                 width: 24,
                                 child: LoadingScreen(),
                               )
-                            : Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  const Icon(Icons.send_rounded, size: 20),
-                                  const SizedBox(width: 10),
-                                  Text(
-                                    'اعادة تعيين الرقم السري',
-                                    style:
-                                        theme.textTheme.titleMedium?.copyWith(
-                                      color: theme.colorScheme.onPrimary,
-                                      fontWeight: FontWeight.bold,
+                            : Center(
+                                // Using Center widget to ensure everything is centered
+                                child: Row(
+                                  mainAxisSize: MainAxisSize
+                                      .min, // This makes the Row take minimum space
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    const Icon(Icons.send_rounded, size: 20),
+                                    const SizedBox(width: 10),
+                                    Text(
+                                      'اعادة تعيين الرقم السري',
+                                      style:
+                                          theme.textTheme.titleMedium?.copyWith(
+                                        color: theme.colorScheme.onPrimary,
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                     ),
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
                       ),
                     ),
