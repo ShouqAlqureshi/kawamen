@@ -1,5 +1,3 @@
-// ignore_for_file: non_constant_identifier_names
-
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
@@ -41,13 +39,27 @@ class _HomePageContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Access the theme from the context
+    final theme = Theme.of(context);
+
     return ThemedScaffold(
-      appBar: _buildAppBar(context),
+      appBar: AppBar(
+        backgroundColor: theme.appBarTheme.backgroundColor,
+        elevation: theme.appBarTheme.elevation,
+        leading: Icon(Icons.menu, color: theme.colorScheme.onBackground),
+        title: Text(
+          'الرئيسية',
+          style: theme.textTheme.headlineMedium,
+        ),
+        centerTitle: true,
+      ),
+      //  refresh scroll to force refresh from network
       body: RefreshIndicator(
         onRefresh: () async {
           context
               .read<HomeBloc>()
               .add(const FetchTreatmentHistory(forceRefresh: true));
+          // Show a snackbar to inform the user
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Refreshing treatment data...'),
@@ -55,199 +67,138 @@ class _HomePageContent extends StatelessWidget {
             ),
           );
         },
-        child: const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 20.0),
-          child: _HomeStateHandler(),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20.0),
+          child: BlocBuilder<HomeBloc, HomeState>(
+            builder: (context, state) {
+              if (state is LoadingHomeState) {
+                return const LoadingScreen();
+              } else if (state is ErrorHomeState) {
+                return Center(child: Text(state.message));
+              } else if (state is TreatmentHistoryLoaded) {
+                // When we have treatments (either from cache, initial load, or real-time updates)
+                return _buildMainContent(context, state.treatments);
+              } else if (state is UsernNotAuthenticated) {
+                Navigator.pushAndRemoveUntil(
+                    context,
+                    MaterialPageRoute(builder: (context) => const LoginView()),
+                    (_) => false);
+              }
+              return _buildMainContent(context, []);
+            },
+          ),
         ),
       ),
-      bottomNavigationBar: showBottomNav ? const _BottomNavBar() : null,
+      bottomNavigationBar: showBottomNav
+          ? BottomNavigationBar(
+              backgroundColor: theme.colorScheme.surface,
+              selectedItemColor: theme.colorScheme.primary,
+              unselectedItemColor: theme.colorScheme.onSurface.withOpacity(0.6),
+              items: const [
+                BottomNavigationBarItem(icon: Icon(Icons.home), label: ''),
+                BottomNavigationBarItem(icon: Icon(Icons.mic), label: ''),
+                BottomNavigationBarItem(icon: Icon(Icons.bar_chart), label: ''),
+              ],
+            )
+          : null,
     );
   }
 
-  PreferredSizeWidget _buildAppBar(BuildContext context) {
-    final theme = Theme.of(context);
-    return AppBar(
-      backgroundColor: theme.appBarTheme.backgroundColor,
-      elevation: theme.appBarTheme.elevation,
-      leading: Icon(Icons.menu, color: theme.colorScheme.onBackground),
-      title: Text(
-        'الرئيسية',
-        style: theme.textTheme.headlineMedium,
-      ),
-      centerTitle: true,
-    );
-  }
-}
-
-// Extracted widget to handle state changes
-class _HomeStateHandler extends StatelessWidget {
-  const _HomeStateHandler();
-
-  @override
-  Widget build(BuildContext context) {
-    return BlocConsumer<HomeBloc, HomeState>(
-      listener: (context, state) {
-        if (state is UsernNotAuthenticated) {
-          Navigator.pushAndRemoveUntil(
-            context,
-            MaterialPageRoute(builder: (context) => const LoginView()),
-            (_) => false,
-          );
-        }
-      },
-      builder: (context, state) {
-        if (state is LoadingHomeState) {
-          return const LoadingScreen();
-        } else if (state is ErrorHomeState) {
-          return Center(child: Text(state.message));
-        } else if (state is TreatmentHistoryLoaded) {
-          return _MainContent(treatments: state.treatments);
-        }
-        return const _MainContent(treatments: []);
-      },
-    );
-  }
-}
-
-// Extract the bottom navigation bar into a separate widget
-class _BottomNavBar extends StatelessWidget {
-  const _BottomNavBar();
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return BottomNavigationBar(
-      backgroundColor: theme.colorScheme.surface,
-      selectedItemColor: theme.colorScheme.primary,
-      unselectedItemColor: theme.colorScheme.onSurface.withOpacity(0.6),
-      items: const [
-        BottomNavigationBarItem(icon: Icon(Icons.home), label: ''),
-        BottomNavigationBarItem(icon: Icon(Icons.mic), label: ''),
-        BottomNavigationBarItem(icon: Icon(Icons.bar_chart), label: ''),
-      ],
-    );
-  }
-}
-
-// Main content extracted for better performance
-class _MainContent extends StatelessWidget {
-  final List<TreatmentData> treatments;
-
-  const _MainContent({required this.treatments});
-
-  @override
-  Widget build(BuildContext context) {
+  Widget _buildMainContent(
+      BuildContext context, List<TreatmentData> treatments) {
     final theme = Theme.of(context);
 
-    final bool hasTreatments = treatments.isNotEmpty;
-
-    return ListView.builder(
-      itemCount: hasTreatments ? treatments.length + 4 : 5,
-      itemBuilder: (context, index) {
-        if (index == 0) return const SizedBox(height: 20);
-        if (index == 1) return const _HeaderWidget();
-        if (index == 2) {
-          return Column(
-            children: [
-              const SizedBox(height: 20),
-              Icon(
-                Icons.auto_awesome,
-                color: theme.colorScheme.primary.withOpacity(0.8),
+    return ListView(
+      children: [
+        const SizedBox(height: 20),
+        Center(
+          child: RichText(
+            textAlign: TextAlign.center,
+            text: TextSpan(
+              text: 'أَلَا بِذِكْرِ اللَّهِ تَطْمَئِنُّ ',
+              style: theme.textTheme.headlineMedium?.copyWith(
+                fontSize: 26,
+                height: 1.8,
               ),
-              const SizedBox(height: 30),
-              Align(
-                alignment: Alignment.centerRight,
-                child: Text(
-                  "جلساتك",
-                  style: theme.textTheme.headlineMedium?.copyWith(fontSize: 18),
+              children: [
+                TextSpan(
+                  text: 'القلوب',
+                  style: TextStyle(
+                    color: theme.colorScheme.primary,
+                    fontSize: 28,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 10),
-            ],
-          );
-        }
-
-        if (!hasTreatments && index == 3) {
-          return const _SessionCard(
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 20),
+        Icon(Icons.auto_awesome,
+            color: theme.colorScheme.primary.withOpacity(0.8)),
+        const SizedBox(height: 30),
+        Text(
+          "جلساتك",
+          textAlign: TextAlign.right,
+          style: theme.textTheme.headlineMedium?.copyWith(fontSize: 18),
+        ),
+        const SizedBox(height: 10),
+        ...treatments.map((treatment) => _buildSessionCard(
+              context: context,
+              treatment: treatment,
+            )),
+        // Add a placeholder card if no treatments are available
+        if (treatments.isEmpty)
+          _buildSessionCard(
+            context: context,
             label: '',
             title: "ليس لديك جلسات ",
             icon: Icons.self_improvement,
             isActive: true,
-          );
-        }
-
-        if (index == (hasTreatments ? treatments.length + 3 : 4)) {
-          return const SizedBox(height: 80);
-        }
-
-        // جلسات عادية
-        return _SessionCard(treatment: treatments[index - 3]);
-      },
-    );
-  }
-}
-
-// Header widget extracted for better performance
-class _HeaderWidget extends StatelessWidget {
-  const _HeaderWidget();
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Center(
-      child: RichText(
-        textAlign: TextAlign.center,
-        text: TextSpan(
-          text: 'أَلَا بِذِكْرِ اللَّهِ تَطْمَئِنُّ ',
-          style: theme.textTheme.headlineMedium?.copyWith(
-            fontSize: 26,
-            height: 1.8,
           ),
-          children: [
-            TextSpan(
-              text: 'القلوب',
-              style: TextStyle(
-                color: theme.colorScheme.primary,
-                fontSize: 28,
-              ),
-            ),
-          ],
-        ),
-      ),
+        const SizedBox(height: 80),
+      ],
     );
   }
-}
 
-// Separate widget for session cards
-class _SessionCard extends StatelessWidget {
-  final TreatmentData? treatment;
-  final String? label;
-  final String? title;
-  final IconData? icon;
-  final bool isActive;
-
-  const _SessionCard({
-    this.treatment,
-    this.label,
-    this.title,
-    this.icon,
-    this.isActive = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
+  Widget _buildSessionCard({
+    required BuildContext context,
+    TreatmentData? treatment,
+    String? label,
+    String? title,
+    IconData? icon,
+    bool isActive = false,
+  }) {
     final theme = Theme.of(context);
 
-    // Extract variables once instead of accessing repeatedly
+    // If treatment is provided, use its data; otherwise, use the provided parameters
     final displayLabel = treatment?.emotion ?? label ?? '';
     final displayTitle = treatment?.treatmentId ?? title ?? '';
-    final isOngoing = treatment != null && treatment!.progress < 100.0;
-    final IconData displayIcon = _getDisplayIcon();
+    final isOngoing = treatment != null && treatment.progress < 100.0;
 
-    var showProgress = treatment != null &&
-        treatment!.progress > 0 &&
-        treatment!.progress < 100;
+    // Choose icon based on status
+    IconData displayIcon;
+    if (treatment != null) {
+      if (treatment.status == 'completed') {
+        displayIcon = Icons.check_circle;
+      } else if (isOngoing) {
+        displayIcon = Icons.access_time;
+      } else {
+        // Choose icon based on treatment ID
+        switch (treatment.treatmentId) {
+          case 'CBTtherapy':
+            displayIcon = Icons.sync_alt;
+            break;
+          case 'DeepBreathing':
+            displayIcon = Icons.self_improvement;
+            break;
+          default:
+            displayIcon = Icons.edit_note;
+        }
+      }
+    } else {
+      displayIcon = icon ?? Icons.help_outline;
+    }
+
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 8),
       padding: const EdgeInsets.all(12),
@@ -257,79 +208,93 @@ class _SessionCard extends StatelessWidget {
       ),
       child: Row(
         children: [
-          IconWidget(displayIcon, theme),
+          Icon(displayIcon,
+              color: treatment?.status == 'completed'
+                  ? Colors.greenAccent
+                  : theme.colorScheme.primary),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                TitleWidget(displayTitle, theme),
-                EmotionWidget(displayLabel, theme),
-                if (showProgress) ProgressBar(theme),
+                Text(
+                  _getTreatmentTitle(displayTitle),
+                  textAlign: TextAlign.right,
+                  style: theme.textTheme.bodyLarge,
+                ),
+                Text(
+                  _getEmotionText(displayLabel),
+                  textAlign: TextAlign.right,
+                  style: theme.textTheme.bodyMedium,
+                ),
+                if (treatment != null &&
+                    treatment.progress > 0 &&
+                    treatment.progress < 100)
+                  LinearProgressIndicator(
+                    value: treatment.progress / 100,
+                    backgroundColor:
+                        theme.colorScheme.onSurface.withOpacity(0.1),
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                        theme.colorScheme.primary),
+                  ),
               ],
             ),
           ),
-          if (isOngoing) _ContinueButton(treatment: treatment),
+          if (isOngoing)
+            Container(
+                margin: const EdgeInsets.only(left: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.primary,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: TextButton(
+                  onPressed: () {
+                    if (treatment != null) {
+                      final sessionId = treatment.userTreatmentId;
+                      // In HomePage._buildSessionCard method
+                      if (treatment.treatmentId == "CBTtherapy") {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => CBTTherapyPage(
+                              userTreatmentId: treatment.userTreatmentId,
+                              treatmentId: treatment.treatmentId,
+                            ),
+                          ),
+                        );
+                      } else if (treatment.treatmentId == 'DeepBreathing') {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => DeepBreathingPage(
+                              userTreatmentId: treatment.userTreatmentId,
+                              treatmentId: treatment.treatmentId,
+                            ),
+                          ),
+                        );
+                      }
+                      log("Session ID: $sessionId, Treatment: ${treatment.treatmentId}, Emotion: ${treatment.emotion}");
+                    }
+                  },
+                  style: TextButton.styleFrom(
+                    padding:
+                        const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+                    minimumSize: const Size(0, 0),
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                  child: Text(
+                    'استئناف',
+                    style: TextStyle(
+                      color: theme.colorScheme.onPrimary,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                )),
         ],
       ),
     );
-  }
-
-  LinearProgressIndicator ProgressBar(ThemeData theme) {
-    return LinearProgressIndicator(
-      value: treatment!.progress / 100,
-      backgroundColor: theme.colorScheme.onSurface.withOpacity(0.1),
-      valueColor: AlwaysStoppedAnimation<Color>(theme.colorScheme.primary),
-    );
-  }
-
-  Text EmotionWidget(String displayLabel, ThemeData theme) {
-    return Text(
-      _getEmotionText(displayLabel),
-      textAlign: TextAlign.right,
-      style: theme.textTheme.bodyMedium,
-    );
-  }
-
-  Text TitleWidget(String displayTitle, ThemeData theme) {
-    return Text(
-      _getTreatmentTitle(displayTitle),
-      textAlign: TextAlign.right,
-      style: theme.textTheme.bodyLarge,
-    );
-  }
-
-  SizedBox IconWidget(IconData displayIcon, ThemeData theme) {
-    return SizedBox(
-      width: 24,
-      height: 24,
-      child: Icon(displayIcon,
-          color: treatment?.status == 'completed'
-              ? Colors.greenAccent
-              : theme.colorScheme.primary),
-    );
-  }
-
-  IconData _getDisplayIcon() {
-    if (treatment != null) {
-      if (treatment!.status == 'completed') {
-        return Icons.check_circle;
-      } else if (treatment!.progress < 100.0) {
-        return Icons.access_time;
-      } else {
-        // Choose icon based on treatment ID
-        switch (treatment!.treatmentId) {
-          case 'CBTtherapy':
-            return Icons.sync_alt;
-          case 'DeepBreathing':
-            return Icons.self_improvement;
-          default:
-            return Icons.edit_note;
-        }
-      }
-    } else {
-      return icon ?? Icons.help_outline;
-    }
   }
 
   // Helper method to get a proper treatment title based on treatment ID
@@ -349,79 +314,14 @@ class _SessionCard extends StatelessWidget {
     switch (emotion.toLowerCase()) {
       case 'sad':
         return 'الحزن';
+      case 'anxiety':
+        return 'القلق';
       case 'angry':
         return 'الغضب';
+      case 'fear':
+        return 'الخوف';
       default:
         return emotion;
     }
-  }
-}
-
-// Continue button extracted as a separate widget
-class _ContinueButton extends StatelessWidget {
-  final TreatmentData? treatment;
-
-  const _ContinueButton({required this.treatment});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Container(
-      margin: const EdgeInsets.only(left: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.primary,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: TextButton(
-        onPressed: () => _handleNavigation(context),
-        style: TextButton.styleFrom(
-          padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
-          minimumSize: const Size(0, 0),
-          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-        ),
-        child: Text(
-          'استئناف',
-          style: TextStyle(
-            color: theme.colorScheme.onPrimary,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      ),
-    );
-  }
-
-  void _handleNavigation(BuildContext context) {
-    if (treatment == null) return;
-
-    final sessionId = treatment!.userTreatmentId;
-
-    switch (treatment!.treatmentId) {
-      case "CBTtherapy":
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => CBTTherapyPage(
-              userTreatmentId: treatment!.userTreatmentId,
-              treatmentId: treatment!.treatmentId,
-            ),
-          ),
-        );
-        break;
-      case 'DeepBreathing':
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => DeepBreathingPage(
-              userTreatmentId: treatment!.userTreatmentId,
-              treatmentId: treatment!.treatmentId,
-            ),
-          ),
-        );
-        break;
-    }
-
-    log("Session ID: $sessionId, Treatment: ${treatment!.treatmentId}, Emotion: ${treatment!.emotion}");
   }
 }
