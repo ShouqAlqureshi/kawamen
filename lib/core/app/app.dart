@@ -99,8 +99,8 @@ class _AppState extends State<App> with WidgetsBindingObserver {
           ),
           navigatorKey: NotificationService().getNavigatorKey,
           routes: {
-            '/deep-breathing': (context) => DeepBreathingPage(),
-            '/cbt-therapy': (context) => CBTTherapyPage(),
+            '/deep-breathing': (context) => const DeepBreathingPage(),
+            '/cbt-therapy': (context) => const CBTTherapyPage(),
             // other routes...
           },
         ),
