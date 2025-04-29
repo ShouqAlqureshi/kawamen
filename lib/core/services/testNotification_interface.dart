@@ -51,7 +51,7 @@ class _NotificationTestPageState extends State<NotificationTestPage> {
             
             // Button for Sadness emotion
             _buildEmotionButton(
-              emotion: 'sadness',
+              emotion: 'sad',
               color: Colors.blue,
               icon: Icons.sentiment_dissatisfied,
             ),
@@ -60,7 +60,7 @@ class _NotificationTestPageState extends State<NotificationTestPage> {
             
             // Button for Anger emotion
             _buildEmotionButton(
-              emotion: 'anger',
+              emotion: 'angry',
               color: Colors.red,
               icon: Icons.sentiment_very_dissatisfied,
             ),
