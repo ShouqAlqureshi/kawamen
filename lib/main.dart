@@ -23,5 +23,5 @@ void main() async {
   await NotificationService().initialize();
   listenForEmailVerification(); // Call this once at app startup
 
-  runApp(App());
+  runApp(const App());
 }
