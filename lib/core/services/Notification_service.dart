@@ -112,20 +112,16 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
   final FirebaseMessaging firebaseMessaging;
 
   final Map<String, String> _emotionTreatments = {
-    'anger': 'جرب تمارين التنفس العميق للتهدئة.',
-    'sadness': 'تواصل مع شخص تثق به أو مارس الرحمة الذاتية.',
+    'anger':
+        'عن أَبي هريرة: أَنَّ رَجُلًا قَالَ للنَّبِيِّ ﷺ: أَوْصِني، قَالَ:(لا تَغْضَبْ)، فَرَدَّدَ مِرَارًا قَالَ:(لا تَغْضَبْ)رواه البخاري. جرب تمارين التنفس العميق للتهدئة',
+    'sadness':
+        ' سورةالقصص الآية:٧(وَلَا تَخَافِي وَلَا تَحْزَنِي) جرب تمارين العلاج السلوكي المعرفي لمساعدتك ',
   };
 
   // Add mapping of English emotion names to Arabic
   final Map<String, String> _emotionNamesArabic = {
     'anger': 'الغضب',
     'sadness': 'الحزن',
-    'fear': 'الخوف',
-    'anxiety': 'القلق',
-    'anxious': 'القلق',
-    'sad': 'الحزن',
-    'angry': 'الغضب',
-    // Add other emotions as needed
   };
 
   NotificationBloc({

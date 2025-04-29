@@ -350,6 +350,12 @@ class ViewProfileScreen extends StatelessWidget {
                     context.read<ProfileBloc>().add(Logout());
                     // Then close the dialog
                     Navigator.of(context).pop();
+                    // Navigate to login screen and remove all previous routes
+                    Navigator.pushAndRemoveUntil(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => const LoginView()),
+                        (_) => false);
                   },
                 ),
               ],
@@ -821,8 +827,9 @@ class ViewProfileScreen extends StatelessWidget {
                 print("Switch changed: $title -> $newValue");
                 onChanged(newValue);
               },
-              activeColor: theme.colorScheme.primary,
-              activeTrackColor: theme.colorScheme.primaryContainer,
+              activeColor: Colors.white, // Change to white for better contrast
+              activeTrackColor:
+                  theme.colorScheme.primary, // Use primary color for track
               inactiveThumbColor: theme.colorScheme.onSurfaceVariant,
               inactiveTrackColor:
                   theme.colorScheme.surfaceVariant.withOpacity(0.6),

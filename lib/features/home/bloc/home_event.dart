@@ -20,3 +20,16 @@ class InitializeUserData extends HomeEvent {
   @override
   List<Object> get props => [];
 }
+class StartTreatmentStreamSubscription extends HomeEvent {
+  @override
+  List<Object> get props => [];
+}
+
+class TreatmentsUpdated extends HomeEvent {
+  final List<Map<String, dynamic>> treatmentsData;
+
+  const TreatmentsUpdated(this.treatmentsData);
+
+  @override
+  List<Object> get props => [treatmentsData];
+}
