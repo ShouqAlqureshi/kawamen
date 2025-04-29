@@ -1,5 +1,3 @@
-// File: emotion_detection/Bloc/emotion_detection_state.dart
-
 import 'package:equatable/equatable.dart';
 
 abstract class EmotionDetectionState extends Equatable {
@@ -34,3 +32,25 @@ class DetectionFailure extends EmotionDetectionState {
 }
 
 class DetectionStopped extends EmotionDetectionState {}
+
+// New states for notification flow
+class EmotionNotified extends EmotionDetectionState {
+  final String emotion;
+  final double intensity;
+  final String emotionId;
+
+  const EmotionNotified(this.emotion, this.intensity, this.emotionId);
+
+  @override
+  List<Object?> get props => [emotion, intensity, emotionId];
+}
+
+class EmotionSkipped extends EmotionDetectionState {
+  final String emotion;
+  final int count;
+
+  const EmotionSkipped(this.emotion, this.count);
+
+  @override
+  List<Object?> get props => [emotion, count];
+}

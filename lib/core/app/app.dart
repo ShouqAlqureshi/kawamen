@@ -16,7 +16,6 @@ import 'package:kawamen/features/registration/bloc/auth_event.dart';
 import 'package:kawamen/features/registration/bloc/auth_state.dart';
 import 'package:kawamen/features/registration/repository/auth_repository.dart';
 import 'package:kawamen/features/login/bloc/login_bloc.dart';
-import '../../features/Treatment/bloc/emotion_bloc.dart';
 import '../navigation/MainNavigator.dart';
 import '../services/Notification_service.dart';
 
@@ -28,7 +27,7 @@ class App extends StatefulWidget {
 }
 
 class _AppState extends State<App> with WidgetsBindingObserver {
-  final EmotionBloc _emotionBloc = EmotionBloc();
+  // Remove the EmotionBloc instance
   final EmotionDetectionBloc _emotionDetectionBloc = EmotionDetectionBloc(
     repository: EmotionDetectionRepository(),
     recorderService: AudioRecorderService(),
@@ -40,7 +39,9 @@ class _AppState extends State<App> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    NotificationService().connectToEmotionBloc(_emotionBloc);
+    // Remove the connectToEmotionBloc call
+    // Initialize notification service - must be done to accept notifications
+    NotificationService().initialize();
     _initializeUser();
   }
 
@@ -59,7 +60,7 @@ class _AppState extends State<App> with WidgetsBindingObserver {
           create: (context) =>
               ProfileBloc(context: context)..add(FetchToggleStates()),
         ),
-        BlocProvider<EmotionBloc>.value(value: _emotionBloc),
+        // Remove the EmotionBloc provider
         BlocProvider<EmotionDetectionBloc>.value(value: _emotionDetectionBloc),
         BlocProvider(
           create: (context) => MicrophoneBloc(),
@@ -105,7 +106,7 @@ class _AppState extends State<App> with WidgetsBindingObserver {
 
   @override
   void dispose() {
-    _emotionBloc.close();
+    // Remove the _emotionBloc.close() call
     _emotionDetectionBloc.close();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
