@@ -442,8 +442,6 @@ class TreatmentNavigator extends StatelessWidget {
           context,
           '/cbt-therapy',
           arguments: {
-            'emotion': emotion,
-            'emotionId': emotionId,
             'userTreatmentId': userTreatmentId, // Pass the treatment ID
           },
         );
@@ -455,35 +453,31 @@ class TreatmentNavigator extends StatelessWidget {
           context,
           '/deep-breathing',
           arguments: {
-            'emotion': emotion,
-            'emotionId': emotionId,
             'userTreatmentId': userTreatmentId, // Pass the treatment ID
           },
         );
         break;
 
-      // Add additional cases for other emotions you might handle
-      case 'fear':
-      case 'anxiety':
-      case 'anxious':
-        Navigator.pushNamed(
-          context,
-          '/deep-breathing',
-          arguments: {
-            'emotion': emotion,
-            'emotionId': emotionId,
-            'userTreatmentId': userTreatmentId, // Pass the treatment ID
-          },
-        );
-        break;
+      // // Add additional cases for other emotions you might handle
+      // case 'fear':
+      // case 'anxiety':
+      // case 'anxious':
+      //   Navigator.pushNamed(
+      //     context,
+      //     '/deep-breathing',
+      //     arguments: {
+      //       'emotion': emotion,
+      //       'emotionId': emotionId,
+      //       'userTreatmentId': userTreatmentId, // Pass the treatment ID
+      //     },
+      //   );
+      //  break;
 
       default:
         Navigator.pushNamed(
           context,
           '/cbt-therapy',
           arguments: {
-            'emotion': emotion,
-            'emotionId': emotionId,
             'userTreatmentId': userTreatmentId, // Pass the treatment ID
           },
         );

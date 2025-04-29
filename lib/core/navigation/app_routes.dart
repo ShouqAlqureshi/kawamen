@@ -18,6 +18,9 @@ class AppRoutes {
   static const String treatment2 = '/deep-breathing';
 
   static Route<dynamic> generateRoute(RouteSettings settings) {
+    // Extract arguments if they exist
+    final args = settings.arguments as Map<String, dynamic>? ?? {};
+    
     switch (settings.name) {
       case entry:
         return MaterialPageRoute(builder: (_) => const EntryScreen());
@@ -31,9 +34,21 @@ class AppRoutes {
       case home:
         return MaterialPageRoute(builder: (_) => const HomePage());
       case treatment1:
-        return MaterialPageRoute(builder: (_) => const CBTTherapyPage());
+        // Pass userTreatmentId and other args to CBTTherapyPage
+        return MaterialPageRoute(
+          builder: (_) => CBTTherapyPage(
+            userTreatmentId: args['userTreatmentId'] as String?,
+            treatmentId: args['treatmentId'] as String? ?? 'CBTtherapy',
+          ),
+        );
       case treatment2:
-        return MaterialPageRoute(builder: (_) => const DeepBreathingPage());
+        // Pass userTreatmentId and other args to DeepBreathingPage
+        return MaterialPageRoute(
+          builder: (_) => DeepBreathingPage(
+            userTreatmentId: args['userTreatmentId'] as String?,
+            treatmentId: args['treatmentId'] as String? ?? 'DeepBreathing',
+          ),
+        );
       default:
         return MaterialPageRoute(
           builder: (_) => const Scaffold(
