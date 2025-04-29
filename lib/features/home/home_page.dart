@@ -312,11 +312,15 @@ class _HomePageContent extends StatelessWidget {
   // Helper method to translate emotion types
   String _getEmotionText(String emotion) {
     switch (emotion.toLowerCase()) {
+      case 'sadness':
+        return 'الحزن';
       case 'sad':
         return 'الحزن';
       case 'anxiety':
         return 'القلق';
       case 'angry':
+        return 'الغضب';
+      case 'anger':
         return 'الغضب';
       case 'fear':
         return 'الخوف';
