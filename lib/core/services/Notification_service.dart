@@ -126,8 +126,8 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
 
   // Map emotions to treatment types
   final Map<String, String> _emotionToTreatmentType = {
-    'anger': 'deepBreathing',
-    'angry': 'deepBreathing',
+    'anger': 'DeepBreathing',
+    'angry': 'DeepBreathing',
     'sadness': 'CBTtherapy',
     'sad': 'CBTtherapy',
     'fear': 'deep-breathing',

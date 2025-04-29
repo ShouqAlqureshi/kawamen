@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -67,7 +69,7 @@ class TreatmentStatsBloc
     extends Bloc<TreatmentStatsEvent, TreatmentStatsState> {
   // Cache expiration time (in minutes)
   final int cacheExpirationMinutes = 15;
-  
+
   TreatmentStatsBloc() : super(TreatmentStatsInitial()) {
     on<FetchTreatmentStats>(_onFetchTreatmentStats);
   }
@@ -102,8 +104,9 @@ class TreatmentStatsBloc
 
       int allTreatments = treatmentsSnapshot.docs.length;
       int completedTreatments = 0;
-      int acceptedTreatments = 0;
       int rejectedTreatments = 0;
+      int acceptedTreatments = 0;
+      int pendingTreatments = 0;
 
       // Process each treatment document
       for (var doc in treatmentsSnapshot.docs) {
@@ -112,15 +115,16 @@ class TreatmentStatsBloc
 
         if (status == 'completed') {
           completedTreatments++;
-        }
-        if (status == 'accepted') {
-          acceptedTreatments++;
-        }
-        if (status == 'rejected') {
+        } else if (status == 'rejected') {
           rejectedTreatments++;
+        } else if (status == 'pending') {
+          pendingTreatments++;
         }
       }
 
+      // Calculate accepted treatments as all treatments except rejected and pending
+      acceptedTreatments =
+          allTreatments - rejectedTreatments - pendingTreatments;
       // Create the loaded state with current timestamp
       final loadedState = TreatmentStatsLoaded(
         allTreatments: allTreatments,
@@ -157,21 +161,21 @@ class TreatmentStatsBloc
     try {
       final prefs = await SharedPreferences.getInstance();
       final jsonString = prefs.getString('treatment_stats_$userId');
-      
+
       if (jsonString == null) {
         return null;
       }
 
       final data = TreatmentStatsLoaded.fromJson(jsonDecode(jsonString));
-      
+
       // Check if cache is expired
       final now = DateTime.now();
       final cacheAge = now.difference(data.lastUpdated).inMinutes;
-      
+
       if (cacheAge > cacheExpirationMinutes) {
         return null; // Cache expired
       }
-      
+
       return data;
     } catch (e) {
       // Return null on any error reading cache
