@@ -126,8 +126,10 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
 
   // Map emotions to treatment types
   final Map<String, String> _emotionToTreatmentType = {
-    'anger': 'deep-breathing',
+    'anger': 'deepBreathing',
+    'angry': 'deepBreathing',
     'sadness': 'CBTtherapy',
+    'sad': 'CBTtherapy',
     'fear': 'deep-breathing',
     'anxiety': 'deep-breathing',
     'anxious': 'deep-breathing',
@@ -151,7 +153,7 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
   }
 
   // Create a treatment document and return the treatment ID
-  Future<String> _createTreatmentDocument(String emotion, String status) async {
+ Future<String> _createTreatmentDocument(String emotion, String status) async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) throw Exception('User not authenticated');
 
@@ -166,13 +168,21 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
         .add({
           'treatmentId': treatmentType,
           'status': status,
-          'emotionFeedback': emotion,
+          'emotion': emotion,
           'progress': status == 'accepted' ? 0.0 : null,
-          'createdAt': FieldValue.serverTimestamp(),
+          'date': FieldValue.serverTimestamp(),
           'updatedAt': FieldValue.serverTimestamp(),
         });
     
-    return treatmentRef.id;
+    // Get the generated document ID
+    final userTreatmentId = treatmentRef.id;
+    
+    // Update the document to include its own ID
+    await treatmentRef.update({
+      'userTreatmentId': userTreatmentId
+    });
+    
+    return userTreatmentId;
   }
 
   FutureOr<void> _onUpdateTreatmentStatus(
