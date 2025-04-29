@@ -74,49 +74,30 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
       // Calculate start date (beginning of current week - Sunday)
       final now = DateTime.now();
       final daysToSubtract = now.weekday == 7 ? 0 : now.weekday;
-      final startDate = DateTime(now.year, now.month, now.day - daysToSubtract);
+      final startDate = DateTime(now.year, now.month, now.day - daysToSubtract)
+          .subtract(const Duration(seconds: 1)); // Start from Sunday 23:59:59
+      final endDate = startDate
+          .add(const Duration(days: 7, seconds: 1)); // End next Sunday 00:00:01
 
-      // Format dates as strings for string timestamp comparison
-      final startDateString = startDate
-          .toIso8601String()
-          .split('.')[0]; // Remove fractional seconds
-      final endDate = startDate.add(const Duration(days: 7));
-      final endDateString =
-          endDate.toIso8601String().split('.')[0]; // Remove fractional seconds
+      // Convert to Firestore Timestamps for proper comparison
+      final startTimestamp = Timestamp.fromDate(startDate);
+      final endTimestamp = Timestamp.fromDate(endDate);
 
-      // Debug log
-      log('Fetching emotions from: $startDateString to $endDateString');
+      log('Fetching emotions from: ${startDate.toIso8601String()} to ${endDate.toIso8601String()}');
 
-      // Get all emotional data first, then filter in memory
-      // This avoids issues with string comparisons in Firestore queries
+      // Query using Firestore Timestamp field for proper date comparison
       final emotionsQuery = FirebaseFirestore.instance
           .collection('users')
           .doc(userId)
-          .collection('emotionalData');
+          .collection('emotionalData')
+          .where('timestamp', isGreaterThanOrEqualTo: startTimestamp)
+          .where('timestamp', isLessThan: endTimestamp);
 
       final emotionsSnapshot = await emotionsQuery.get();
 
       log('Total emotion records found: ${emotionsSnapshot.docs.length}');
 
-      // Filter documents by timestamp string comparison
-      final filteredDocs = emotionsSnapshot.docs.where((doc) {
-        final data = doc.data();
-        if (data.containsKey('timestamp') && data['timestamp'] is String) {
-          final timestamp = data['timestamp'] as String;
-          // Remove fractional seconds for comparison if present
-          final timestampForComparison =
-              timestamp.contains('.') ? timestamp.split('.')[0] : timestamp;
-
-          // Compare as strings
-          return timestampForComparison.compareTo(startDateString) >= 0 &&
-              timestampForComparison.compareTo(endDateString) < 0;
-        }
-        return false;
-      }).toList();
-
-      log('Filtered emotion records for current week: ${filteredDocs.length}');
-
-      if (filteredDocs.isEmpty) {
+      if (emotionsSnapshot.docs.isEmpty) {
         log('No emotion data found for the current week');
         final loadedState = DashboardLoaded(angerEmotions, sadEmotions);
         await _setCacheData(userId, loadedState);
@@ -125,7 +106,7 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
       }
 
       // Process each emotion document
-      for (var doc in filteredDocs) {
+      for (var doc in emotionsSnapshot.docs) {
         final data = doc.data();
         String? emotion;
         DateTime? date;
@@ -136,35 +117,23 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
           log('Found emotion: $emotion');
         }
 
-        // Parse timestamp string
-        if (data.containsKey('timestamp') && data['timestamp'] is String) {
+        // Get the timestamp (handle both Firestore Timestamp and String formats)
+        if (data.containsKey('timestamp') && data['timestamp'] is Timestamp) {
+          // Preferred: Use the Firestore Timestamp object
+          final timestamp = data['timestamp'] as Timestamp;
+          date = timestamp.toDate();
+          log('Using Firestore Timestamp: ${date.toString()}');
+        } else if (data.containsKey('timestamp') &&
+            data['timestamp'] is String) {
+          // Fallback: Parse from string format if needed
           final timestampStr = data['timestamp'] as String;
-          log('Processing timestamp: $timestampStr');
+          log('Falling back to string timestamp: $timestampStr');
 
           try {
             date = DateTime.parse(timestampStr);
-            log('Successfully parsed timestamp to: ${date.toString()}');
+            log('Successfully parsed timestamp string to: ${date.toString()}');
           } catch (e) {
-            log('Failed to parse timestamp directly: $e');
-
-            // Alternative parsing approach
-            try {
-              if (timestampStr.contains('T')) {
-                final parts = timestampStr.split('T');
-                if (parts.length == 2) {
-                  final datePart = parts[0];
-                  // Handle microseconds in the time part
-                  final timePart = parts[1].contains('.')
-                      ? parts[1].split('.')[0]
-                      : parts[1];
-
-                  date = DateTime.parse('$datePart $timePart');
-                  log('Alternative parse successful: $datePart $timePart -> ${date.toString()}');
-                }
-              }
-            } catch (e2) {
-              log('Alternative parsing also failed: $e2');
-            }
+            log('Failed to parse timestamp string: $e');
           }
         }
 
@@ -174,7 +143,7 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
 
           log('Processing entry: Day of week: $dayOfWeek, Emotion: $emotion');
 
-          // Categorize emotions - handle both direct and score-based emotion data
+          // Categorize emotions
           if ((emotion.toLowerCase() == 'angry')) {
             angerEmotions[dayOfWeek] = (angerEmotions[dayOfWeek] ?? 0) + 1;
             log('Incremented anger for day $dayOfWeek');
