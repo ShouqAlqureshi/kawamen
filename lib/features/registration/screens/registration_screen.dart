@@ -8,6 +8,7 @@ import 'package:kawamen/core/utils/Loadingscreen.dart';
 import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
 import '../bloc/auth_state.dart';
+import 'TermsAndConditionsPage.dart';
 
 class RegistrationScreen extends StatefulWidget {
   @override
@@ -421,24 +422,47 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
 
                           // Terms & Conditions Checkbox
                           Row(
-                            mainAxisAlignment: MainAxisAlignment.end,
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  "من خلال إنشاء حساب، فإنك توافق على الشروط والأحكام الخاصة بنا",
-                                  style: TextStyle(color: Colors.white),
-                                  textAlign: TextAlign.right,
-                                ),
-                              ),
-                              Checkbox(
-                                value: agreeToTerms,
-                                onChanged: (value) {
-                                  setState(() {
-                                    agreeToTerms = value!;
-                                    _validateForm();
-                                  });
-                                },
-                                activeColor: Colors.purple,
+  mainAxisAlignment: MainAxisAlignment.end,
+  children: [
+    Expanded(
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          InkWell(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const TermsAndConditionsPage(),
+                ),
+              );
+            },
+            child: Text(
+              "الشروط والأحكام",
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.secondary,
+                decoration: TextDecoration.underline,
+              ),
+              textAlign: TextAlign.right,
+            ),
+          ),
+          Text(
+            " من خلال إنشاء حساب، فإنك توافق على ",
+            style: TextStyle(color: Colors.white),
+            textAlign: TextAlign.right,
+          ),
+        ],
+      ),
+    ),
+    Checkbox(
+      value: agreeToTerms,
+      onChanged: (value) {
+        setState(() {
+          agreeToTerms = value!;
+          _validateForm();
+        });
+      },
+      activeColor: Colors.purple,
                               ),
                             ],
                           ),

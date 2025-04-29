@@ -15,14 +15,14 @@ abstract class NotificationEvent extends Equatable {
 
   @override
   List<Object?> get props => [];
-  
 }
+
 class UpdateTreatmentStatus extends NotificationEvent {
   final String emotionId;
   final String status; // 'accepted', 'rejected', 'postponed'
-  
+
   const UpdateTreatmentStatus(this.emotionId, this.status);
-  
+
   @override
   List<Object?> get props => [emotionId, status];
 }
@@ -70,15 +70,17 @@ abstract class NotificationState extends Equatable {
   @override
   List<Object> get props => [];
 }
+
 class TreatmentStatusUpdated extends NotificationState {
   final String emotionId;
   final String status;
-  
+
   const TreatmentStatusUpdated(this.emotionId, this.status);
-  
+
   @override
   List<Object> get props => [emotionId, status];
 }
+
 class NotificationInitial extends NotificationState {}
 
 class NotificationReady extends NotificationState {}
@@ -107,22 +109,16 @@ class NavigateToTreatment extends NotificationState {
 class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
   final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin;
   final FirebaseMessaging firebaseMessaging;
-  
+
   final Map<String, String> _emotionTreatments = {
-    'anger': 'جرب تمارين التنفس العميق للتهدئة.',
-    'sadness': 'تواصل مع شخص تثق به أو مارس الرحمة الذاتية.',
+    'anger':'عن أَبي هريرة: أَنَّ رَجُلًا قَالَ للنَّبِيِّ ﷺ: أَوْصِني، قَالَ:(لا تَغْضَبْ)، فَرَدَّدَ مِرَارًا قَالَ:(لا تَغْضَبْ)رواه البخاري. جرب تمارين التنفس العميق للتهدئة',
+    'sadness': ' سورةالقصص الآية:٧(وَلَا تَخَافِي وَلَا تَحْزَنِي) جرب تمارين العلاج السلوكي المعرفي لمساعدتك ',
   };
-  
+
   // Add mapping of English emotion names to Arabic
   final Map<String, String> _emotionNamesArabic = {
     'anger': 'الغضب',
     'sadness': 'الحزن',
-    'fear': 'الخوف',
-    'anxiety': 'القلق',
-    'anxious': 'القلق',
-    'sad': 'الحزن',
-    'angry': 'الغضب',
-    // Add other emotions as needed
   };
 
   NotificationBloc({
@@ -136,7 +132,7 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
     on<NotificationPostponed>(_onNotificationPostponed);
     on<UpdateTreatmentStatus>(_onUpdateTreatmentStatus);
   }
-  
+
   Future<bool> _requestNotificationPermissions() async {
     final settings = await firebaseMessaging.requestPermission();
     return settings.authorizationStatus == AuthorizationStatus.authorized;
@@ -147,15 +143,16 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
     try {
       final user = FirebaseAuth.instance.currentUser;
       if (user != null) {
-        final userDocRef = FirebaseFirestore.instance.collection('users').doc(user.uid);
-        
+        final userDocRef =
+            FirebaseFirestore.instance.collection('users').doc(user.uid);
+
         // First get the emotional data array
         final userDoc = await userDocRef.get();
         if (userDoc.exists) {
           final data = userDoc.data();
           if (data != null && data.containsKey('emotionalData')) {
             List<dynamic> emotionalData = List.from(data['emotionalData']);
-            
+
             // Find and update the specific emotion entry
             for (int i = 0; i < emotionalData.length; i++) {
               if (emotionalData[i]['emotionId'] == event.emotionId) {
@@ -163,7 +160,7 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
                 break;
               }
             }
-            
+
             // Update the document
             await userDocRef.update({'emotionalData': emotionalData});
             emit(TreatmentStatusUpdated(event.emotionId, event.status));
@@ -174,16 +171,17 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
       print('Error updating treatment status: $e');
     }
   }
-  
+
   FutureOr<void> _onInitializeNotifications(
       InitializeNotifications event, Emitter<NotificationState> emit) async {
     const AndroidInitializationSettings initializationSettingsAndroid =
         AndroidInitializationSettings('@mipmap/ic_launcher');
-    
-    final InitializationSettings initializationSettings = const InitializationSettings(
+
+    final InitializationSettings initializationSettings =
+        const InitializationSettings(
       android: initializationSettingsAndroid,
     );
-    
+
     await flutterLocalNotificationsPlugin.initialize(
       initializationSettings,
       onDidReceiveNotificationResponse: (NotificationResponse response) {
@@ -194,8 +192,9 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
             final action = parts[0];
             final emotion = parts[1];
             final emotionId = parts[2];
-            final intensity = parts.length >= 4 ? double.tryParse(parts[3]) ?? 0.0 : 0.0;
-            
+            final intensity =
+                parts.length >= 4 ? double.tryParse(parts[3]) ?? 0.0 : 0.0;
+
             if (action == 'EMOTION') {
               switch (response.actionId) {
                 case 'accept':
@@ -213,14 +212,14 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
         }
       },
     );
-    
+
     // Request permissions
     await firebaseMessaging.requestPermission(
       alert: true,
       badge: true,
       sound: true,
     );
-    
+
     // Handle notification when app is in foreground
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
       final data = message.data;
@@ -228,11 +227,11 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
         final emotion = data['emotion'] as String;
         final emotionId = data['emotionId'] as String;
         final intensity = double.tryParse(data['intensity'] ?? '0.0') ?? 0.0;
-        
+
         add(ShowEmotionNotification(emotion, intensity, emotionId));
       }
     });
-    
+
     emit(NotificationReady());
   }
 
@@ -241,7 +240,7 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
     await _showNotification(event.emotion, event.emotionId, event.intensity);
     emit(NotificationShowing(event.emotion, event.emotionId));
   }
-  
+
   Future<void> checkNotificationPermissions() async {
     final settings = await FirebaseMessaging.instance.getNotificationSettings();
     print('Notification permission status: ${settings.authorizationStatus}');
@@ -250,9 +249,9 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
   FutureOr<void> _onNotificationAccepted(
       NotificationAccepted event, Emitter<NotificationState> emit) {
     flutterLocalNotificationsPlugin.cancel(0);
-    
+
     add(UpdateTreatmentStatus(event.emotionId, 'accepted'));
-    
+
     emit(NavigateToTreatment(event.emotion, event.emotionId));
   }
 
@@ -262,7 +261,7 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
       final currentState = state as NotificationShowing;
       add(UpdateTreatmentStatus(currentState.emotionId, 'rejected'));
     }
-    
+
     flutterLocalNotificationsPlugin.cancel(0);
     emit(NotificationReady());
   }
@@ -270,21 +269,24 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
   FutureOr<void> _onNotificationPostponed(
       NotificationPostponed event, Emitter<NotificationState> emit) async {
     flutterLocalNotificationsPlugin.cancel(0);
-    
+
     add(UpdateTreatmentStatus(event.emotionId, 'postponed'));
-    
+
     await Future.delayed(const Duration(minutes: 30));
-    add(ShowEmotionNotification(event.emotion, event.intensity, event.emotionId));
+    add(ShowEmotionNotification(
+        event.emotion, event.intensity, event.emotionId));
   }
 
-  Future<void> _showNotification(String emotion, String emotionId, double intensity) async {
+  Future<void> _showNotification(
+      String emotion, String emotionId, double intensity) async {
     // Get Arabic emotion name
-    String emotionArabic = _emotionNamesArabic[emotion.toLowerCase()] ?? 'مشاعر';
-    
+    String emotionArabic =
+        _emotionNamesArabic[emotion.toLowerCase()] ?? 'مشاعر';
+
     // Get treatment text for this emotion
     String treatmentText = _emotionTreatments[emotion.toLowerCase()] ??
-                        'لدينا اقتراحات لمساعدتك مع مشاعرك الحالية.';
-    
+        'لدينا اقتراحات لمساعدتك مع مشاعرك الحالية.';
+
     AndroidNotificationDetails androidPlatformChannelSpecifics =
         const AndroidNotificationDetails(
       'emotion_channel',
@@ -294,7 +296,6 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
       priority: Priority.high,
       ongoing: true,
       autoCancel: false,
-      
       actions: <AndroidNotificationAction>[
         AndroidNotificationAction(
           'accept',
@@ -338,14 +339,14 @@ class NotificationService {
 
   Future<void> initialize() async {
     if (_isInitialized) return;
-    
+
     await Firebase.initializeApp();
-    
+
     _notificationBloc = NotificationBloc(
       flutterLocalNotificationsPlugin: FlutterLocalNotificationsPlugin(),
       firebaseMessaging: FirebaseMessaging.instance,
     );
-    
+
     _notificationBloc.add(InitializeNotifications());
     _isInitialized = true;
   }
@@ -353,13 +354,13 @@ class NotificationService {
   void connectToEmotionBloc(EmotionBloc emotionBloc) {
     emotionBloc.stream.listen((state) {
       if (state is EmotionProcessed) {
-        final latestEmotion = emotionBloc.historyQueue.queue.isNotEmpty 
+        final latestEmotion = emotionBloc.historyQueue.queue.isNotEmpty
             ? emotionBloc.historyQueue.queue.last
             : null;
-        
-        final emotionId = latestEmotion?['emotionId'] as String? ?? 
-                          DateTime.now().millisecondsSinceEpoch.toString();
-        
+
+        final emotionId = latestEmotion?['emotionId'] as String? ??
+            DateTime.now().millisecondsSinceEpoch.toString();
+
         _notificationBloc.add(ShowEmotionNotification(
           state.emotion,
           state.intensity,
@@ -368,7 +369,7 @@ class NotificationService {
       }
     });
   }
-  
+
   void _showNotification(String emotion, String emotionId) {
     print('Showing notification for emotion: $emotion');
   }
@@ -398,7 +399,8 @@ class TreatmentNavigator extends StatelessWidget {
     );
   }
 
-  void _navigateToTreatment(BuildContext context, String emotion, String emotionId) {
+  void _navigateToTreatment(
+      BuildContext context, String emotion, String emotionId) {
     // Map emotions to specific treatment pages
     switch (emotion.toLowerCase()) {
       case 'sadness':
@@ -412,7 +414,7 @@ class TreatmentNavigator extends StatelessWidget {
           },
         );
         break;
-      
+
       case 'anger':
       case 'angry':
         Navigator.pushNamed(
@@ -424,7 +426,7 @@ class TreatmentNavigator extends StatelessWidget {
           },
         );
         break;
-      
+
       // Add additional cases for other emotions you might handle
       case 'fear':
       case 'anxiety':
@@ -438,7 +440,7 @@ class TreatmentNavigator extends StatelessWidget {
           },
         );
         break;
-        
+
       default:
         Navigator.pushNamed(
           context,
