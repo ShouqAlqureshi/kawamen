@@ -7,8 +7,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:equatable/equatable.dart';
-// Remove this import since you deleted EmotionBloc
-// import 'package:kawamen/features/Treatment/bloc/emotion_bloc.dart';
 
 // Events
 abstract class NotificationEvent extends Equatable {
@@ -20,7 +18,7 @@ abstract class NotificationEvent extends Equatable {
 
 class UpdateTreatmentStatus extends NotificationEvent {
   final String emotionId;
-  final String status; // 'accepted', 'rejected', 'postponed'
+  final String status; // 'accepted', 'rejected', 'pending'
 
   const UpdateTreatmentStatus(this.emotionId, this.status);
 
@@ -75,11 +73,12 @@ abstract class NotificationState extends Equatable {
 class TreatmentStatusUpdated extends NotificationState {
   final String emotionId;
   final String status;
+  final String? userTreatmentId;
 
-  const TreatmentStatusUpdated(this.emotionId, this.status);
+  const TreatmentStatusUpdated(this.emotionId, this.status, {this.userTreatmentId});
 
   @override
-  List<Object> get props => [emotionId, status];
+  List<Object> get props => [emotionId, status, userTreatmentId ?? ''];
 }
 
 class NotificationInitial extends NotificationState {}
@@ -99,11 +98,12 @@ class NotificationShowing extends NotificationState {
 class NavigateToTreatment extends NotificationState {
   final String emotion;
   final String emotionId;
+  final String userTreatmentId;
 
-  const NavigateToTreatment(this.emotion, this.emotionId);
+  const NavigateToTreatment(this.emotion, this.emotionId, this.userTreatmentId);
 
   @override
-  List<Object> get props => [emotion, emotionId];
+  List<Object> get props => [emotion, emotionId, userTreatmentId];
 }
 
 // BLoC
@@ -113,7 +113,7 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
 
   final Map<String, String> _emotionTreatments = {
     'anger':
-        'عن أَبي هريرة: أَنَّ رَجُلًا قَالَ للنَّبِيِّ ﷺ: أَوْصِني، قَالَ:(لا تَغْضَبْ)، فَرَدَّدَ مِرَارًا قَالَ:(لا تَغْضَبْ)رواه البخاري. جرب تمارين التنفس العميق للتهدئة',
+        'عن أَبي هريرة: أَنَّ رَجُلًا قَالَ للنَّبِيِّ ﷺ: أَوْصِني، قَالَ:(لا تَغْضَبْ)، فَرَدَّدَ مِرَارًا قَالَ:(لا تَغْضَبْ)رواه البخاري. جرب تمارين التنفس العميق للتهدئة',
     'sadness':
         ' سورةالقصص الآية:٧(وَلَا تَخَافِي وَلَا تَحْزَنِي) جرب تمارين العلاج السلوكي المعرفي لمساعدتك ',
   };
@@ -122,6 +122,15 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
   final Map<String, String> _emotionNamesArabic = {
     'anger': 'الغضب',
     'sadness': 'الحزن',
+  };
+
+  // Map emotions to treatment types
+  final Map<String, String> _emotionToTreatmentType = {
+    'anger': 'deep-breathing',
+    'sadness': 'CBTtherapy',
+    'fear': 'deep-breathing',
+    'anxiety': 'deep-breathing',
+    'anxious': 'deep-breathing',
   };
 
   NotificationBloc({
@@ -141,20 +150,66 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
     return settings.authorizationStatus == AuthorizationStatus.authorized;
   }
 
+  // Create a treatment document and return the treatment ID
+  Future<String> _createTreatmentDocument(String emotion, String status) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) throw Exception('User not authenticated');
+
+    // Determine treatment type based on emotion
+    final treatmentType = _emotionToTreatmentType[emotion.toLowerCase()] ?? 'CBTtherapy';
+    
+    // Create a treatment document in a treatments collection
+    final treatmentRef = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid)
+        .collection('userTreatments')
+        .add({
+          'treatmentId': treatmentType,
+          'status': status,
+          'emotionFeedback': emotion,
+          'progress': status == 'accepted' ? 0.0 : null,
+          'createdAt': FieldValue.serverTimestamp(),
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
+    
+    return treatmentRef.id;
+  }
+
   FutureOr<void> _onUpdateTreatmentStatus(
       UpdateTreatmentStatus event, Emitter<NotificationState> emit) async {
     try {
       final user = FirebaseAuth.instance.currentUser;
       if (user != null) {
-        // Modified to use your subcollection approach
+        // Get the emotion document to access the emotion type
         final emotionDocRef = FirebaseFirestore.instance
             .collection('users')
             .doc(user.uid)
             .collection('emotionalData')
             .doc(event.emotionId);
-
-        await emotionDocRef.update({'treatmentStatus': event.status});
-        emit(TreatmentStatusUpdated(event.emotionId, event.status));
+        
+        final emotionDoc = await emotionDocRef.get();
+        if (!emotionDoc.exists) {
+          print('Error: Emotion document not found');
+          return;
+        }
+        
+        final emotion = emotionDoc.data()?['emotion'] as String? ?? 'unknown';
+        
+        // Create a treatment document with the specified status
+        final userTreatmentId = await _createTreatmentDocument(emotion, event.status);
+        
+        // Update the emotion document with a reference to the treatment
+        await emotionDocRef.update({
+          'userTreatmentId': userTreatmentId,
+          // We don't need treatmentStatus here anymore, as it will be in the treatment document
+        });
+        
+        emit(TreatmentStatusUpdated(event.emotionId, event.status, userTreatmentId: userTreatmentId));
+        
+        // If accepted, we'll want to navigate to the treatment
+        if (event.status == 'accepted') {
+          emit(NavigateToTreatment(emotion, event.emotionId, userTreatmentId));
+        }
       }
     } catch (e) {
       print('Error updating treatment status: $e');
@@ -240,8 +295,6 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
     flutterLocalNotificationsPlugin.cancel(0);
 
     add(UpdateTreatmentStatus(event.emotionId, 'accepted'));
-
-    emit(NavigateToTreatment(event.emotion, event.emotionId));
   }
 
   FutureOr<void> _onNotificationRejected(
@@ -259,7 +312,7 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
       NotificationPostponed event, Emitter<NotificationState> emit) async {
     flutterLocalNotificationsPlugin.cancel(0);
 
-    add(UpdateTreatmentStatus(event.emotionId, 'postponed'));
+    add(UpdateTreatmentStatus(event.emotionId, 'pending'));
 
     await Future.delayed(const Duration(minutes: 30));
     add(ShowEmotionNotification(
@@ -340,26 +393,6 @@ class NotificationService {
     _isInitialized = true;
   }
 
-  // Remove this method since EmotionBloc no longer exists
-  // void connectToEmotionBloc(EmotionBloc emotionBloc) {
-  //   emotionBloc.stream.listen((state) {
-  //     if (state is EmotionProcessed) {
-  //       final latestEmotion = emotionBloc.historyQueue.queue.isNotEmpty
-  //           ? emotionBloc.historyQueue.queue.last
-  //           : null;
-  //
-  //       final emotionId = latestEmotion?['emotionId'] as String? ??
-  //                         DateTime.now().millisecondsSinceEpoch.toString();
-  //
-  //       _notificationBloc.add(ShowEmotionNotification(
-  //         state.emotion,
-  //         state.intensity,
-  //         emotionId,
-  //       ));
-  //     }
-  //   });
-  // }
-
   void _showNotification(String emotion, String emotionId) {
     print('Showing notification for emotion: $emotion');
   }
@@ -382,7 +415,7 @@ class TreatmentNavigator extends StatelessWidget {
         // Handle navigation to treatment page when notification is accepted
         if (state is NavigateToTreatment) {
           // Route to appropriate treatment page based on emotion type
-          _navigateToTreatment(context, state.emotion, state.emotionId);
+          _navigateToTreatment(context, state.emotion, state.emotionId, state.userTreatmentId);
         }
       },
       child: Container(), // This widget doesn't render anything visible
@@ -390,7 +423,7 @@ class TreatmentNavigator extends StatelessWidget {
   }
 
   void _navigateToTreatment(
-      BuildContext context, String emotion, String emotionId) {
+      BuildContext context, String emotion, String emotionId, String userTreatmentId) {
     // Map emotions to specific treatment pages
     switch (emotion.toLowerCase()) {
       case 'sadness':
@@ -401,6 +434,7 @@ class TreatmentNavigator extends StatelessWidget {
           arguments: {
             'emotion': emotion,
             'emotionId': emotionId,
+            'userTreatmentId': userTreatmentId, // Pass the treatment ID
           },
         );
         break;
@@ -413,6 +447,7 @@ class TreatmentNavigator extends StatelessWidget {
           arguments: {
             'emotion': emotion,
             'emotionId': emotionId,
+            'userTreatmentId': userTreatmentId, // Pass the treatment ID
           },
         );
         break;
@@ -427,6 +462,7 @@ class TreatmentNavigator extends StatelessWidget {
           arguments: {
             'emotion': emotion,
             'emotionId': emotionId,
+            'userTreatmentId': userTreatmentId, // Pass the treatment ID
           },
         );
         break;
@@ -438,6 +474,7 @@ class TreatmentNavigator extends StatelessWidget {
           arguments: {
             'emotion': emotion,
             'emotionId': emotionId,
+            'userTreatmentId': userTreatmentId, // Pass the treatment ID
           },
         );
         break;
