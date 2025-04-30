@@ -112,9 +112,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
     ThemeData theme,
     DashboardLoaded state,
   ) {
+    // Calculate extra bottom padding based on bottom nav presence
+    final double extraBottomPadding = 70.0;
+
     return Padding(
-      // Adjust padding - remove bottom padding when nav bar is present
-      padding: EdgeInsets.fromLTRB(20.0, 20.0, 20.0, 00.0),
+      // Adjust padding - add more bottom padding to ensure content is fully visible
+      padding: EdgeInsets.fromLTRB(20.0, 20.0, 20.0, 0.0),
       child: Stack(
         children: <Widget>[
           RepaintBoundary(
@@ -276,7 +279,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       ),
                       child: const TreatmentProgressTracker(),
                     ),
-                    // No extra padding at the bottom
+                    // Add extra padding at the bottom to ensure content is fully visible when scrolled
+                    SizedBox(height: extraBottomPadding),
                   ],
                 ),
               ),
