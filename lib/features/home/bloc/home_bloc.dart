@@ -183,7 +183,9 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
         final statusOrder = {
           'in_progress': 0,
           'paused': 1,
-          'completed': 2,
+          'pending': 2,
+          'completed': 3,
+          'rejected': 4,
         };
 
         final aStatus = statusOrder[a.status] ?? 2;
