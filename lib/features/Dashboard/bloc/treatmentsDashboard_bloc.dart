@@ -29,13 +29,16 @@ class TreatmentLoaded extends TreatmentState {
   final double weeklyProgress;
   final int weeklyCompletedTreatments;
   final int weeklyTotalTreatments;
-  
+
   // Overall stats data
   final int allTreatments;
   final int completedTreatments;
   final int acceptedTreatments;
   final int rejectedTreatments;
   final int remainingTreatments;
+
+  // Timestamp for cache validation
+  final DateTime lastFetched;
 
   TreatmentLoaded({
     required this.weeklyProgress,
@@ -46,7 +49,8 @@ class TreatmentLoaded extends TreatmentState {
     required this.acceptedTreatments,
     required this.rejectedTreatments,
     required this.remainingTreatments,
-  });
+    DateTime? lastFetched,
+  }) : this.lastFetched = lastFetched ?? DateTime.now();
 }
 
 class TreatmentError extends TreatmentState {
@@ -59,7 +63,12 @@ class TreatmentBloc extends Bloc<TreatmentEvent, TreatmentState> {
   StreamSubscription<QuerySnapshot>? _treatmentStreamSubscription;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  
+
+  // Cache related properties
+  TreatmentLoaded? _cachedData;
+  final Duration _cacheLifetime =
+      const Duration(minutes: 5); // Cache lifetime of 5 minutes
+
   TreatmentBloc() : super(TreatmentInitial()) {
     on<FetchTreatmentData>(_onFetchTreatmentData);
     on<StartTreatmentStream>(_onStartTreatmentStream);
@@ -72,13 +81,40 @@ class TreatmentBloc extends Bloc<TreatmentEvent, TreatmentState> {
     return super.close();
   }
 
+  // Check if cache is valid
+  bool _isCacheValid() {
+    if (_cachedData == null) {
+      return false;
+    }
+
+    final DateTime now = DateTime.now();
+    final DateTime cacheExpiry = _cachedData!.lastFetched.add(_cacheLifetime);
+
+    return now.isBefore(cacheExpiry);
+  }
+
   Future<void> _onFetchTreatmentData(
       FetchTreatmentData event, Emitter<TreatmentState> emit) async {
-    emit(TreatmentLoading());
-    
+    // First emit loading state if we don't have cached data
+    if (state is! TreatmentLoaded) {
+      emit(TreatmentLoading());
+    }
+
     try {
+      // Use cache if it's valid and we're not forcing a refresh
+      if (!event.forceRefresh && _isCacheValid()) {
+        log('Using cached treatment data');
+        emit(_cachedData!);
+        return;
+      }
+
+      // If we're here, we need to fetch fresh data
+      log('Fetching fresh treatment data from Firestore');
       final treatmentData = await _fetchAllTreatmentData();
+
       if (treatmentData != null) {
+        // Update cache
+        _cachedData = treatmentData;
         emit(treatmentData);
       } else {
         emit(TreatmentError('Unable to load treatment data'));
@@ -107,9 +143,11 @@ class TreatmentBloc extends Bloc<TreatmentEvent, TreatmentState> {
         .collection('userTreatments')
         .snapshots()
         .listen((snapshot) async {
-      // When the stream updates, fetch the complete treatment data
+      // When the stream updates, invalidate cache and fetch fresh data
+      _cachedData = null;
       final treatmentData = await _fetchAllTreatmentData();
       if (treatmentData != null) {
+        _cachedData = treatmentData;
         emit(treatmentData);
       }
     }, onError: (error) {
@@ -149,7 +187,7 @@ class TreatmentBloc extends Bloc<TreatmentEvent, TreatmentState> {
     int completedTreatments = 0;
     int rejectedTreatments = 0;
     int pendingTreatments = 0;
-    
+
     // Track weekly treatments separately
     int weeklyTotalTreatments = 0;
     int weeklyCompletedTreatments = 0;
@@ -179,10 +217,12 @@ class TreatmentBloc extends Bloc<TreatmentEvent, TreatmentState> {
     }
 
     // Calculate accepted treatments as all treatments except rejected and pending
-    int acceptedTreatments = allTreatments - rejectedTreatments - pendingTreatments;
-    
+    int acceptedTreatments =
+        allTreatments - rejectedTreatments - pendingTreatments;
+
     // Calculate remaining treatments: all treatments except rejected and completed
-    int remainingTreatments = allTreatments - rejectedTreatments - completedTreatments;
+    int remainingTreatments =
+        allTreatments - rejectedTreatments - completedTreatments;
     // Make sure we don't display negative numbers
     remainingTreatments = remainingTreatments < 0 ? 0 : remainingTreatments;
 
@@ -193,7 +233,8 @@ class TreatmentBloc extends Bloc<TreatmentEvent, TreatmentState> {
     if (weeklyProgress.isNaN) {
       weeklyProgress = 0.0;
     }
-    
+
+    // Create the treatment data with current timestamp
     return TreatmentLoaded(
       weeklyProgress: weeklyProgress,
       weeklyCompletedTreatments: weeklyCompletedTreatments,
@@ -203,6 +244,7 @@ class TreatmentBloc extends Bloc<TreatmentEvent, TreatmentState> {
       acceptedTreatments: acceptedTreatments,
       rejectedTreatments: rejectedTreatments,
       remainingTreatments: remainingTreatments,
+      lastFetched: DateTime.now(),
     );
   }
 }

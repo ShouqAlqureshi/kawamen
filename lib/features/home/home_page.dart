@@ -46,7 +46,6 @@ class _HomePageContent extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: theme.appBarTheme.backgroundColor,
         elevation: theme.appBarTheme.elevation,
-        leading: Icon(Icons.menu, color: theme.colorScheme.onBackground),
         title: Text(
           'الرئيسية',
           style: theme.textTheme.headlineMedium,
