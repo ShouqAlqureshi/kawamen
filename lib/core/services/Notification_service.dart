@@ -135,16 +135,16 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
   int _currentNotificationId = 0;
 
   final Map<String, String> _emotionTreatments = {
-    'anger':
+    'angry':
         'عن أَبي هريرة: أَنَّ رَجُلًا قَالَ للنَّبِيِّ ﷺ: أَوْصِني، قَالَ:(لا تَغْضَبْ)، فَرَدَّدَ مِرَارًا قَالَ:(لا تَغْضَبْ)رواه البخاري. جرب تمارين التنفس العميق للتهدئة',
-    'sadness':
+    'sad':
         ' سورةالقصص الآية:٧(وَلَا تَخَافِي وَلَا تَحْزَنِي) جرب تمارين العلاج السلوكي المعرفي لمساعدتك ',
   };
 
   // Add mapping of English emotion names to Arabic
   final Map<String, String> _emotionNamesArabic = {
-    'anger': 'الغضب',
-    'sadness': 'الحزن',
+    'angry': 'الغضب',
+    'sad': 'الحزن',
   };
 
   // Map emotions to treatment types
@@ -757,8 +757,8 @@ class InAppNotification extends StatelessWidget {
   Widget build(BuildContext context) {
     // Get Arabic emotion name using the bloc's mapping
     final Map<String, String> _emotionNamesArabic = {
-      'anger': 'الغضب',
-      'sadness': 'الحزن',
+      'angry': 'الغضب',
+      'sad': 'الحزن',
     };
 
     String emotionArabic =
@@ -766,9 +766,9 @@ class InAppNotification extends StatelessWidget {
 
     // Get treatment text
     final Map<String, String> _emotionTreatments = {
-      'anger':
+      'angry':
           'عن أَبي هريرة: أَنَّ رَجُلًا قَالَ للنَّبِيِّ ﷺ: أَوْصِني، قَالَ:(لا تَغْضَبْ)، فَرَدَّدَ مِرَارًا قَالَ:(لا تَغْضَبْ)رواه البخاري. جرب تمارين التنفس العميق للتهدئة',
-      'sadness':
+      'sad':
           ' سورةالقصص الآية:٧(وَلَا تَخَافِي وَلَا تَحْزَنِي) جرب تمارين العلاج السلوكي المعرفي لمساعدتك ',
     };
 

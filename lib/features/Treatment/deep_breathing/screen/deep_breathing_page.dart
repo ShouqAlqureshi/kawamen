@@ -14,11 +14,54 @@ class DeepBreathingPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Extract parameters from route arguments if they exist
+    final Map<String, dynamic>? args =
+        ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+
+    // Use route arguments if available, otherwise use constructor parameters
+    final String? routeTreatmentId = args?['treatmentId'] as String?;
+    final String? routeUserTreatmentId = args?['userTreatmentId'] as String?;
+
+    // Print debug information
+    print(
+        'DeepBreathingPage BUILD - Constructor userTreatmentId: $userTreatmentId');
+    print(
+        'DeepBreathingPage BUILD - Route userTreatmentId: $routeUserTreatmentId');
+
+    // Prioritize route parameters over constructor parameters
+    final String? effectiveTreatmentId = routeTreatmentId ?? treatmentId;
+    final String? effectiveUserTreatmentId =
+        routeUserTreatmentId ?? userTreatmentId;
+
+    print(
+        'DeepBreathingPage BUILD - Effective userTreatmentId: $effectiveUserTreatmentId');
+
     return BlocProvider(
-      create: (_) => DeepBreathingBloc(),
+      create: (_) {
+        final bloc = DeepBreathingBloc();
+
+        // If we have a user treatment ID, load it immediately
+        if (effectiveUserTreatmentId != null &&
+            effectiveUserTreatmentId.isNotEmpty) {
+          print(
+              'DeepBreathingPage - Loading existing treatment: $effectiveUserTreatmentId');
+          bloc.add(LoadUserTreatmentEvent(
+            userTreatmentId: effectiveUserTreatmentId,
+            treatmentId: effectiveTreatmentId ?? 'DeepBreathing',
+          ));
+        } else {
+          // Otherwise just load the treatment data
+          print(
+              'DeepBreathingPage - No userTreatmentId, loading template data only');
+          bloc.add(LoadTreatmentEvent(
+              treatmentId: effectiveTreatmentId ?? 'DeepBreathing'));
+        }
+
+        return bloc;
+      },
       child: _DeepBreathingView(
-        userTreatmentId: userTreatmentId,
-        treatmentId: treatmentId,
+        userTreatmentId: effectiveUserTreatmentId,
+        treatmentId: effectiveTreatmentId,
       ),
     );
   }
@@ -99,20 +142,6 @@ class _DeepBreathingViewState extends State<_DeepBreathingView>
 
     _breathingAnimationController.value = 0.5;
     _glowAnimationController.value = 0.3;
-
-    // Load the appropriate treatment
-    if (widget.userTreatmentId != null) {
-      // Load existing user treatment session
-      context.read<DeepBreathingBloc>().add(LoadUserTreatmentEvent(
-            userTreatmentId: widget.userTreatmentId!,
-            treatmentId: widget.treatmentId!,
-          ));
-    } else {
-      // Load a fresh treatment
-      context
-          .read<DeepBreathingBloc>()
-          .add(LoadTreatmentEvent(treatmentId: widget.treatmentId!));
-    }
   }
 
   @override

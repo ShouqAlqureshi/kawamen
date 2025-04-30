@@ -494,63 +494,66 @@ Future<void> _onStartTrackingTreatment(StartTrackingTreatmentEvent event,
     }
   }
 
-// Add new method to load a specific user treatment
-  Future<void> _onLoadUserTreatment(
-      LoadUserTreatmentEvent event, Emitter<DeepBreathingState> emit) async {
-    try {
-      emit(DeepBreathingState.loading());
+// Update the LoadUserTreatmentEvent handler method in DeepBreathingBloc
 
-      // First, get the treatment details
-      final treatment =
-          await _repository.getTreatmentWithSteps(event.treatmentId);
+Future<void> _onLoadUserTreatment(
+    LoadUserTreatmentEvent event, Emitter<DeepBreathingState> emit) async {
+  try {
+    emit(DeepBreathingState.loading());
 
-      // Calculate total exercise time
-      int totalStepsDuration = 0;
-      for (var step in treatment.steps) {
-        totalStepsDuration += step.duration;
-      }
-      final totalExerciseTime =
-          totalRepetitions * (totalStepsDuration + transitionTimePerRepetition);
+    developer.log('Loading user treatment with ID: ${event.userTreatmentId}');
 
-      // Determine initial phase based on first step
-      InstructionPhase initialPhase = InstructionPhase.inhale;
-      if (treatment.steps.isNotEmpty) {
-        final firstStepNumber = treatment.steps.first.stepNumber;
-        if (firstStepNumber == 1) {
-          initialPhase = InstructionPhase.inhale;
-        } else if (firstStepNumber == 2) {
-          initialPhase = InstructionPhase.hold;
-        } else if (firstStepNumber == 3) {
-          initialPhase = InstructionPhase.exhale;
-        }
-      }
+    // First, get the treatment details
+    final treatment =
+        await _repository.getTreatmentWithSteps(event.treatmentId);
 
-      // Always start from the beginning but keep the user treatment ID
-      emit(state.copyWith(
-        isLoading: false,
-        treatment: treatment,
-        totalExerciseSeconds: totalExerciseTime,
-        userTreatmentId: event.userTreatmentId,
-        currentPhase: initialPhase,
-        currentInstructionIndex: 0,
-        currentRepetition: 1,
-        countdownSeconds:
-            treatment.steps.isNotEmpty ? treatment.steps.first.duration : 0,
-        instructionOpacity: 1.0,
-        countdownOpacity: 0.0,
-        isAnimating: false,
-        isPlaying: false,
-        isCompleting: false,
-      ));
-
-      developer.log(
-          'Loaded user treatment: ${event.userTreatmentId} - restarting from beginning');
-    } catch (e) {
-      developer.log('Error loading user treatment: $e');
-      emit(DeepBreathingState.error(
-          'Failed to load treatment session: ${e.toString()}'));
+    // Calculate total exercise time
+    int totalStepsDuration = 0;
+    for (var step in treatment.steps) {
+      totalStepsDuration += step.duration;
     }
+    final totalExerciseTime =
+        totalRepetitions * (totalStepsDuration + transitionTimePerRepetition);
+
+    // Determine initial phase based on first step
+    InstructionPhase initialPhase = InstructionPhase.inhale;
+    if (treatment.steps.isNotEmpty) {
+      final firstStepNumber = treatment.steps.first.stepNumber;
+      if (firstStepNumber == 1) {
+        initialPhase = InstructionPhase.inhale;
+      } else if (firstStepNumber == 2) {
+        initialPhase = InstructionPhase.hold;
+      } else if (firstStepNumber == 3) {
+        initialPhase = InstructionPhase.exhale;
+      }
+    }
+
+    // Load with the provided userTreatmentId but starting from the beginning
+    emit(state.copyWith(
+      isLoading: false,
+      treatment: treatment,
+      totalExerciseSeconds: totalExerciseTime,
+      userTreatmentId: event.userTreatmentId, // Use the existing ID
+      currentPhase: initialPhase,
+      currentInstructionIndex: 0,
+      currentRepetition: 1,
+      countdownSeconds:
+          treatment.steps.isNotEmpty ? treatment.steps.first.duration : 0,
+      instructionOpacity: 1.0,
+      countdownOpacity: 0.0,
+      isAnimating: false,
+      isPlaying: false,
+      isCompleting: false,
+    ));
+
+    developer.log(
+        'Loaded user treatment: ${event.userTreatmentId} - ready to restart');
+  } catch (e) {
+    developer.log('Error loading user treatment: $e');
+    emit(DeepBreathingState.error(
+        'Failed to load treatment session: ${e.toString()}'));
   }
+}
 
   Future<void> _onLoadTreatment(
       LoadTreatmentEvent event, Emitter<DeepBreathingState> emit) async {
