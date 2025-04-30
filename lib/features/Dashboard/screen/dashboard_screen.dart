@@ -13,7 +13,9 @@ import 'package:kawamen/features/Dashboard/screen/treatment_boxes_screen.dart';
 import 'package:kawamen/features/LogIn/view/login_view.dart';
 
 class DashboardScreen extends StatefulWidget {
-  const DashboardScreen({super.key});
+  final bool showBottomNav;
+
+  const DashboardScreen({super.key, this.showBottomNav = false});
 
   @override
   State<DashboardScreen> createState() => _DashboardScreenState();
@@ -52,56 +54,74 @@ class _DashboardScreenState extends State<DashboardScreen> {
       ],
       child: Builder(
           builder: (context) => ThemedScaffold(
-              appBar: AppBar(
-                backgroundColor: Colors.transparent,
-                centerTitle: true,
-                title: Text(
-                  "لوحة البيانات",
-                  style: Theme.of(context).textTheme.headlineMedium,
+                appBar: AppBar(
+                  backgroundColor: Colors.transparent,
+                  centerTitle: true,
+                  title: Text(
+                    "لوحة البيانات",
+                    style: Theme.of(context).textTheme.headlineMedium,
+                  ),
                 ),
-              ),
-              body: BlocConsumer<DashboardBloc, DashboardState>(
-                builder: (context, state) {
-                  if (state is DashboardInitial ||
-                      state is DashboardLoading ||
-                      state is DashboardExporting) {
-                    return const LoadingScreen();
-                  } else if (state is DashboardLoaded) {
-                    return buildDashboard(
-                      context,
-                      theme,
-                      state,
-                    );
-                  } else if (state is DashboardError) {
-                    return Center(
-                      child: Text(
-                        state.message,
-                        style: theme.textTheme.bodyLarge,
-                      ),
-                    );
-                  }
-                  return const SizedBox(width: 0);
-                },
-                listener: (context, state) {
-                  if (state is DashboardError) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text(state.message)),
-                    );
-                  } else if (state is DashboardExported) {
-                    context.read<DashboardBloc>().add(FetchDashboard());
-                  } else if (state is UsernNotAuthenticated) {
-                    Navigator.pushAndRemoveUntil(
+                body: BlocConsumer<DashboardBloc, DashboardState>(
+                  builder: (context, state) {
+                    if (state is DashboardInitial ||
+                        state is DashboardLoading ||
+                        state is DashboardExporting) {
+                      return const LoadingScreen();
+                    } else if (state is DashboardLoaded) {
+                      return buildDashboard(
                         context,
-                        MaterialPageRoute(
-                            builder: (context) => const LoginView()),
-                        (_) => false);
-                  } else if (state is DashboardPreviewReady) {
-                    final bloc = context.read<DashboardBloc>();
-                    // Show preview dialog
-                    _showPreviewDialog(context, state.imageBytes, bloc, theme);
-                  }
-                },
-              ))),
+                        Theme.of(context),
+                        state,
+                      );
+                    } else if (state is DashboardError) {
+                      return Center(
+                        child: Text(
+                          state.message,
+                          style: Theme.of(context).textTheme.bodyLarge,
+                        ),
+                      );
+                    }
+                    return const SizedBox(width: 0);
+                  },
+                  listener: (context, state) {
+                    if (state is DashboardError) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text(state.message)),
+                      );
+                    } else if (state is DashboardExported) {
+                      context.read<DashboardBloc>().add(FetchDashboard());
+                    } else if (state is UsernNotAuthenticated) {
+                      Navigator.pushAndRemoveUntil(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => const LoginView()),
+                          (_) => false);
+                    } else if (state is DashboardPreviewReady) {
+                      final bloc = context.read<DashboardBloc>();
+                      // Show preview dialog
+                      _showPreviewDialog(
+                          context, state.imageBytes, bloc, Theme.of(context));
+                    }
+                  },
+                ),
+                bottomNavigationBar: widget.showBottomNav
+                    ? BottomNavigationBar(
+                        backgroundColor: theme.colorScheme.surface,
+                        selectedItemColor: theme.colorScheme.primary,
+                        unselectedItemColor:
+                            theme.colorScheme.onSurface.withOpacity(0.6),
+                        items: const [
+                          BottomNavigationBarItem(
+                              icon: Icon(Icons.home), label: ''),
+                          BottomNavigationBarItem(
+                              icon: Icon(Icons.mic), label: ''),
+                          BottomNavigationBarItem(
+                              icon: Icon(Icons.bar_chart), label: ''),
+                        ],
+                      )
+                    : null,
+              )),
     );
   }
 
@@ -111,7 +131,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
     DashboardLoaded state,
   ) {
     return Padding(
-      padding: const EdgeInsets.all(20.0),
+      // Adjust padding - remove bottom padding when nav bar is present
+      padding: EdgeInsets.fromLTRB(
+          20.0, 20.0, 20.0, widget.showBottomNav ? 0.0 : 20.0),
       child: Stack(
         children: <Widget>[
           RepaintBoundary(
@@ -137,7 +159,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
               color: Colors.greenAccent,
               backgroundColor: const Color(0xFF2B2B2B),
               child: SingleChildScrollView(
+                // Ensure content scrolls all the way to the bottom
                 physics: const AlwaysScrollableScrollPhysics(),
+                clipBehavior: Clip.none,
                 child: Column(
                   children: [
                     Row(
@@ -271,8 +295,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       ),
                       child: const TreatmentProgressTracker(),
                     ),
-                    // Add extra padding at the bottom to ensure pull-to-refresh works well
-                    const SizedBox(height: 40),
+                    // No extra padding at the bottom
                   ],
                 ),
               ),
