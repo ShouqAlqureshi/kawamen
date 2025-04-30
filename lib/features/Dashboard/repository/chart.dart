@@ -106,75 +106,73 @@ class EmotionalTrendGraph extends StatelessWidget {
         ),
         // The chart
         Expanded(
-          child: LineChart(
-            LineChartData(
-              gridData: const FlGridData(show: false),
-              titlesData: titlesData,
-              borderData: FlBorderData(show: false),
-              minX: 1,
-              maxX: 7,
-              minY: 0,
-              lineTouchData: LineTouchData(
-                touchTooltipData: LineTouchTooltipData(
-                  getTooltipColor: (LineBarSpot touchedSpot) => Colors.black,
-                ),
-                handleBuiltInTouches: true,
+            child: LineChart(
+          LineChartData(
+            gridData: const FlGridData(show: false),
+            titlesData: titlesData,
+            borderData: FlBorderData(show: false),
+            minX: 1,
+            maxX: 7,
+            minY: 0,
+            maxY: _getMaxY().toDouble(),
+            lineTouchData: LineTouchData(
+              touchTooltipData: LineTouchTooltipData(
+                getTooltipColor: (LineBarSpot touchedSpot) => Colors.black,
               ),
-              lineBarsData: [
-                LineChartBarData(
-                  // Sad - blue line
-                  spots: _createSortedSpots(sadEmotionalData),
-                  isCurved: true,
-                  curveSmoothness: 0.3, // Reduce curviness
-                  preventCurveOverShooting: true, // Prevent loops
-                  isStrokeCapRound: true,
-                  color: Colors.blue..withOpacity(0.6),
-                  barWidth: 3,
-                  dotData: FlDotData(
-                    show: true,
-                    getDotPainter: (spot, percent, barData, index) {
-                      return FlDotCirclePainter(
-                        radius: 4,
-                        color: Colors.blue,
-                        strokeWidth: 2,
-                        strokeColor: Colors.transparent,
-                      );
-                    },
-                  ),
-                  belowBarData: BarAreaData(
-                    show: true,
-                    color: Colors.blue.withOpacity(0.1),
-                  ),
-                ),
-                LineChartBarData(
-                  // Anger - red line
-                  spots: _createSortedSpots(angerEmotionalData),
-                  isCurved: true,
-                  curveSmoothness: 0.3, // Reduce curviness
-                  preventCurveOverShooting: true, // Prevent loops
-                  isStrokeCapRound: true,
-                  color: Colors.red.withOpacity(0.6),
-                  barWidth: 3,
-                  dotData: FlDotData(
-                    show: true,
-                    getDotPainter: (spot, percent, barData, index) {
-                      return FlDotCirclePainter(
-                        radius: 4,
-                        color: Colors.red,
-                        strokeWidth: 2,
-                        strokeColor: Colors.transparent,
-                      );
-                    },
-                  ),
-                  belowBarData: BarAreaData(
-                    show: true,
-                    color: Colors.red.withOpacity(0.1),
-                  ),
-                ),
-              ],
+              handleBuiltInTouches: true,
             ),
+            lineBarsData: [
+              LineChartBarData(
+                spots: _createSortedSpots(sadEmotionalData),
+                isCurved: true,
+                curveSmoothness: 0.3,
+                preventCurveOverShooting: true,
+                isStrokeCapRound: true,
+                color: Colors.blue.withOpacity(0.6),
+                barWidth: 3,
+                dotData: FlDotData(
+                  show: true,
+                  getDotPainter: (spot, percent, barData, index) {
+                    return FlDotCirclePainter(
+                      radius: 4,
+                      color: Colors.blue,
+                      strokeWidth: 2,
+                      strokeColor: Colors.transparent,
+                    );
+                  },
+                ),
+                belowBarData: BarAreaData(
+                  show: true,
+                  color: Colors.blue.withOpacity(0.1),
+                ),
+              ),
+              LineChartBarData(
+                spots: _createSortedSpots(angerEmotionalData),
+                isCurved: true,
+                curveSmoothness: 0.3,
+                preventCurveOverShooting: true,
+                isStrokeCapRound: true,
+                color: Colors.red.withOpacity(0.6),
+                barWidth: 3,
+                dotData: FlDotData(
+                  show: true,
+                  getDotPainter: (spot, percent, barData, index) {
+                    return FlDotCirclePainter(
+                      radius: 4,
+                      color: Colors.red,
+                      strokeWidth: 2,
+                      strokeColor: Colors.transparent,
+                    );
+                  },
+                ),
+                belowBarData: BarAreaData(
+                  show: true,
+                  color: Colors.red.withOpacity(0.1),
+                ),
+              ),
+            ],
           ),
-        ),
+        )),
       ],
     );
   }
@@ -220,6 +218,28 @@ class EmotionalTrendGraph extends StatelessWidget {
     );
   }
 
+  int _getMaxY() {
+    final allValues = [
+      ...sadEmotionalData.values,
+      ...angerEmotionalData.values
+    ];
+    if (allValues.isEmpty) return 5;
+
+    final maxVal = allValues.reduce((a, b) => a > b ? a : b);
+    // Round up to the nearest multiple of interval (5, 10, etc.)
+    final interval = _getYInterval(maxVal);
+    return ((maxVal / interval).ceil()) * interval;
+  }
+
+  int _getYInterval(int maxVal) {
+    if (maxVal <= 5) return 1;
+    if (maxVal <= 10) return 2;
+    if (maxVal <= 20) return 5;
+    if (maxVal <= 50) return 10;
+    if (maxVal <= 100) return 20;
+    return 50;
+  }
+
   FlTitlesData get titlesData => FlTitlesData(
         bottomTitles: AxisTitles(
           sideTitles: SideTitles(
@@ -235,11 +255,18 @@ class EmotionalTrendGraph extends StatelessWidget {
         topTitles: const AxisTitles(
           sideTitles: SideTitles(showTitles: false),
         ),
-        leftTitles: const AxisTitles(
+        leftTitles: AxisTitles(
           sideTitles: SideTitles(
             showTitles: true,
-            interval: 1,
+            interval: _getYInterval(_getMaxY()).toDouble(),
             reservedSize: 40,
+            getTitlesWidget: (value, meta) => Text(
+              value.toInt().toString(),
+              style: const TextStyle(
+                fontSize: 10,
+                color: Colors.white,
+              ),
+            ),
           ),
         ),
       );
