@@ -51,11 +51,13 @@ class NotificationAccepted extends NotificationEvent {
 
 class NotificationRejected extends NotificationEvent {
   final String emotionId; // Added to track which notification was rejected
+  final String
+      emotion; // Added emotion to ensure we have it for document creation
 
-  const NotificationRejected(this.emotionId);
+  const NotificationRejected(this.emotionId, this.emotion);
 
   @override
-  List<Object?> get props => [emotionId];
+  List<Object?> get props => [emotionId, emotion];
 }
 
 class NotificationPostponed extends NotificationEvent {
@@ -257,7 +259,8 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
                 add(NotificationAccepted(emotion, emotionId));
               } else if (response.actionId == 'reject') {
                 print('Action: reject for emotion $emotion, $emotionId');
-                add(NotificationRejected(emotionId));
+                // Make sure the event is being created correctly with both emotionId and emotion
+                add(NotificationRejected(emotionId, emotion));
               } else if (response.actionId == 'later') {
                 print('Action: later for emotion $emotion, $emotionId');
                 add(NotificationPostponed(emotion, emotionId, intensity));
@@ -321,63 +324,79 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
     return settings.authorizationStatus == AuthorizationStatus.authorized;
   }
 
-  // Fixed rejection handler with proper document creation
   FutureOr<void> _onNotificationRejected(
       NotificationRejected event, Emitter<NotificationState> emit) async {
     try {
-      print('Notification rejected for emotionId: ${event.emotionId}');
+      print(
+          '[DEBUG] _onNotificationRejected handler START with emotionId: ${event.emotionId}, emotion: ${event.emotion}');
 
-      // First, update the database
+      // First, cancel the notification to ensure it goes away
+      await flutterLocalNotificationsPlugin.cancel(_currentNotificationId);
+      print('[DEBUG] Notification cancelled');
+
+      // Then update the database
       final user = FirebaseAuth.instance.currentUser;
       if (user != null) {
-        // Get the emotion document to access the emotion type
+        print('[DEBUG] User authenticated: ${user.uid}');
+
+        // IMPORTANT FIX: Make sure we have a valid emotion string
+        if (event.emotion.isEmpty) {
+          print('[DEBUG] ERROR: Empty emotion string!');
+          throw Exception('Empty emotion string in NotificationRejected event');
+        }
+
+        print(
+            '[DEBUG] Creating treatment document with rejected status for emotion: ${event.emotion}');
+
+        // Create treatment document with 'rejected' status using the emotion from the event
+        final userTreatmentId =
+            await _createTreatmentDocument(event.emotion, 'rejected');
+        print(
+            '[DEBUG] Created rejected treatment document with ID: $userTreatmentId');
+
+        // Get the emotion document reference to update it
         final emotionDocRef = FirebaseFirestore.instance
             .collection('users')
             .doc(user.uid)
             .collection('emotionalData')
             .doc(event.emotionId);
 
-        final emotionDoc = await emotionDocRef.get();
-        if (!emotionDoc.exists) {
-          print('Error: Emotion document not found');
-          return;
+        // IMPORTANT: Verify the document exists before updating
+        final docSnapshot = await emotionDocRef.get();
+        if (!docSnapshot.exists) {
+          print(
+              '[DEBUG] ERROR: Emotion document ${event.emotionId} does not exist!');
+          throw Exception('Emotion document not found');
         }
 
-        final emotion = emotionDoc.data()?['emotion'] as String? ?? 'unknown';
-
-        // Create treatment document with 'rejected' status
-        final userTreatmentId =
-            await _createTreatmentDocument(emotion, 'rejected');
-        print('Created rejected treatment document: $userTreatmentId');
-
         // Update the emotion document with a reference to the treatment
+        print('[DEBUG] Updating emotion document with treatment reference');
         await emotionDocRef.update({
           'userTreatmentId': userTreatmentId,
           'treatmentStatus': 'rejected',
         });
-
-        // Now cancel the notification
-        await flutterLocalNotificationsPlugin.cancel(_currentNotificationId);
+        print('[DEBUG] Emotion document updated successfully');
 
         // Emit states
         emit(TreatmentStatusUpdated(event.emotionId, 'rejected',
             userTreatmentId: userTreatmentId));
         emit(NotificationCancelled('rejected'));
         emit(NotificationReady());
+        print('[DEBUG] States emitted successfully');
       } else {
-        print('Error: User not authenticated');
-        // Still cancel notification even if there's an auth issue
-        await flutterLocalNotificationsPlugin.cancel(_currentNotificationId);
+        print('[DEBUG] Error: User not authenticated');
+        // Still emit states
         emit(NotificationCancelled('rejected'));
         emit(NotificationReady());
       }
     } catch (e) {
-      print('Error rejecting notification: $e');
-      // Still cancel notification even if there's an error
-      await flutterLocalNotificationsPlugin.cancel(_currentNotificationId);
+      print('[DEBUG] Error rejecting notification: $e');
+      // Still emit states to ensure UI is updated
       emit(NotificationCancelled('rejected'));
       emit(NotificationReady());
     }
+
+    print('[DEBUG] _onNotificationRejected handler END');
   }
 
   // Fixed postpone handler with proper document creation
@@ -439,34 +458,53 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
 
   // Create a treatment document and return the treatment ID
   Future<String> _createTreatmentDocument(String emotion, String status) async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) throw Exception('User not authenticated');
+    try {
+      print(
+          '[DEBUG] _createTreatmentDocument START - emotion: $emotion, status: $status');
 
-    // Determine treatment type based on emotion
-    final treatmentType =
-        _emotionToTreatmentType[emotion.toLowerCase()] ?? 'CBTtherapy';
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) {
+        print('[DEBUG] User not authenticated in _createTreatmentDocument');
+        throw Exception('User not authenticated');
+      }
 
-    // Create a treatment document in a treatments collection
-    final treatmentRef = await FirebaseFirestore.instance
-        .collection('users')
-        .doc(user.uid)
-        .collection('userTreatments')
-        .add({
-      'treatmentId': treatmentType,
-      'status': status,
-      'emotion': emotion,
-      'progress': status == 'accepted' ? 0.0 : null,
-      'date': FieldValue.serverTimestamp(),
-      'updatedAt': FieldValue.serverTimestamp(),
-    });
+      print(
+          '[DEBUG] Creating $status treatment document for emotion: $emotion');
 
-    // Get the generated document ID
-    final userTreatmentId = treatmentRef.id;
+      // Determine treatment type based on emotion
+      final treatmentType =
+          _emotionToTreatmentType[emotion.toLowerCase()] ?? 'CBTtherapy';
+      print('[DEBUG] Selected treatment type: $treatmentType');
 
-    // Update the document to include its own ID
-    await treatmentRef.update({'userTreatmentId': userTreatmentId});
+      // Create a treatment document in a treatments collection
+      final treatmentRef = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .collection('userTreatments')
+          .add({
+        'treatmentId': treatmentType,
+        'status': status,
+        'emotion': emotion,
+        'progress': status == 'accepted' ? 0.0 : null,
+        'date': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
 
-    return userTreatmentId;
+      // Get the generated document ID
+      final userTreatmentId = treatmentRef.id;
+      print('[DEBUG] Created treatment document with ID: $userTreatmentId');
+
+      // Update the document to include its own ID
+      await treatmentRef.update({'userTreatmentId': userTreatmentId});
+      print('[DEBUG] Updated treatment document with its own ID');
+
+      print(
+          '[DEBUG] _createTreatmentDocument END - returning ID: $userTreatmentId');
+      return userTreatmentId;
+    } catch (e) {
+      print('[DEBUG] Error in _createTreatmentDocument: $e');
+      throw e; // Re-throw to handle in calling method
+    }
   }
 
   FutureOr<void> _onUpdateTreatmentStatus(
@@ -578,12 +616,19 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
 
   void handleInAppNotificationResponse(
       String action, String emotion, String emotionId, double intensity) {
-    print('Handling in-app notification response: $action for $emotion');
+    print(
+        '[DEBUG] handleInAppNotificationResponse called with action: $action for $emotion with ID: $emotionId');
 
     if (action == 'accept') {
       add(NotificationAccepted(emotion, emotionId));
     } else if (action == 'reject') {
-      add(NotificationRejected(emotionId));
+      print('[DEBUG] About to add NotificationRejected event for $emotionId');
+      // Make sure the event is being created correctly
+      final event = NotificationRejected(emotionId, emotion);
+      print(
+          '[DEBUG] Created event with emotionId: ${event.emotionId}, emotion: ${event.emotion}');
+      add(event);
+      print('[DEBUG] Added NotificationRejected event to stream');
     } else if (action == 'later') {
       add(NotificationPostponed(emotion, emotionId, intensity));
     }
@@ -690,22 +735,43 @@ class InAppNotification extends StatelessWidget {
         actions: [
           TextButton(
             onPressed: () {
+              print('[DEBUG] ACCEPT button pressed for emotion $emotionId');
               Navigator.of(context).pop(); // Close the dialog
               bloc.handleInAppNotificationResponse(
                   'accept', emotion, emotionId, intensity);
             },
             child: const Text('قبول'),
           ),
+          // FIXED REJECT BUTTON
           TextButton(
             onPressed: () {
-              Navigator.of(context).pop(); // Close the dialog
-              bloc.handleInAppNotificationResponse(
-                  'reject', emotion, emotionId, intensity);
+              print('[DEBUG] REJECT button pressed for emotion $emotionId');
+
+              // Store the bloc reference before dismissing dialog
+              final NotificationBloc localBloc = bloc;
+              final String localEmotionId = emotionId;
+              final String localEmotion = emotion;
+
+              // Close the dialog first
+              Navigator.of(context).pop();
+
+              // Use a microtask to ensure this runs after dialog dismissal but before the next frame
+              Future.microtask(() {
+                print('[DEBUG] Creating NotificationRejected event');
+                final event =
+                    NotificationRejected(localEmotionId, localEmotion);
+                print(
+                    '[DEBUG] Created event with emotionId: ${event.emotionId}, emotion: ${event.emotion}');
+
+                localBloc.add(event);
+                print('[DEBUG] Added NotificationRejected event to bloc');
+              });
             },
             child: const Text('رفض'),
           ),
           TextButton(
             onPressed: () {
+              print('[DEBUG] LATER button pressed for emotion $emotionId');
               Navigator.of(context).pop(); // Close the dialog
               bloc.handleInAppNotificationResponse(
                   'later', emotion, emotionId, intensity);
