@@ -13,9 +13,7 @@ import 'package:kawamen/features/Dashboard/screen/treatment_boxes_screen.dart';
 import 'package:kawamen/features/LogIn/view/login_view.dart';
 
 class DashboardScreen extends StatefulWidget {
-  final bool showBottomNav;
-
-  const DashboardScreen({super.key, this.showBottomNav = false});
+  const DashboardScreen({super.key});
 
   @override
   State<DashboardScreen> createState() => _DashboardScreenState();
@@ -105,22 +103,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     }
                   },
                 ),
-                bottomNavigationBar: widget.showBottomNav
-                    ? BottomNavigationBar(
-                        backgroundColor: theme.colorScheme.surface,
-                        selectedItemColor: theme.colorScheme.primary,
-                        unselectedItemColor:
-                            theme.colorScheme.onSurface.withOpacity(0.6),
-                        items: const [
-                          BottomNavigationBarItem(
-                              icon: Icon(Icons.home), label: ''),
-                          BottomNavigationBarItem(
-                              icon: Icon(Icons.mic), label: ''),
-                          BottomNavigationBarItem(
-                              icon: Icon(Icons.bar_chart), label: ''),
-                        ],
-                      )
-                    : null,
               )),
     );
   }
@@ -132,8 +114,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   ) {
     return Padding(
       // Adjust padding - remove bottom padding when nav bar is present
-      padding: EdgeInsets.fromLTRB(
-          20.0, 20.0, 20.0, widget.showBottomNav ? 0.0 : 20.0),
+      padding: EdgeInsets.fromLTRB(20.0, 20.0, 20.0, 00.0),
       child: Stack(
         children: <Widget>[
           RepaintBoundary(
