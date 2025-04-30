@@ -68,6 +68,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
               .toList();
 
           log("Using cached treatments data");
+          _sortTreatments(treatments);
           emit(TreatmentHistoryLoaded(treatments));
           return;
         }
@@ -87,33 +88,38 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
           .map((doc) => TreatmentData.fromFirestore(doc))
           .toList();
 
-      treatments.sort((a, b) {
-        final statusOrder = {
-          'in_progress': 0,
-          'paused': 1,
-          'pending': 2,
-          'completed': 3,
-          'rejected': 4,
-        };
-
-        final aStatus = statusOrder[a.status] ?? 2;
-        final bStatus = statusOrder[b.status] ?? 2;
-
-        if (aStatus != bStatus) {
-          return aStatus.compareTo(bStatus);
-        }
-
-        return b.date.compareTo(a.date);
-      });
-
-      // We don't need to update cache manually here, as the _setupTreatmentsListener
-      // in UserCacheService will handle that through the Firestore snapshot listener
+      _sortTreatments(treatments);
 
       log("Treatment count: ${treatments.length}");
       emit(TreatmentHistoryLoaded(treatments));
     } catch (e) {
       emit(ErrorHomeState('Error fetching treatment history: ${e.toString()}'));
     }
+  }
+
+  // Helper method to sort treatments with the updated logic
+  void _sortTreatments(List<TreatmentData> treatments) {
+    treatments.sort((a, b) {
+      // Status priority: in_progress (0), paused (1), pending (2), completed (3), rejected (4)
+      final statusOrder = {
+        'in_progress': 0,
+        'paused': 1,
+        'pending': 2,
+        'completed': 3,
+        'rejected': 4,
+      };
+
+      final aStatus = statusOrder[a.status] ?? 2;
+      final bStatus = statusOrder[b.status] ?? 2;
+
+      // First, group by status
+      if (aStatus != bStatus) {
+        return aStatus.compareTo(bStatus);
+      }
+
+      // For same status, sort by date (oldest first)
+      return a.date.compareTo(b.date);
+    });
   }
 
   // New method to handle stream subscription
@@ -177,27 +183,8 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
             treatment.date.isAtSameMomentAs(startDate);
       }).toList();
 
-      // Sort by status first (in_progress > paused > completed), then by date
-      filteredTreatments.sort((a, b) {
-        // Status priority: in_progress (0), paused (1), completed (2)
-        final statusOrder = {
-          'in_progress': 0,
-          'paused': 1,
-          'pending': 2,
-          'completed': 3,
-          'rejected': 4,
-        };
-
-        final aStatus = statusOrder[a.status] ?? 2;
-        final bStatus = statusOrder[b.status] ?? 2;
-
-        if (aStatus != bStatus) {
-          return aStatus.compareTo(bStatus);
-        }
-
-        // If status is same, sort by date (newest first)
-        return b.date.compareTo(a.date);
-      });
+      // Apply the updated sorting logic
+      _sortTreatments(filteredTreatments);
 
       log("Stream updated with ${filteredTreatments.length} treatments");
       emit(TreatmentHistoryLoaded(filteredTreatments));

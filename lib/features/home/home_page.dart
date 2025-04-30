@@ -2,6 +2,7 @@ import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:intl/intl.dart';
 import 'package:kawamen/core/utils/Loadingscreen.dart';
 import 'package:kawamen/core/utils/theme/ThemedScaffold.dart';
 import 'package:kawamen/core/utils/theme/theme.dart';
@@ -173,6 +174,20 @@ class _HomePageContent extends StatelessWidget {
     final displayTitle = treatment?.treatmentId ?? title ?? '';
     final isOngoing = treatment != null && treatment.progress < 100.0;
 
+    // Format date for display - only month and day
+    String formattedDate = '';
+    bool isDateOld = false;
+    if (treatment != null) {
+      final formatter = DateFormat('d MMM');
+      formattedDate = formatter.format(treatment.date);
+
+      // Check if ongoing treatment is more than 5 days old
+      if (isOngoing || treatment.status == 'pending') {
+        final difference = DateTime.now().difference(treatment.date).inDays;
+        isDateOld = difference > 4;
+      }
+    }
+
     IconData displayIcon;
     Color iconColor = theme.colorScheme.primary;
     bool showButton = false;
@@ -237,10 +252,27 @@ class _HomePageContent extends StatelessWidget {
                   textAlign: TextAlign.right,
                   style: theme.textTheme.bodyLarge,
                 ),
-                Text(
-                  _getEmotionText(displayLabel),
-                  textAlign: TextAlign.right,
-                  style: theme.textTheme.bodyMedium,
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    if (treatment != null)
+                      Text(
+                        formattedDate,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: isDateOld
+                              ? Colors.red
+                              : theme.colorScheme.onSurface.withOpacity(0.7),
+                          fontWeight:
+                              isDateOld ? FontWeight.bold : FontWeight.normal,
+                        ),
+                      ),
+                    if (treatment != null) const SizedBox(width: 8),
+                    Text(
+                      _getEmotionText(displayLabel),
+                      textAlign: TextAlign.right,
+                      style: theme.textTheme.bodyMedium,
+                    ),
+                  ],
                 ),
                 if (treatment != null &&
                     treatment.progress > 0 &&
