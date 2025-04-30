@@ -401,100 +401,104 @@ class CBTTherapyBloc extends Bloc<CBTTherapyEvent, CBTTherapyState> {
     }
   }
 
-  Future<void> _onLoadUserTreatment(
-      LoadUserCBTTreatmentEvent event, Emitter<CBTTherapyState> emit) async {
-    try {
-      emit(state.copyWith(isLoading: true, isError: false, errorMessage: ''));
+Future<void> _onLoadUserTreatment(
+    LoadUserCBTTreatmentEvent event, Emitter<CBTTherapyState> emit) async {
+  try {
+    print('Loading user treatment with ID: ${event.userTreatmentId}');
+    emit(state.copyWith(isLoading: true, isError: false, errorMessage: ''));
 
-      // First, load the CBT data
-      await _onLoadData(LoadCBTDataEvent(treatmentId: event.treatmentId), emit);
+    // First, load the CBT data
+    await _onLoadData(LoadCBTDataEvent(treatmentId: event.treatmentId), emit);
 
-      // Then get the user treatment details
-      final userTreatment =
-          await _repository.getUserTreatmentById(event.userTreatmentId);
+    // Then get the user treatment details
+    final userTreatment =
+        await _repository.getUserTreatmentById(event.userTreatmentId);
 
-      if (userTreatment == null) {
-        throw Exception("Couldn't find the specific treatment session");
-      }
+    if (userTreatment == null) {
+      throw Exception("Couldn't find the specific treatment session");
+    }
 
-      final progress = userTreatment['progress'] as double? ?? 0.0;
-      final totalSteps = state.totalSteps;
+    final progress = userTreatment['progress'] as double? ?? 0.0;
+    final totalSteps = state.totalSteps;
 
-      // Calculate current step from progress
-      final currentStep =
-          min(((progress / 100) * totalSteps).ceil(), totalSteps);
-      final currentInstructionIndex = currentStep > 0 ? currentStep - 1 : 0;
+    // Calculate current step from progress
+    final currentStep =
+        min(((progress / 100) * totalSteps).ceil(), totalSteps);
+    final currentInstructionIndex = currentStep > 0 ? currentStep - 1 : 0;
 
-      final estimatedSecondsPerStep = 60;
-      final estimatedElapsedTime = currentStep * estimatedSecondsPerStep;
+    final estimatedSecondsPerStep = 60;
+    final estimatedElapsedTime = currentStep * estimatedSecondsPerStep;
 
-      // Retrieve saved user input data
-      String userThought = '';
-      String alternativeThought = '';
-      String supportingEvidence = '';
-      String contradictingEvidence = '';
-      Map<String, bool>? cognitiveDistortions;
+    // Retrieve saved user input data
+    String userThought = '';
+    String alternativeThought = '';
+    String supportingEvidence = '';
+    String contradictingEvidence = '';
+    Map<String, bool>? cognitiveDistortions;
 
-      // Check if additional data exists in userTreatment
-      if (userTreatment.containsKey('userData')) {
-        final userData = userTreatment['userData'] as Map<String, dynamic>?;
-        if (userData != null) {
-          userThought = userData['userThought'] as String? ?? '';
-          alternativeThought = userData['alternativeThought'] as String? ?? '';
-          supportingEvidence = userData['supportingEvidence'] as String? ?? '';
-          contradictingEvidence =
-              userData['contradictingEvidence'] as String? ?? '';
+    // Check if additional data exists in userTreatment
+    if (userTreatment.containsKey('userData')) {
+      final userData = userTreatment['userData'] as Map<String, dynamic>?;
+      if (userData != null) {
+        userThought = userData['userThought'] as String? ?? '';
+        alternativeThought = userData['alternativeThought'] as String? ?? '';
+        supportingEvidence = userData['supportingEvidence'] as String? ?? '';
+        contradictingEvidence =
+            userData['contradictingEvidence'] as String? ?? '';
 
-          // Restore cognitive distortions if saved
-          if (userData.containsKey('cognitiveDistortions')) {
-            final distortionsData =
-                userData['cognitiveDistortions'] as Map<String, dynamic>?;
-            if (distortionsData != null) {
-              cognitiveDistortions = {};
-              distortionsData.forEach((key, value) {
-                cognitiveDistortions![key] = value as bool;
-              });
-            }
+        // Restore cognitive distortions if saved
+        if (userData.containsKey('cognitiveDistortions')) {
+          final distortionsData =
+              userData['cognitiveDistortions'] as Map<String, dynamic>?;
+          if (distortionsData != null) {
+            cognitiveDistortions = {};
+            distortionsData.forEach((key, value) {
+              cognitiveDistortions![key] = value as bool;
+            });
           }
         }
       }
-
-      // Determine the treatment status
-      final status = userTreatment['status'] as String? ?? 'paused';
-
-      // IMPORTANT FIX: Set isPlaying to true when resuming
-      // This will make sure the UI shows the fields for the current step
-      // rather than just showing the "Start" button
-      final bool isPlaying = progress > 0 && currentStep > 0;
-
-      emit(state.copyWith(
-        isLoading: false,
-        userTreatmentId: event.userTreatmentId,
-        progress: progress,
-        currentStep: max(currentStep, 1),
-        currentInstructionIndex: currentInstructionIndex,
-        elapsedTimeSeconds: estimatedElapsedTime,
-        userThought: userThought,
-        alternativeThought: alternativeThought,
-        supportingEvidence: supportingEvidence,
-        contradictingEvidence: contradictingEvidence,
-        cognitiveDistortions:
-            cognitiveDistortions ?? state.cognitiveDistortions,
-        // IMPORTANT FIX: Set isPlaying flag to show proper fields
-        isPlaying: isPlaying,
-      ));
-
-      print(
-          'Loaded user CBT treatment: ${event.userTreatmentId} with progress: $progress%, currentStep: $currentStep, isPlaying: $isPlaying');
-    } catch (e) {
-      print('Error loading user CBT treatment: $e');
-      emit(state.copyWith(
-          isLoading: false,
-          isError: true,
-          errorMessage:
-              'Failed to load CBT treatment session: ${e.toString()}'));
     }
+
+    // Determine the treatment status
+    final status = userTreatment['status'] as String? ?? 'paused';
+
+    // IMPORTANT FIX: Set isPlaying to true when resuming
+    // This will make sure the UI shows the fields for the current step
+    // rather than just showing the "Start" button
+    final bool isPlaying = progress > 0 && currentStep > 0;
+
+    // Debug print to verify userTreatmentId is being set
+    print('Setting userTreatmentId in state to: ${event.userTreatmentId}');
+    
+    emit(state.copyWith(
+      isLoading: false,
+      userTreatmentId: event.userTreatmentId,  // Critical: Setting the userTreatmentId in state
+      progress: progress,
+      currentStep: max(currentStep, 1),
+      currentInstructionIndex: currentInstructionIndex,
+      elapsedTimeSeconds: estimatedElapsedTime,
+      userThought: userThought,
+      alternativeThought: alternativeThought,
+      supportingEvidence: supportingEvidence,
+      contradictingEvidence: contradictingEvidence,
+      cognitiveDistortions:
+          cognitiveDistortions ?? state.cognitiveDistortions,
+      // IMPORTANT FIX: Set isPlaying flag to show proper fields
+      isPlaying: isPlaying,
+    ));
+
+    print(
+        'Loaded user CBT treatment: ${event.userTreatmentId} with progress: $progress%, currentStep: $currentStep, isPlaying: $isPlaying');
+  } catch (e) {
+    print('Error loading user CBT treatment: $e');
+    emit(state.copyWith(
+        isLoading: false,
+        isError: true,
+        errorMessage:
+            'Failed to load CBT treatment session: ${e.toString()}'));
   }
+}
 
   Future<void> _onLoadData(
       LoadCBTDataEvent event, Emitter<CBTTherapyState> emit) async {
@@ -550,27 +554,42 @@ class CBTTherapyBloc extends Bloc<CBTTherapyEvent, CBTTherapyState> {
     }
   }
 
-  void _onStartExercise(
-      StartCBTExerciseEvent event, Emitter<CBTTherapyState> emit) {
-    if (state.instructions.isEmpty) {
-      emit(state.copyWith(
-        isError: true,
-        errorMessage: 'Cannot start exercise: Instructions not loaded',
-      ));
-      return;
-    }
-
-    _cancelTimers();
-
-    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      add(UpdateElapsedTimeEvent(
-          elapsedTimeSeconds: state.elapsedTimeSeconds + 1));
-    });
-
-    emit(state.copyWith(isPlaying: true));
-    _startInstructionAnimation(emit);
-    add(const StartTrackingCBTTreatmentEvent());
+void _onStartExercise(
+    StartCBTExerciseEvent event, Emitter<CBTTherapyState> emit) {
+  if (state.instructions.isEmpty) {
+    emit(state.copyWith(
+      isError: true,
+      errorMessage: 'Cannot start exercise: Instructions not loaded',
+    ));
+    return;
   }
+
+  // Debug print to check if userTreatmentId exists
+  print('Starting CBT exercise with userTreatmentId: ${state.userTreatmentId}');
+
+  _cancelTimers();
+
+  _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+    add(UpdateElapsedTimeEvent(
+        elapsedTimeSeconds: state.elapsedTimeSeconds + 1));
+  });
+
+  emit(state.copyWith(isPlaying: true));
+  _startInstructionAnimation(emit);
+  
+  // Here's the fix - only add the StartTrackingCBTTreatmentEvent if we need to
+  // since this is what creates a new document
+  if (state.userTreatmentId == null || state.userTreatmentId!.isEmpty) {
+    print('No existing userTreatmentId, creating new treatment');
+    add(const StartTrackingCBTTreatmentEvent());
+  } else {
+    print('Using existing userTreatmentId: ${state.userTreatmentId}');
+    // Instead of creating a new document, just update the existing one
+    add(UpdateCBTTreatmentProgressEvent(
+      progress: (state.currentStep / state.totalSteps) * 100,
+    ));
+  }
+}
 
   void _onPauseExercise(
       PauseCBTExerciseEvent event, Emitter<CBTTherapyState> emit) {

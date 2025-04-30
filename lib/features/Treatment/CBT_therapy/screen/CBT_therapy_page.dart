@@ -9,19 +9,53 @@ import 'package:kawamen/features/Treatment/CBT_therapy/bloc/CBT_therapy_bloc.dar
 class CBTTherapyPage extends StatelessWidget {
   final String? userTreatmentId;
   final String? treatmentId;
-  const CBTTherapyPage({ 
-    Key? key, 
-    this.userTreatmentId, 
-    this.treatmentId = 'CBTtherapy'
-    }) : super(key: key);
+  const CBTTherapyPage(
+      {Key? key, this.userTreatmentId, this.treatmentId = 'CBTtherapy'})
+      : super(key: key);
 
-  @override
+@override
   Widget build(BuildContext context) {
+    // Extract parameters from route arguments if they exist
+    final Map<String, dynamic>? args = 
+        ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+    
+    // Use route arguments if available, otherwise use constructor parameters
+    final String? routeTreatmentId = args?['treatmentId'] as String?;
+    final String? routeUserTreatmentId = args?['userTreatmentId'] as String?;
+    
+    // Print debug information
+    print('CBTTherapyPage BUILD - Constructor userTreatmentId: $userTreatmentId');
+    print('CBTTherapyPage BUILD - Route userTreatmentId: $routeUserTreatmentId');
+    
+    // Prioritize route parameters over constructor parameters
+    final String? effectiveTreatmentId = routeTreatmentId ?? treatmentId;
+    final String? effectiveUserTreatmentId = routeUserTreatmentId ?? userTreatmentId;
+    
+    print('CBTTherapyPage BUILD - Effective userTreatmentId: $effectiveUserTreatmentId');
+    
     return BlocProvider(
-      create: (_) => CBTTherapyBloc(),
+      create: (_) {
+        final bloc = CBTTherapyBloc();
+        
+        // If we have a user treatment ID, load it immediately
+        if (effectiveUserTreatmentId != null && effectiveUserTreatmentId.isNotEmpty) {
+          print('CBTTherapyPage - Loading existing treatment: $effectiveUserTreatmentId');
+          bloc.add(LoadUserCBTTreatmentEvent(
+            userTreatmentId: effectiveUserTreatmentId,
+            treatmentId: effectiveTreatmentId ?? 'CBTtherapy',
+          ));
+        } else {
+          // Otherwise just load the treatment data
+          print('CBTTherapyPage - No userTreatmentId, loading template data only');
+          bloc.add(LoadCBTDataEvent(treatmentId: effectiveTreatmentId ?? 'CBTtherapy'));
+        }
+        
+        return bloc;
+      },
       child: _CBTTherapyView(
-      userTreatmentId: userTreatmentId,
-      treatmentId: treatmentId,),
+        userTreatmentId: effectiveUserTreatmentId,
+        treatmentId: effectiveTreatmentId,
+      ),
     );
   }
 }
@@ -29,7 +63,7 @@ class CBTTherapyPage extends StatelessWidget {
 class _CBTTherapyView extends StatefulWidget {
   final String? userTreatmentId;
   final String? treatmentId;
-  
+
   const _CBTTherapyView({this.userTreatmentId, this.treatmentId});
 
   @override
@@ -57,21 +91,21 @@ class _CBTTherapyViewState extends State<_CBTTherapyView>
   @override
   void initState() {
     super.initState();
-   // Load existing treatment or new treatment
-  if (widget.userTreatmentId != null && widget.treatmentId != null) {
-    // Load existing treatment
-    context.read<CBTTherapyBloc>().add(
-      LoadUserCBTTreatmentEvent(
-        userTreatmentId: widget.userTreatmentId!,
-        treatmentId: widget.treatmentId!,
-      ),
-    );
-  } else {
-    // Load new treatment
-    context.read<CBTTherapyBloc>().add(
-      const LoadCBTDataEvent(treatmentId: 'CBTtherapy'),
-    );
-  }
+    // Load existing treatment or new treatment
+    if (widget.userTreatmentId != null && widget.treatmentId != null) {
+      // Load existing treatment
+      context.read<CBTTherapyBloc>().add(
+            LoadUserCBTTreatmentEvent(
+              userTreatmentId: widget.userTreatmentId!,
+              treatmentId: widget.treatmentId!,
+            ),
+          );
+    } else {
+      // Load new treatment
+      context.read<CBTTherapyBloc>().add(
+            const LoadCBTDataEvent(treatmentId: 'CBTtherapy'),
+          );
+    }
     // Initialize pulse animation controller (for the thought bubble)
     _pulseAnimationController = AnimationController(
       vsync: this,
@@ -182,88 +216,89 @@ class _CBTTherapyViewState extends State<_CBTTherapyView>
   void _hideKeyboard() {
     FocusScope.of(context).unfocus();
   }
-  
-void _updateTextControllers(CBTTherapyState state) {
-  // Only update if text is not empty to avoid overwriting user edits
-  if (state.userThought.isNotEmpty && 
-      _thoughtController.text != state.userThought) {
-    _thoughtController.text = state.userThought;
-  }
-  
-  if (state.alternativeThought.isNotEmpty && 
-      _alternativeController.text != state.alternativeThought) {
-    _alternativeController.text = state.alternativeThought;
-  }
-  
-  if (state.supportingEvidence.isNotEmpty && 
-      _supportingEvidenceController.text != state.supportingEvidence) {
-    _supportingEvidenceController.text = state.supportingEvidence;
-  }
-  
-  if (state.contradictingEvidence.isNotEmpty && 
-      _contradictingEvidenceController.text != state.contradictingEvidence) {
-    _contradictingEvidenceController.text = state.contradictingEvidence;
-  }
-}
 
-Future<bool> _showExitConfirmationDialog(BuildContext context) async {
-  final theme = Theme.of(context);
-  final bloc = context.read<CBTTherapyBloc>();
+  void _updateTextControllers(CBTTherapyState state) {
+    // Only update if text is not empty to avoid overwriting user edits
+    if (state.userThought.isNotEmpty &&
+        _thoughtController.text != state.userThought) {
+      _thoughtController.text = state.userThought;
+    }
 
-  return await showDialog<bool>(
-        context: context,
-        builder: (BuildContext dialogContext) {
-          return Directionality(
-            textDirection: TextDirection.rtl,
-            child: AlertDialog(
-              title: const Text(
-                'هل أنت متأكد؟',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              content: const Text(
-                'إذا غادرت الآن، ستفقد التقدم في جلسة العلاج الحالية.',
-                textAlign: TextAlign.right,
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () {
-                    Navigator.of(dialogContext).pop(false); // Don't exit
-                  },
-                  style: TextButton.styleFrom(
-                    foregroundColor: theme.colorScheme.secondary,
+    if (state.alternativeThought.isNotEmpty &&
+        _alternativeController.text != state.alternativeThought) {
+      _alternativeController.text = state.alternativeThought;
+    }
+
+    if (state.supportingEvidence.isNotEmpty &&
+        _supportingEvidenceController.text != state.supportingEvidence) {
+      _supportingEvidenceController.text = state.supportingEvidence;
+    }
+
+    if (state.contradictingEvidence.isNotEmpty &&
+        _contradictingEvidenceController.text != state.contradictingEvidence) {
+      _contradictingEvidenceController.text = state.contradictingEvidence;
+    }
+  }
+
+  Future<bool> _showExitConfirmationDialog(BuildContext context) async {
+    final theme = Theme.of(context);
+    final bloc = context.read<CBTTherapyBloc>();
+
+    return await showDialog<bool>(
+          context: context,
+          builder: (BuildContext dialogContext) {
+            return Directionality(
+              textDirection: TextDirection.rtl,
+              child: AlertDialog(
+                title: const Text(
+                  'هل أنت متأكد؟',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
                   ),
-                  child: const Text('البقاء'),
                 ),
-                FilledButton(
-                  onPressed: () {
-                    // IMPORTANT FIX: Save progress before exiting, by using PauseCBTTreatmentEvent
-                    // This event will handle the database update
-                    bloc.add(const PauseCBTTreatmentEvent());
-                    
-                    // Add a small delay to ensure database operation completes
-                    Future.delayed(const Duration(milliseconds: 100), () {
-                      Navigator.of(dialogContext).pop(true); // Confirm exit
-                    });
-                  },
-                  style: FilledButton.styleFrom(
-                    backgroundColor: Colors.red,
-                    foregroundColor: Colors.white,
+                content: const Text(
+                  'إذا غادرت الآن، ستفقد التقدم في جلسة العلاج الحالية.',
+                  textAlign: TextAlign.right,
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () {
+                      Navigator.of(dialogContext).pop(false); // Don't exit
+                    },
+                    style: TextButton.styleFrom(
+                      foregroundColor: theme.colorScheme.secondary,
+                    ),
+                    child: const Text('البقاء'),
                   ),
-                  child: const Text('مغادرة'),
+                  FilledButton(
+                    onPressed: () {
+                      // IMPORTANT FIX: Save progress before exiting, by using PauseCBTTreatmentEvent
+                      // This event will handle the database update
+                      bloc.add(const PauseCBTTreatmentEvent());
+
+                      // Add a small delay to ensure database operation completes
+                      Future.delayed(const Duration(milliseconds: 100), () {
+                        Navigator.of(dialogContext).pop(true); // Confirm exit
+                      });
+                    },
+                    style: FilledButton.styleFrom(
+                      backgroundColor: Colors.red,
+                      foregroundColor: Colors.white,
+                    ),
+                    child: const Text('مغادرة'),
+                  ),
+                ],
+                backgroundColor: theme.cardColor,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(15),
                 ),
-              ],
-              backgroundColor: theme.cardColor,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(15),
               ),
-            ),
-          );
-        },
-      ) ??
-      false; // Default to false (don't exit) if dialog is dismissed
-}
+            );
+          },
+        ) ??
+        false; // Default to false (don't exit) if dialog is dismissed
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocConsumer<CBTTherapyBloc, CBTTherapyState>(
@@ -352,7 +387,8 @@ Future<bool> _showExitConfirmationDialog(BuildContext context) async {
                               style: TextStyle(
                                 color: theme.colorScheme.onBackground,
                                 fontWeight: FontWeight.bold,
-                                fontSize: screenWidth < 360 ? 18 : screenWidth*0.06,
+                                fontSize:
+                                    screenWidth < 360 ? 18 : screenWidth * 0.06,
                               ),
                               textDirection: TextDirection.rtl,
                             );
@@ -1403,7 +1439,6 @@ Future<bool> _showExitConfirmationDialog(BuildContext context) async {
       },
     );
   }
-
 }
 
 // Confetti painter for celebration animation

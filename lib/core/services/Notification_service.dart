@@ -557,11 +557,14 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
   }
 
   // Handle navigation directly within the bloc
-  void _navigateToTreatment(
-      {required String emotion,
-      required String emotionId,
-      required String userTreatmentId}) {
-    print('DirectNavigation attempting for $emotion, $userTreatmentId');
+// Fix for the _navigateToTreatment method in NotificationBloc
+  void _navigateToTreatment({
+    required String emotion,
+    required String emotionId,
+    required String userTreatmentId,
+  }) {
+    print(
+        'DirectNavigation attempting for $emotion, userTreatmentId: $userTreatmentId');
 
     if (navigatorKey.currentState == null) {
       print('Error: Navigator state is null');
@@ -583,13 +586,68 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
         route = '/cbt-therapy';
     }
 
+    // DEBUG: Print the arguments being passed
+    print('Navigating to $route with userTreatmentId: $userTreatmentId');
+
     // Navigate using the global navigator key
     navigatorKey.currentState!.pushNamed(
       route,
       arguments: {
         'userTreatmentId': userTreatmentId,
+        'treatmentId':
+            _emotionToTreatmentType[emotion.toLowerCase()] ?? 'CBTtherapy',
       },
     );
+  }
+
+// Fix for _onNotificationAccepted method in NotificationBloc
+  FutureOr<void> _onNotificationAccepted(
+      NotificationAccepted event, Emitter<NotificationState> emit) async {
+    try {
+      // Cancel notification first
+      await flutterLocalNotificationsPlugin.cancel(_currentNotificationId);
+      print('Notification accepted for ${event.emotion}, ${event.emotionId}');
+
+      // Get current user
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) {
+        print('Error: User not authenticated');
+        return;
+      }
+
+      // First create the treatment document
+      final userTreatmentId =
+          await _createTreatmentDocument(event.emotion, 'accepted');
+      print('Created accepted treatment document with ID: $userTreatmentId');
+
+      // Update the emotion document with the treatment reference
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .collection('emotionalData')
+          .doc(event.emotionId)
+          .update({
+        'userTreatmentId': userTreatmentId,
+        'treatmentStatus': 'accepted',
+      });
+
+      // Emit the status update
+      emit(TreatmentStatusUpdated(event.emotionId, 'accepted',
+          userTreatmentId: userTreatmentId));
+
+      // Then emit the navigation state which will trigger navigation to the treatment
+      emit(
+          NavigateToTreatment(event.emotion, event.emotionId, userTreatmentId));
+
+      // Direct navigation using navigatorKey
+      _navigateToTreatment(
+        emotion: event.emotion,
+        emotionId: event.emotionId,
+        userTreatmentId: userTreatmentId,
+      );
+    } catch (e) {
+      print('Error in _onNotificationAccepted: $e');
+    }
   }
 
   FutureOr<void> _onShowEmotionNotification(
@@ -637,14 +695,6 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
   Future<void> checkNotificationPermissions() async {
     final settings = await FirebaseMessaging.instance.getNotificationSettings();
     print('Notification permission status: ${settings.authorizationStatus}');
-  }
-
-  FutureOr<void> _onNotificationAccepted(
-      NotificationAccepted event, Emitter<NotificationState> emit) {
-    // Cancel notification first
-    flutterLocalNotificationsPlugin.cancel(_currentNotificationId);
-    print('Notification accepted for ${event.emotion}, ${event.emotionId}');
-    add(UpdateTreatmentStatus(event.emotionId, 'accepted'));
   }
 }
 
@@ -845,6 +895,20 @@ class CombinedNotificationListener extends StatelessWidget {
     print(
         'CombinedListener: Navigating to treatment for emotion: $emotion, userTreatmentId: $userTreatmentId');
 
+    // Map emotions to treatment types
+    final Map<String, String> _emotionToTreatmentType = {
+      'anger': 'DeepBreathing',
+      'angry': 'DeepBreathing',
+      'sadness': 'CBTtherapy',
+      'sad': 'CBTtherapy',
+      'fear': 'deep-breathing',
+      'anxiety': 'deep-breathing',
+      'anxious': 'deep-breathing',
+    };
+
+    final String treatmentType =
+        _emotionToTreatmentType[emotion.toLowerCase()] ?? 'CBTtherapy';
+
     // Map emotions to specific treatment pages
     switch (emotion.toLowerCase()) {
       case 'sadness':
@@ -854,6 +918,7 @@ class CombinedNotificationListener extends StatelessWidget {
           '/cbt-therapy',
           arguments: {
             'userTreatmentId': userTreatmentId,
+            'treatmentId': treatmentType,
           },
         );
         break;
@@ -865,6 +930,7 @@ class CombinedNotificationListener extends StatelessWidget {
           '/deep-breathing',
           arguments: {
             'userTreatmentId': userTreatmentId,
+            'treatmentId': treatmentType,
           },
         );
         break;
@@ -875,6 +941,7 @@ class CombinedNotificationListener extends StatelessWidget {
           '/cbt-therapy',
           arguments: {
             'userTreatmentId': userTreatmentId,
+            'treatmentId': treatmentType,
           },
         );
         break;
