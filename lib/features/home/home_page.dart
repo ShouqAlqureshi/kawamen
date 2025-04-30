@@ -170,30 +170,49 @@ class _HomePageContent extends StatelessWidget {
   }) {
     final theme = Theme.of(context);
 
-    // If treatment is provided, use its data; otherwise, use the provided parameters
     final displayLabel = treatment?.emotion ?? label ?? '';
     final displayTitle = treatment?.treatmentId ?? title ?? '';
     final isOngoing = treatment != null && treatment.progress < 100.0;
 
-    // Choose icon based on status
     IconData displayIcon;
+    Color iconColor = theme.colorScheme.primary;
+    bool showButton = false;
+    String buttonText = 'استئناف';
+    Color buttonColor = theme.colorScheme.primary;
+
     if (treatment != null) {
-      if (treatment.status == 'completed') {
-        displayIcon = Icons.check_circle;
-      } else if (isOngoing) {
-        displayIcon = Icons.access_time;
-      } else {
-        // Choose icon based on treatment ID
-        switch (treatment.treatmentId) {
-          case 'CBTtherapy':
-            displayIcon = Icons.sync_alt;
-            break;
-          case 'DeepBreathing':
-            displayIcon = Icons.self_improvement;
-            break;
-          default:
-            displayIcon = Icons.edit_note;
-        }
+      switch (treatment.status) {
+        case 'completed':
+          displayIcon = Icons.check_circle;
+          iconColor = Colors.greenAccent;
+          break;
+        case 'rejected':
+          displayIcon = Icons.cancel;
+          iconColor = Colors.redAccent;
+          break;
+        case 'pending':
+          displayIcon = Icons.hourglass_empty;
+          iconColor = Colors.amber;
+          showButton = true;
+          buttonText = 'بدء';
+          buttonColor = Colors.amber;
+          break;
+        default:
+          if (isOngoing) {
+            displayIcon = Icons.access_time;
+            showButton = true;
+          } else {
+            switch (treatment.treatmentId) {
+              case 'CBTtherapy':
+                displayIcon = Icons.sync_alt;
+                break;
+              case 'DeepBreathing':
+                displayIcon = Icons.self_improvement;
+                break;
+              default:
+                displayIcon = Icons.edit_note;
+            }
+          }
       }
     } else {
       displayIcon = icon ?? Icons.help_outline;
@@ -208,10 +227,7 @@ class _HomePageContent extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Icon(displayIcon,
-              color: treatment?.status == 'completed'
-                  ? Colors.greenAccent
-                  : theme.colorScheme.primary),
+          Icon(displayIcon, color: iconColor),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -240,58 +256,57 @@ class _HomePageContent extends StatelessWidget {
               ],
             ),
           ),
-          if (isOngoing)
+          if (treatment != null &&
+              (showButton || isOngoing) &&
+              treatment.status != 'rejected')
             Container(
-                margin: const EdgeInsets.only(left: 8),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.primary,
-                  borderRadius: BorderRadius.circular(20),
+              margin: const EdgeInsets.only(left: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: buttonColor,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: TextButton(
+                onPressed: () {
+                  final sessionId = treatment.userTreatmentId;
+                  if (treatment.treatmentId == "CBTtherapy") {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => CBTTherapyPage(
+                          userTreatmentId: sessionId,
+                          treatmentId: treatment.treatmentId,
+                        ),
+                      ),
+                    );
+                  } else if (treatment.treatmentId == 'DeepBreathing') {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => DeepBreathingPage(
+                          userTreatmentId: sessionId,
+                          treatmentId: treatment.treatmentId,
+                        ),
+                      ),
+                    );
+                  }
+                  log("Session ID: $sessionId, Treatment: ${treatment.treatmentId}, Emotion: ${treatment.emotion}");
+                },
+                style: TextButton.styleFrom(
+                  padding:
+                      const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+                  minimumSize: const Size(0, 0),
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
-                child: TextButton(
-                  onPressed: () {
-                    if (treatment != null) {
-                      final sessionId = treatment.userTreatmentId;
-                      // In HomePage._buildSessionCard method
-                      if (treatment.treatmentId == "CBTtherapy") {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => CBTTherapyPage(
-                              userTreatmentId: treatment.userTreatmentId,
-                              treatmentId: treatment.treatmentId,
-                            ),
-                          ),
-                        );
-                      } else if (treatment.treatmentId == 'DeepBreathing') {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => DeepBreathingPage(
-                              userTreatmentId: treatment.userTreatmentId,
-                              treatmentId: treatment.treatmentId,
-                            ),
-                          ),
-                        );
-                      }
-                      log("Session ID: $sessionId, Treatment: ${treatment.treatmentId}, Emotion: ${treatment.emotion}");
-                    }
-                  },
-                  style: TextButton.styleFrom(
-                    padding:
-                        const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
-                    minimumSize: const Size(0, 0),
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                child: Text(
+                  buttonText,
+                  style: TextStyle(
+                    color: theme.colorScheme.onPrimary,
+                    fontWeight: FontWeight.bold,
                   ),
-                  child: Text(
-                    'استئناف',
-                    style: TextStyle(
-                      color: theme.colorScheme.onPrimary,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                )),
+                ),
+              ),
+            ),
         ],
       ),
     );
