@@ -6,7 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:kawamen/core/utils/Loadingscreen.dart';
 import 'package:kawamen/core/utils/theme/ThemedScaffold.dart';
 import 'package:kawamen/features/Dashboard/bloc/dashboard_bloc.dart';
-import 'package:kawamen/features/Dashboard/bloc/treatments_boxes_bloc.dart';
+import 'package:kawamen/features/Dashboard/bloc/treatmentsDashboard_bloc.dart';
 import 'package:kawamen/features/Dashboard/repository/chart.dart';
 import 'package:kawamen/features/Dashboard/screen/treatment_progress_screen.dart';
 import 'package:kawamen/features/Dashboard/screen/treatment_boxes_screen.dart';
@@ -41,8 +41,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return BlocProvider(
-      create: (context) => DashboardBloc()..add(FetchDashboard()),
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(
+          create: (context) => DashboardBloc()..add(FetchDashboard()),
+        ),
+        BlocProvider(
+          create: (context) => TreatmentBloc()..add(FetchTreatmentData()),
+        ),
+      ],
       child: Builder(
           builder: (context) => ThemedScaffold(
               appBar: AppBar(
