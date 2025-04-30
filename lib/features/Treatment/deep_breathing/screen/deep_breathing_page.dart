@@ -573,6 +573,8 @@ class _DeepBreathingViewState extends State<_DeepBreathingView>
                             const SizedBox(height: 40),
 
                             // Play/Pause Button
+
+                            // Play/Pause Button with descriptive text inside
                             GestureDetector(
                               onTap: () {
                                 if (state.isPlaying) {
@@ -606,25 +608,41 @@ class _DeepBreathingViewState extends State<_DeepBreathingView>
                                 }
                               },
                               child: Container(
-                                width: 64,
-                                height: 64,
+                                width: 200,
+                                height: 50,
                                 decoration: BoxDecoration(
                                   color: colorScheme.secondary,
-                                  borderRadius: BorderRadius.circular(32),
+                                  borderRadius: BorderRadius.circular(15),
                                 ),
-                                child: Icon(
-                                  state.isPlaying
-                                      ? Icons.pause
-                                      : Icons.play_arrow,
-                                  color: colorScheme.onSecondary,
-                                  size: 32,
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      state.isPlaying
+                                          ? Icons.pause
+                                          : Icons.play_arrow,
+                                      color: colorScheme.onSecondary,
+                                      size: 32,
+                                    ),
+                                    const SizedBox(width: 10),
+                                    Text(
+                                      state.isPlaying
+                                          ? 'اضغط للإيقاف المؤقت'
+                                          : 'اضغط لبدء العد التنازلي',
+                                      style: TextStyle(
+                                        color: colorScheme.onSecondary,
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
                             ),
 
                             const SizedBox(height: 24),
 
-                            // Total exercise time countdown display
+                            // Total exercise time countdown display with descriptive text inside
                             Container(
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 20, vertical: 10),
@@ -635,22 +653,34 @@ class _DeepBreathingViewState extends State<_DeepBreathingView>
                                 border: Border.all(
                                     color: colorScheme.secondary, width: 1),
                               ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
+                              child: Column(
                                 children: [
-                                  Icon(
-                                    Icons.timer,
-                                    color: colorScheme.secondary,
-                                    size: 24,
-                                  ),
-                                  const SizedBox(width: 10),
                                   Text(
-                                    formatTime(state.totalExerciseSeconds),
+                                    'الوقت المتبقي للجلسة',
                                     style: TextStyle(
                                       color: theme.colorScheme.onBackground,
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16,
                                     ),
+                                  ),
+                                  const SizedBox(height: 5),
+                                  Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        Icons.timer,
+                                        color: colorScheme.secondary,
+                                        size: 24,
+                                      ),
+                                      const SizedBox(width: 10),
+                                      Text(
+                                        formatTime(state.totalExerciseSeconds),
+                                        style: TextStyle(
+                                          color: theme.colorScheme.onBackground,
+                                          fontSize: 20,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ],
                               ),

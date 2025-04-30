@@ -13,43 +13,51 @@ class CBTTherapyPage extends StatelessWidget {
       {Key? key, this.userTreatmentId, this.treatmentId = 'CBTtherapy'})
       : super(key: key);
 
-@override
+  @override
   Widget build(BuildContext context) {
     // Extract parameters from route arguments if they exist
-    final Map<String, dynamic>? args = 
+    final Map<String, dynamic>? args =
         ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
-    
+
     // Use route arguments if available, otherwise use constructor parameters
     final String? routeTreatmentId = args?['treatmentId'] as String?;
     final String? routeUserTreatmentId = args?['userTreatmentId'] as String?;
-    
+
     // Print debug information
-    print('CBTTherapyPage BUILD - Constructor userTreatmentId: $userTreatmentId');
-    print('CBTTherapyPage BUILD - Route userTreatmentId: $routeUserTreatmentId');
-    
+    print(
+        'CBTTherapyPage BUILD - Constructor userTreatmentId: $userTreatmentId');
+    print(
+        'CBTTherapyPage BUILD - Route userTreatmentId: $routeUserTreatmentId');
+
     // Prioritize route parameters over constructor parameters
     final String? effectiveTreatmentId = routeTreatmentId ?? treatmentId;
-    final String? effectiveUserTreatmentId = routeUserTreatmentId ?? userTreatmentId;
-    
-    print('CBTTherapyPage BUILD - Effective userTreatmentId: $effectiveUserTreatmentId');
-    
+    final String? effectiveUserTreatmentId =
+        routeUserTreatmentId ?? userTreatmentId;
+
+    print(
+        'CBTTherapyPage BUILD - Effective userTreatmentId: $effectiveUserTreatmentId');
+
     return BlocProvider(
       create: (_) {
         final bloc = CBTTherapyBloc();
-        
+
         // If we have a user treatment ID, load it immediately
-        if (effectiveUserTreatmentId != null && effectiveUserTreatmentId.isNotEmpty) {
-          print('CBTTherapyPage - Loading existing treatment: $effectiveUserTreatmentId');
+        if (effectiveUserTreatmentId != null &&
+            effectiveUserTreatmentId.isNotEmpty) {
+          print(
+              'CBTTherapyPage - Loading existing treatment: $effectiveUserTreatmentId');
           bloc.add(LoadUserCBTTreatmentEvent(
             userTreatmentId: effectiveUserTreatmentId,
             treatmentId: effectiveTreatmentId ?? 'CBTtherapy',
           ));
         } else {
           // Otherwise just load the treatment data
-          print('CBTTherapyPage - No userTreatmentId, loading template data only');
-          bloc.add(LoadCBTDataEvent(treatmentId: effectiveTreatmentId ?? 'CBTtherapy'));
+          print(
+              'CBTTherapyPage - No userTreatmentId, loading template data only');
+          bloc.add(LoadCBTDataEvent(
+              treatmentId: effectiveTreatmentId ?? 'CBTtherapy'));
         }
-        
+
         return bloc;
       },
       child: _CBTTherapyView(
@@ -388,7 +396,7 @@ class _CBTTherapyViewState extends State<_CBTTherapyView>
                                 color: theme.colorScheme.onBackground,
                                 fontWeight: FontWeight.bold,
                                 fontSize:
-                                    screenWidth < 360 ? 18 : screenWidth * 0.06,
+                                    screenWidth < 360 ? 18 : screenWidth * 0.05,
                               ),
                               textDirection: TextDirection.rtl,
                             );
