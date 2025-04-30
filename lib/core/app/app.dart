@@ -91,7 +91,7 @@ class _AppState extends State<App> with WidgetsBindingObserver {
           home: BlocBuilder<AuthBloc, AuthState>(
             builder: (context, state) {
               if (state is AuthSuccess) {
-                return const NotificationTestPage();
+                return const MainNavigator();
               } else {
                 return const LoginPage();
               }

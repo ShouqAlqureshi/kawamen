@@ -49,7 +49,14 @@ class NotificationAccepted extends NotificationEvent {
   List<Object?> get props => [emotion, emotionId];
 }
 
-class NotificationRejected extends NotificationEvent {}
+class NotificationRejected extends NotificationEvent {
+  final String emotionId; // Added to track which notification was rejected
+
+  const NotificationRejected(this.emotionId);
+
+  @override
+  List<Object?> get props => [emotionId];
+}
 
 class NotificationPostponed extends NotificationEvent {
   final String emotion;
@@ -107,11 +114,23 @@ class NavigateToTreatment extends NotificationState {
   List<Object> get props => [emotion, emotionId, userTreatmentId];
 }
 
+class NotificationCancelled extends NotificationState {
+  final String action; // 'rejected' or 'postponed'
+
+  const NotificationCancelled(this.action);
+
+  @override
+  List<Object> get props => [action];
+}
+
 // BLoC
 class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
   final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin;
   final FirebaseMessaging firebaseMessaging;
   final GlobalKey<NavigatorState> navigatorKey;
+
+  // Track current notification ID
+  int _currentNotificationId = 0;
 
   final Map<String, String> _emotionTreatments = {
     'anger':
@@ -149,10 +168,273 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
     on<NotificationPostponed>(_onNotificationPostponed);
     on<UpdateTreatmentStatus>(_onUpdateTreatmentStatus);
   }
+  Future<void> _showNotification(
+      String emotion, String emotionId, double intensity) async {
+    // Get Arabic emotion name
+    String emotionArabic =
+        _emotionNamesArabic[emotion.toLowerCase()] ?? 'مشاعر';
+
+    // Get treatment text for this emotion
+    String treatmentText = _emotionTreatments[emotion.toLowerCase()] ??
+        'لدينا اقتراحات لمساعدتك مع مشاعرك الحالية.';
+
+    // Create non-const instance to allow setting all properties
+    AndroidNotificationDetails androidPlatformChannelSpecifics =
+        AndroidNotificationDetails(
+      'emotion_channel',
+      'Emotion Notifications',
+      channelDescription: 'Notifications for detected emotions',
+      importance: Importance.max,
+      priority: Priority.high,
+      ongoing: true, // Make notification persistent
+      autoCancel: false, // Prevent auto-cancellation
+      fullScreenIntent: true, // Make sure user sees it
+      category: AndroidNotificationCategory
+          .reminder, // Use enum type instead of string
+      actions: const <AndroidNotificationAction>[
+        AndroidNotificationAction(
+          'accept',
+          'قبول',
+          showsUserInterface: true,
+        ),
+        AndroidNotificationAction(
+          'reject',
+          'رفض',
+          showsUserInterface: true, // Ensure UI interaction for reject action
+        ),
+        AndroidNotificationAction(
+          'later',
+          'لاحقاً',
+          showsUserInterface: true, // Ensure UI interaction for later action
+        ),
+      ],
+    );
+
+    NotificationDetails platformChannelSpecifics =
+        NotificationDetails(android: androidPlatformChannelSpecifics);
+
+    // Use current notification ID for tracking
+    _currentNotificationId =
+        DateTime.now().millisecondsSinceEpoch.hashCode % 100000;
+    int notificationId = _currentNotificationId;
+
+    await flutterLocalNotificationsPlugin.show(
+      notificationId,
+      'تم اكتشاف مشاعر: $emotionArabic',
+      'أنت تشعر بـ $emotionArabic... $treatmentText',
+      platformChannelSpecifics,
+      payload: 'EMOTION|$emotion|$emotionId|$intensity',
+    );
+  }
+
+  FutureOr<void> _onInitializeNotifications(
+      InitializeNotifications event, Emitter<NotificationState> emit) async {
+    const AndroidInitializationSettings initializationSettingsAndroid =
+        AndroidInitializationSettings('@mipmap/ic_launcher');
+
+    final InitializationSettings initializationSettings =
+        const InitializationSettings(
+      android: initializationSettingsAndroid,
+    );
+
+    await flutterLocalNotificationsPlugin.initialize(
+      initializationSettings,
+      onDidReceiveNotificationResponse: (NotificationResponse response) async {
+        final payload = response.payload;
+        if (payload != null) {
+          final parts = payload.split('|');
+          if (parts.length >= 3) {
+            final action = parts[0];
+            final emotion = parts[1];
+            final emotionId = parts[2];
+            final intensity =
+                parts.length >= 4 ? double.tryParse(parts[3]) ?? 0.0 : 0.0;
+
+            if (action == 'EMOTION') {
+              // Process notification response based on action ID
+              if (response.actionId == 'accept') {
+                print('Action: accept for emotion $emotion, $emotionId');
+                add(NotificationAccepted(emotion, emotionId));
+              } else if (response.actionId == 'reject') {
+                print('Action: reject for emotion $emotion, $emotionId');
+                add(NotificationRejected(emotionId));
+              } else if (response.actionId == 'later') {
+                print('Action: later for emotion $emotion, $emotionId');
+                add(NotificationPostponed(emotion, emotionId, intensity));
+              } else {
+                // Handle tap on notification body (default to accept)
+                print('Notification tapped (default action)');
+                add(NotificationAccepted(emotion, emotionId));
+              }
+            }
+          }
+        }
+      },
+    );
+
+    // Configure notification channel for Android
+    const AndroidNotificationChannel channel = AndroidNotificationChannel(
+      'emotion_channel',
+      'Emotion Notifications',
+      description: 'Notifications for detected emotions',
+      importance: Importance.max,
+      playSound: true,
+      enableVibration: true,
+      showBadge: true,
+    );
+
+    // Create the notification channel for Android 8.0+
+    await flutterLocalNotificationsPlugin
+        .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>()
+        ?.createNotificationChannel(channel);
+
+    // Request permissions
+    await _requestNotificationPermissions();
+
+    // Handle notification when app is in foreground
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+      final data = message.data;
+      if (data.containsKey('emotion') && data.containsKey('emotionId')) {
+        final emotion = data['emotion'] as String;
+        final emotionId = data['emotionId'] as String;
+        final intensity = double.tryParse(data['intensity'] ?? '0.0') ?? 0.0;
+
+        add(ShowEmotionNotification(emotion, intensity, emotionId));
+      }
+    });
+
+    emit(NotificationReady());
+  }
 
   Future<bool> _requestNotificationPermissions() async {
-    final settings = await firebaseMessaging.requestPermission();
+    // Request notification permissions
+    final settings = await firebaseMessaging.requestPermission(
+      alert: true,
+      badge: true,
+      sound: true,
+      provisional: false,
+      criticalAlert: true, // Request critical alert permission
+      announcement: true,
+    );
+
     return settings.authorizationStatus == AuthorizationStatus.authorized;
+  }
+
+  // Fixed rejection handler with proper document creation
+  FutureOr<void> _onNotificationRejected(
+      NotificationRejected event, Emitter<NotificationState> emit) async {
+    try {
+      print('Notification rejected for emotionId: ${event.emotionId}');
+
+      // First, update the database
+      final user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        // Get the emotion document to access the emotion type
+        final emotionDocRef = FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .collection('emotionalData')
+            .doc(event.emotionId);
+
+        final emotionDoc = await emotionDocRef.get();
+        if (!emotionDoc.exists) {
+          print('Error: Emotion document not found');
+          return;
+        }
+
+        final emotion = emotionDoc.data()?['emotion'] as String? ?? 'unknown';
+
+        // Create treatment document with 'rejected' status
+        final userTreatmentId =
+            await _createTreatmentDocument(emotion, 'rejected');
+        print('Created rejected treatment document: $userTreatmentId');
+
+        // Update the emotion document with a reference to the treatment
+        await emotionDocRef.update({
+          'userTreatmentId': userTreatmentId,
+          'treatmentStatus': 'rejected',
+        });
+
+        // Now cancel the notification
+        await flutterLocalNotificationsPlugin.cancel(_currentNotificationId);
+
+        // Emit states
+        emit(TreatmentStatusUpdated(event.emotionId, 'rejected',
+            userTreatmentId: userTreatmentId));
+        emit(NotificationCancelled('rejected'));
+        emit(NotificationReady());
+      } else {
+        print('Error: User not authenticated');
+        // Still cancel notification even if there's an auth issue
+        await flutterLocalNotificationsPlugin.cancel(_currentNotificationId);
+        emit(NotificationCancelled('rejected'));
+        emit(NotificationReady());
+      }
+    } catch (e) {
+      print('Error rejecting notification: $e');
+      // Still cancel notification even if there's an error
+      await flutterLocalNotificationsPlugin.cancel(_currentNotificationId);
+      emit(NotificationCancelled('rejected'));
+      emit(NotificationReady());
+    }
+  }
+
+  // Fixed postpone handler with proper document creation
+  FutureOr<void> _onNotificationPostponed(
+      NotificationPostponed event, Emitter<NotificationState> emit) async {
+    try {
+      print('Notification postponed for ${event.emotion}, ${event.emotionId}');
+
+      // First, update the database
+      final user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        // Get the emotion document
+        final emotionDocRef = FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .collection('emotionalData')
+            .doc(event.emotionId);
+
+        // Create treatment document with 'pending' status
+        final userTreatmentId =
+            await _createTreatmentDocument(event.emotion, 'pending');
+        print('Created pending treatment document: $userTreatmentId');
+
+        // Update the emotion document with a reference to the treatment
+        await emotionDocRef.update({
+          'userTreatmentId': userTreatmentId,
+          'treatmentStatus': 'pending',
+        });
+
+        // Now cancel the notification
+        await flutterLocalNotificationsPlugin.cancel(_currentNotificationId);
+
+        // Emit states
+        emit(TreatmentStatusUpdated(event.emotionId, 'pending',
+            userTreatmentId: userTreatmentId));
+        emit(NotificationCancelled('postponed'));
+        emit(NotificationReady());
+
+        // After 30 minutes, show the notification again
+        await Future.delayed(const Duration(minutes: 30));
+        print('30 minutes passed, showing notification again');
+        add(ShowEmotionNotification(
+            event.emotion, event.intensity, event.emotionId));
+      } else {
+        print('Error: User not authenticated');
+        // Still cancel notification even if there's an auth issue
+        await flutterLocalNotificationsPlugin.cancel(_currentNotificationId);
+        emit(NotificationCancelled('postponed'));
+        emit(NotificationReady());
+      }
+    } catch (e) {
+      print('Error postponing notification: $e');
+      // Still cancel notification even if there's an error
+      await flutterLocalNotificationsPlugin.cancel(_currentNotificationId);
+      emit(NotificationCancelled('postponed'));
+      emit(NotificationReady());
+    }
   }
 
   // Create a treatment document and return the treatment ID
@@ -214,7 +496,8 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
         // Update the emotion document with a reference to the treatment
         await emotionDocRef.update({
           'userTreatmentId': userTreatmentId,
-          // We don't need treatmentStatus here anymore, as it will be in the treatment document
+          'treatmentStatus':
+              event.status, // Keep this for backward compatibility
         });
 
         emit(TreatmentStatusUpdated(event.emotionId, event.status,
@@ -271,70 +554,6 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
     );
   }
 
-  FutureOr<void> _onInitializeNotifications(
-      InitializeNotifications event, Emitter<NotificationState> emit) async {
-    const AndroidInitializationSettings initializationSettingsAndroid =
-        AndroidInitializationSettings('@mipmap/ic_launcher');
-
-    final InitializationSettings initializationSettings =
-        const InitializationSettings(
-      android: initializationSettingsAndroid,
-    );
-
-    await flutterLocalNotificationsPlugin.initialize(
-      initializationSettings,
-      onDidReceiveNotificationResponse: (NotificationResponse response) {
-        final payload = response.payload;
-        if (payload != null) {
-          final parts = payload.split('|');
-          if (parts.length >= 3) {
-            final action = parts[0];
-            final emotion = parts[1];
-            final emotionId = parts[2];
-            final intensity =
-                parts.length >= 4 ? double.tryParse(parts[3]) ?? 0.0 : 0.0;
-
-            if (action == 'EMOTION') {
-              // Process notification response based on action ID
-              if (response.actionId == 'accept') {
-                add(NotificationAccepted(emotion, emotionId));
-              } else if (response.actionId == 'reject') {
-                add(NotificationRejected());
-              } else if (response.actionId == 'later') {
-                add(NotificationPostponed(emotion, emotionId, intensity));
-              } else {
-                // Handle tap on notification body (no specific action)
-                // Default to showing the notification
-                add(ShowEmotionNotification(emotion, intensity, emotionId));
-              }
-            }
-          }
-        }
-      },
-    );
-
-    // Request permissions
-    await firebaseMessaging.requestPermission(
-      alert: true,
-      badge: true,
-      sound: true,
-    );
-
-    // Handle notification when app is in foreground
-    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      final data = message.data;
-      if (data.containsKey('emotion') && data.containsKey('emotionId')) {
-        final emotion = data['emotion'] as String;
-        final emotionId = data['emotionId'] as String;
-        final intensity = double.tryParse(data['intensity'] ?? '0.0') ?? 0.0;
-
-        add(ShowEmotionNotification(emotion, intensity, emotionId));
-      }
-    });
-
-    emit(NotificationReady());
-  }
-
   FutureOr<void> _onShowEmotionNotification(
       ShowEmotionNotification event, Emitter<NotificationState> emit) async {
     await _showNotification(event.emotion, event.emotionId, event.intensity);
@@ -364,7 +583,7 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
     if (action == 'accept') {
       add(NotificationAccepted(emotion, emotionId));
     } else if (action == 'reject') {
-      add(NotificationRejected());
+      add(NotificationRejected(emotionId));
     } else if (action == 'later') {
       add(NotificationPostponed(emotion, emotionId, intensity));
     }
@@ -377,85 +596,10 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
 
   FutureOr<void> _onNotificationAccepted(
       NotificationAccepted event, Emitter<NotificationState> emit) {
-    flutterLocalNotificationsPlugin.cancel(0);
+    // Cancel notification first
+    flutterLocalNotificationsPlugin.cancel(_currentNotificationId);
     print('Notification accepted for ${event.emotion}, ${event.emotionId}');
     add(UpdateTreatmentStatus(event.emotionId, 'accepted'));
-  }
-
-  FutureOr<void> _onNotificationRejected(
-      NotificationRejected event, Emitter<NotificationState> emit) async {
-    // Cancel the notification first
-    flutterLocalNotificationsPlugin.cancel(0);
-
-    // If the current state is NotificationShowing, use that emotionId
-    if (state is NotificationShowing) {
-      final currentState = state as NotificationShowing;
-      add(UpdateTreatmentStatus(currentState.emotionId, 'rejected'));
-    }
-
-    emit(NotificationReady());
-  }
-
-  FutureOr<void> _onNotificationPostponed(
-      NotificationPostponed event, Emitter<NotificationState> emit) async {
-    // Cancel the notification first
-    flutterLocalNotificationsPlugin.cancel(0);
-
-    // Create a treatment document with 'pending' status
-    add(UpdateTreatmentStatus(event.emotionId, 'pending'));
-
-    // After 30 minutes, show the notification again
-    await Future.delayed(const Duration(minutes: 30));
-    add(ShowEmotionNotification(
-        event.emotion, event.intensity, event.emotionId));
-  }
-
-  Future<void> _showNotification(
-      String emotion, String emotionId, double intensity) async {
-    // Get Arabic emotion name
-    String emotionArabic =
-        _emotionNamesArabic[emotion.toLowerCase()] ?? 'مشاعر';
-
-    // Get treatment text for this emotion
-    String treatmentText = _emotionTreatments[emotion.toLowerCase()] ??
-        'لدينا اقتراحات لمساعدتك مع مشاعرك الحالية.';
-
-    AndroidNotificationDetails androidPlatformChannelSpecifics =
-        const AndroidNotificationDetails(
-      'emotion_channel',
-      'Emotion Notifications',
-      channelDescription: 'Notifications for detected emotions',
-      importance: Importance.max,
-      priority: Priority.high,
-      ongoing: true,
-      autoCancel: false,
-      actions: <AndroidNotificationAction>[
-        AndroidNotificationAction(
-          'accept',
-          'قبول',
-          showsUserInterface: true,
-        ),
-        AndroidNotificationAction(
-          'reject',
-          'رفض',
-        ),
-        AndroidNotificationAction(
-          'later',
-          'لاحقاً',
-        ),
-      ],
-    );
-
-    NotificationDetails platformChannelSpecifics =
-        NotificationDetails(android: androidPlatformChannelSpecifics);
-
-    await flutterLocalNotificationsPlugin.show(
-      0,
-      'تم اكتشاف مشاعر: $emotionArabic',
-      'أنت تشعر بـ $emotionArabic... $treatmentText',
-      platformChannelSpecifics,
-      payload: 'EMOTION|$emotion|$emotionId|$intensity',
-    );
   }
 }
 
@@ -536,35 +680,40 @@ class InAppNotification extends StatelessWidget {
     String treatmentText = _emotionTreatments[emotion.toLowerCase()] ??
         'لدينا اقتراحات لمساعدتك مع مشاعرك الحالية.';
 
-    return AlertDialog(
-      title: Text('تم اكتشاف مشاعر: $emotionArabic'),
-      content: Text('أنت تشعر بـ $emotionArabic... $treatmentText'),
-      actions: [
-        TextButton(
-          onPressed: () {
-            Navigator.of(context).pop(); // Close the dialog
-            bloc.handleInAppNotificationResponse(
-                'accept', emotion, emotionId, intensity);
-          },
-          child: const Text('قبول'),
-        ),
-        TextButton(
-          onPressed: () {
-            Navigator.of(context).pop(); // Close the dialog
-            bloc.handleInAppNotificationResponse(
-                'reject', emotion, emotionId, intensity);
-          },
-          child: const Text('رفض'),
-        ),
-        TextButton(
-          onPressed: () {
-            Navigator.of(context).pop(); // Close the dialog
-            bloc.handleInAppNotificationResponse(
-                'later', emotion, emotionId, intensity);
-          },
-          child: const Text('لاحقاً'),
-        ),
-      ],
+    return WillPopScope(
+      // Prevent dialog from being dismissed by back button
+      onWillPop: () async => false,
+      child: AlertDialog(
+        title: Text('تم اكتشاف مشاعر: $emotionArabic'),
+        content: Text('أنت تشعر بـ $emotionArabic... $treatmentText'),
+        // Disable the close button
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop(); // Close the dialog
+              bloc.handleInAppNotificationResponse(
+                  'accept', emotion, emotionId, intensity);
+            },
+            child: const Text('قبول'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop(); // Close the dialog
+              bloc.handleInAppNotificationResponse(
+                  'reject', emotion, emotionId, intensity);
+            },
+            child: const Text('رفض'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop(); // Close the dialog
+              bloc.handleInAppNotificationResponse(
+                  'later', emotion, emotionId, intensity);
+            },
+            child: const Text('لاحقاً'),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -582,7 +731,9 @@ class CombinedNotificationListener extends StatelessWidget {
     return BlocListener<NotificationBloc, NotificationState>(
       bloc: NotificationService().bloc,
       listenWhen: (previous, current) =>
-          current is NavigateToTreatment || current is NotificationShowing,
+          current is NavigateToTreatment ||
+          current is NotificationShowing ||
+          current is NotificationCancelled,
       listener: (context, state) {
         if (state is NavigateToTreatment) {
           print(
@@ -595,14 +746,26 @@ class CombinedNotificationListener extends StatelessWidget {
               'CombinedListener: NotificationShowing received: ${state.emotion}');
 
           // Show an in-app dialog instead of a system notification
+          // with barrierDismissible set to false to prevent tapping outside to dismiss
           showDialog(
             context: context,
+            barrierDismissible: false,
             builder: (dialogContext) => InAppNotification(
               emotion: state.emotion,
               emotionId: state.emotionId,
-              intensity:
-                  0.0, // You might want to store intensity in NotificationShowing state
+              intensity: 0.0,
               bloc: NotificationService().bloc,
+            ),
+          );
+        } else if (state is NotificationCancelled) {
+          print(
+              'CombinedListener: Notification cancelled with action: ${state.action}');
+          // You could show a brief confirmation message here if desired
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                  'تم ${state.action == 'rejected' ? 'رفض' : 'تأجيل'} التنبيه'),
+              duration: const Duration(seconds: 2),
             ),
           );
         }
