@@ -75,9 +75,26 @@ dev_dependencies:
   flutter_lints: ^4.0.0
   build_runner: ^2.4.6
   freezed: 3.0.0-0.0.dev
+  flutter_launcher_icons: ^0.13.1  # Use the latest version
+
+
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
-
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: true
+  image_path: "lib/core/assets/icon/icon.png" # Your current icon path
+  min_sdk_android: 21
+  # For Android 8.0+ devices (Adaptive Icons)
+  adaptive_icon_background: "#171619" # Black background
+  adaptive_icon_foreground: "lib/core/assets/icon/icon_foreground.png" # You'll need to create this
+  remove_alpha_ios: true # This helps ensure iOS icon also has full black background
+  web:
+    generate: false
+  windows:
+    generate: false
+  macos:
+    generate: false
 # The following section is specific to Flutter packages.
 flutter:
   # The following line ensures that the Material Icons font is
@@ -89,6 +106,8 @@ flutter:
   assets:
     - lib/core/assets/images/
     - lib/core/assets/animations/
+    - lib/core/assets/icon/
+
     - .env
 
   # An image asset can refer to one or more resolution-specific "variants", see
