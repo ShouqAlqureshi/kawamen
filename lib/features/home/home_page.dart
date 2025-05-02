@@ -211,6 +211,13 @@ class _HomePageContent extends StatelessWidget {
           buttonText = 'بدء';
           buttonColor = Colors.amber;
           break;
+        case 'accepted':
+          displayIcon = Icons.hourglass_empty;
+          iconColor = Colors.amber;
+          showButton = true;
+          buttonText = 'بدء';
+          buttonColor = Colors.amber;
+          break;
         default:
           if (isOngoing) {
             displayIcon = Icons.access_time;
