@@ -273,7 +273,15 @@ class _HomePageContent extends StatelessWidget {
                               isDateOld ? FontWeight.bold : FontWeight.normal,
                         ),
                       ),
-                    if (treatment != null) const SizedBox(width: 8),
+                    if (treatment != null) const SizedBox(width: 4),
+                    if (treatment != null)
+                      Text(
+                        '•',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurface.withOpacity(0.7),
+                        ),
+                      ),
+                    if (treatment != null) const SizedBox(width: 4),
                     Text(
                       _getEmotionText(displayLabel),
                       textAlign: TextAlign.right,
