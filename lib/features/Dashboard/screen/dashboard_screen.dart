@@ -31,12 +31,55 @@ class _DashboardScreenState extends State<DashboardScreen> {
     7: 0
   };
   final Map<int, int> sadEmotions = {1: 1, 2: 1, 3: 3, 4: 0, 5: 4, 6: 2, 7: 1};
+
+  // Add screenshot mode flag
+  bool _isCapturingScreenshot = false;
+
+  final GlobalKey _boundaryKey = GlobalKey();
+  final ScrollController _scrollController = ScrollController();
+
   @override
   void initState() {
     super.initState();
   }
 
-  final GlobalKey _boundaryKey = GlobalKey();
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  Future<void> captureAndShareDashboard(BuildContext context) async {
+    try {
+      final DashboardBloc dashboardBloc = context.read<DashboardBloc>();
+
+      // 1. First, scroll to top to ensure we capture everything
+      if (_scrollController.hasClients) {
+        _scrollController.jumpTo(0);
+      }
+
+      // 2. Temporarily modify layout for capturing
+      setState(() {
+        _isCapturingScreenshot = true;
+      });
+
+      // 3. Wait for the layout to rebuild
+      await Future.delayed(const Duration(milliseconds: 300));
+
+      // 4. Capture the screenshot
+      dashboardBloc.add(CaptureScreenshot(_boundaryKey, showPreview: true));
+
+      // 5. Reset layout after capturing
+      setState(() {
+        _isCapturingScreenshot = false;
+      });
+    } catch (e) {
+      log('Error during capture setup: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Failed to prepare screenshot')),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -113,56 +156,57 @@ class _DashboardScreenState extends State<DashboardScreen> {
     DashboardLoaded state,
   ) {
     // Calculate extra bottom padding based on bottom nav presence
-    final double extraBottomPadding = 70.0;
+    final double extraBottomPadding = _isCapturingScreenshot ? 30.0 : 30.0;
 
-    return Padding(
-      // Adjust padding - add more bottom padding to ensure content is fully visible
-      padding: EdgeInsets.fromLTRB(20.0, 20.0, 20.0, 0.0),
-      child: Stack(
-        children: <Widget>[
-          RepaintBoundary(
-            key: _boundaryKey,
-            child: RefreshIndicator(
-              onRefresh: () async {
-                // Force refresh data
-                context
-                    .read<DashboardBloc>()
-                    .add(FetchDashboard(forceRefresh: true));
+    return Stack(
+      children: [
+        // This is the main scrollable content
+        RefreshIndicator(
+          onRefresh: () async {
+            // Force refresh data
+            context
+                .read<DashboardBloc>()
+                .add(FetchDashboard(forceRefresh: true));
 
-                // Show a snackbar to inform the user
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Refreshing dashboard data...'),
-                    duration: Duration(seconds: 1),
-                  ),
-                );
+            // Show a snackbar to inform the user
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Refreshing dashboard data...'),
+                duration: Duration(seconds: 1),
+              ),
+            );
 
-                // Wait a moment to simulate network request
-                await Future.delayed(const Duration(milliseconds: 800));
-              },
-              color: Colors.greenAccent,
-              backgroundColor: const Color(0xFF2B2B2B),
-              child: SingleChildScrollView(
-                // Ensure content scrolls all the way to the bottom
-                physics: const AlwaysScrollableScrollPhysics(),
-                clipBehavior: Clip.none,
+            // Wait a moment to simulate network request
+            await Future.delayed(const Duration(milliseconds: 800));
+          },
+          color: Colors.greenAccent,
+          backgroundColor: const Color(0xFF2B2B2B),
+          child: SingleChildScrollView(
+            controller: _scrollController,
+            physics: _isCapturingScreenshot
+                ? const NeverScrollableScrollPhysics()
+                : const AlwaysScrollableScrollPhysics(),
+            child: RepaintBoundary(
+              key: _boundaryKey,
+              child: Container(
+                padding: const EdgeInsets.fromLTRB(20.0, 20.0, 20.0, 20.0),
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
-                        IconButton(
-                          onPressed: () {
-                            // Trigger the capture process
-                            context
-                                .read<DashboardBloc>()
-                                .add(CaptureScreenshot(_boundaryKey));
-                          },
-                          icon: const Icon(
-                            Icons.share,
-                            color: Colors.greenAccent,
+                        // Only show share button when not capturing
+                        if (!_isCapturingScreenshot)
+                          IconButton(
+                            onPressed: () {
+                              captureAndShareDashboard(context);
+                            },
+                            icon: const Icon(
+                              Icons.share,
+                              color: Colors.greenAccent,
+                            ),
                           ),
-                        ),
                       ],
                     ),
                     const SizedBox(height: 2),
@@ -277,15 +321,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       ),
                       child: const TreatmentProgressTracker(),
                     ),
-                    // Add extra padding at the bottom to ensure content is fully visible when scrolled
+                    // Add extra padding at the bottom to ensure content is fully visible when captured
                     SizedBox(height: extraBottomPadding),
                   ],
                 ),
               ),
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 

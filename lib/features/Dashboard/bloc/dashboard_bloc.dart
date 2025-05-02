@@ -224,7 +224,7 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
       // Share the image
       await Share.shareXFiles(
         [XFile(tempPath)],
-        text: 'Check out my Emotional Dashboard for this week!',
+        text: 'اطّلع على لوحة المشاعر الخاصة بي لهذا الأسبوع!',
       );
 
       // Delete the temporary file
@@ -241,12 +241,13 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
   }
 
   // Function to capture the widget as an image
+// Replace this method in your DashboardBloc class
   Future<Uint8List?> _captureWidget(GlobalKey boundaryKey) async {
     try {
       log('Starting widget capture...');
 
-      // Wait to ensure widget is properly built
-      await Future.delayed(const Duration(milliseconds: 300));
+      // Wait longer to ensure widget is properly built and fully rendered
+      await Future.delayed(const Duration(milliseconds: 800));
 
       // First check if the boundary key has a context and is mounted
       final BuildContext? context = boundaryKey.currentContext;
@@ -265,7 +266,7 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
       final RenderRepaintBoundary boundary = renderObject;
 
       log('Capturing image with pixel ratio 3.0');
-      // Capture the widget as an image
+      // Capture the widget as an image with higher pixel ratio for better quality
       final ui.Image image = await boundary.toImage(pixelRatio: 3.0);
       log('Image captured successfully: ${image.width}x${image.height}');
 
