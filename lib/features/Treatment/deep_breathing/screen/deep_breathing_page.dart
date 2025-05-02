@@ -325,10 +325,15 @@ class _DeepBreathingViewState extends State<_DeepBreathingView>
                             // Okay button - Now with filled style
                             ElevatedButton(
                               onPressed: () {
-                                Navigator.pushReplacement(
-                                  dialogContext,
+                                // Close the dialog first
+                                Navigator.of(dialogContext).pop();
+
+                                // Navigate to MainNavigator and clear the navigation history
+                                Navigator.of(context).pushAndRemoveUntil(
                                   MaterialPageRoute(
                                       builder: (_) => const MainNavigator()),
+                                  (route) =>
+                                      false, // This condition ensures all previous routes are removed
                                 );
                               },
                               style: ElevatedButton.styleFrom(
