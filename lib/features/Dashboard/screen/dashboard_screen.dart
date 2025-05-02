@@ -102,6 +102,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     "لوحة البيانات",
                     style: Theme.of(context).textTheme.headlineMedium,
                   ),
+                  actions: [
+                    // Added share button to AppBar
+                    Padding(
+                      padding: const EdgeInsets.only(right: 20.0),
+                      child: IconButton(
+                        onPressed: () {
+                          captureAndShareDashboard(context);
+                        },
+                        icon: const Icon(
+                          Icons.share,
+                          color: Colors.greenAccent,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
                 body: BlocConsumer<DashboardBloc, DashboardState>(
                   builder: (context, state) {
@@ -193,22 +208,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        // Only show share button when not capturing
-                        if (!_isCapturingScreenshot)
-                          IconButton(
-                            onPressed: () {
-                              captureAndShareDashboard(context);
-                            },
-                            icon: const Icon(
-                              Icons.share,
-                              color: Colors.greenAccent,
-                            ),
-                          ),
-                      ],
-                    ),
+                    // Removed the original share button row
                     const SizedBox(height: 2),
                     // Emotional trend container
                     Container(
