@@ -87,7 +87,7 @@ flutter_launcher_icons:
   min_sdk_android: 21
   # For Android 8.0+ devices (Adaptive Icons)
   adaptive_icon_background: "#171619" # Black background
-  adaptive_icon_foreground: "lib/core/assets/icon/icon_foreground.png" # You'll need to create this
+  adaptive_icon_foreground: "lib/core/assets/icon/icon.png" # You'll need to create this
   remove_alpha_ios: true # This helps ensure iOS icon also has full black background
   web:
     generate: false
