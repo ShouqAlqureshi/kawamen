@@ -30,7 +30,7 @@ class TreatmentLoaded extends TreatmentState {
   final int weeklyCompletedTreatments;
   final int weeklyTotalTreatments;
 
-  // Overall stats data
+  // Overall stats data (now also last 7 days)
   final int allTreatments;
   final int completedTreatments;
   final int acceptedTreatments;
@@ -133,14 +133,20 @@ class TreatmentBloc extends Bloc<TreatmentEvent, TreatmentState> {
       return;
     }
 
+    // Calculate the start date (7 days ago)
+    final DateTime startDate = DateTime.now().subtract(const Duration(days: 7));
+    final Timestamp startTimestamp = Timestamp.fromDate(startDate);
+
     // Cancel any existing stream
     await _treatmentStreamSubscription?.cancel();
 
     // Start a new stream on the userTreatments collection
+    // Only listen to treatments from the last 7 days
     _treatmentStreamSubscription = _firestore
         .collection('users')
         .doc(userId)
         .collection('userTreatments')
+        .where('date', isGreaterThanOrEqualTo: startTimestamp)
         .snapshots()
         .listen((snapshot) async {
       // When the stream updates, invalidate cache and fetch fresh data
@@ -168,51 +174,40 @@ class TreatmentBloc extends Bloc<TreatmentEvent, TreatmentState> {
       return null;
     }
 
-    // Fetch ALL treatments from Firestore
-    final allTreatmentsSnapshot = await _firestore
-        .collection('users')
-        .doc(userId)
-        .collection('userTreatments')
-        .get();
-
-    // Calculate weekly date range (last 7 days)
+    // Calculate the start date (7 days ago)
     final now = DateTime.now();
     final startDate = DateTime(now.year, now.month, now.day)
         .subtract(const Duration(days: 6));
-    final endDate =
-        DateTime(now.year, now.month, now.day).add(const Duration(days: 1));
+    final Timestamp startTimestamp = Timestamp.fromDate(startDate);
 
-    // Process all treatments for overall stats
-    int allTreatments = allTreatmentsSnapshot.docs.length;
+    // Only fetch treatments from the last 7 days
+    final treatmentsSnapshot = await _firestore
+        .collection('users')
+        .doc(userId)
+        .collection('userTreatments')
+        .where('date', isGreaterThanOrEqualTo: startTimestamp)
+        .get();
+
+    // Process treatments for the 7-day period
+    int allTreatments = treatmentsSnapshot.docs.length;
     int completedTreatments = 0;
     int rejectedTreatments = 0;
     int pendingTreatments = 0;
-
-    // Track weekly treatments separately
-    int weeklyTotalTreatments = 0;
     int weeklyCompletedTreatments = 0;
 
     // Process each treatment document
-    for (var doc in allTreatmentsSnapshot.docs) {
+    for (var doc in treatmentsSnapshot.docs) {
       final data = doc.data();
       final status = data['status'] as String? ?? '';
-      final date = (data['date'] as Timestamp?)?.toDate();
 
-      // Count for overall stats
+      // Count for stats
       if (status == 'completed') {
         completedTreatments++;
+        weeklyCompletedTreatments++;
       } else if (status == 'rejected') {
         rejectedTreatments++;
       } else if (status == 'pending') {
         pendingTreatments++;
-      }
-
-      // Additional counting for weekly stats
-      if (date != null && date.isAfter(startDate) && date.isBefore(endDate)) {
-        weeklyTotalTreatments++;
-        if (status == 'completed') {
-          weeklyCompletedTreatments++;
-        }
       }
     }
 
@@ -227,8 +222,8 @@ class TreatmentBloc extends Bloc<TreatmentEvent, TreatmentState> {
     remainingTreatments = remainingTreatments < 0 ? 0 : remainingTreatments;
 
     // Safely calculate weekly progress (ensures value is between 0.0 and 1.0)
-    double weeklyProgress = (weeklyTotalTreatments > 0)
-        ? (weeklyCompletedTreatments / weeklyTotalTreatments).clamp(0.0, 1.0)
+    double weeklyProgress = (allTreatments > 0)
+        ? (weeklyCompletedTreatments / allTreatments).clamp(0.0, 1.0)
         : 0.0;
     if (weeklyProgress.isNaN) {
       weeklyProgress = 0.0;
@@ -238,7 +233,7 @@ class TreatmentBloc extends Bloc<TreatmentEvent, TreatmentState> {
     return TreatmentLoaded(
       weeklyProgress: weeklyProgress,
       weeklyCompletedTreatments: weeklyCompletedTreatments,
-      weeklyTotalTreatments: weeklyTotalTreatments,
+      weeklyTotalTreatments: allTreatments,
       allTreatments: allTreatments,
       completedTreatments: completedTreatments,
       acceptedTreatments: acceptedTreatments,

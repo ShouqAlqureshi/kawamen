@@ -166,24 +166,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       ],
                     ),
                     const SizedBox(height: 2),
-                    // Treatment stats container
-                    Container(
-                      padding: const EdgeInsets.all(15),
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [
-                            Color(0xFF2B2B2B),
-                            Color.fromARGB(255, 24, 24, 24)
-                          ],
-                          begin: Alignment.bottomCenter,
-                          end: Alignment.topCenter,
-                        ),
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: Colors.transparent, width: 2),
-                      ),
-                      child: const TreatmentStatsBoxes(),
-                    ),
-                    const SizedBox(height: 20),
                     // Emotional trend container
                     Container(
                       padding: const EdgeInsets.all(15),
@@ -209,14 +191,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             Column(
                               crossAxisAlignment: CrossAxisAlignment.stretch,
                               children: <Widget>[
-                                const SizedBox(height: 37),
+                                const SizedBox(height: 10),
                                 const Text(
-                                  "المشاعر المكتشفه هاذا الاسبوع",
+                                  "المشاعر المكتشفه هذا الاسبوع",
                                   style: TextStyle(
                                     color: Colors.white,
-                                    fontSize: 16,
+                                    fontSize: 20,
                                     fontWeight: FontWeight.bold,
-                                    letterSpacing: 2,
                                   ),
                                   textAlign: TextAlign.center,
                                 ),
@@ -244,7 +225,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                     borderRadius: BorderRadius.circular(10),
                                   ),
                                   child: const Text(
-                                    'ليس لديك مشاعر مكتشفه لهاذا الاسبوع',
+                                    'ليس لديك مشاعر مكتشفه لهذا الاسبوع',
                                     style: TextStyle(
                                       color: Colors.white,
                                       fontSize: 18,
@@ -256,6 +237,23 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           ],
                         ),
                       ),
+                    ),
+                    const SizedBox(height: 20),
+                    Container(
+                      padding: const EdgeInsets.all(15),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [
+                            Color(0xFF2B2B2B),
+                            Color.fromARGB(255, 24, 24, 24)
+                          ],
+                          begin: Alignment.bottomCenter,
+                          end: Alignment.topCenter,
+                        ),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: Colors.transparent, width: 2),
+                      ),
+                      child: const TreatmentStatsBoxes(),
                     ),
                     const SizedBox(height: 20),
                     // Progress tracker container - now full width
