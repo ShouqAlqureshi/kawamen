@@ -232,7 +232,7 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
   FutureOr<void> _onInitializeNotifications(
       InitializeNotifications event, Emitter<NotificationState> emit) async {
     const AndroidInitializationSettings initializationSettingsAndroid =
-        AndroidInitializationSettings('@mipmap/ic_launcher');
+        AndroidInitializationSettings('@mipmap/launcher_icon');
 
     final InitializationSettings initializationSettings =
         const InitializationSettings(
