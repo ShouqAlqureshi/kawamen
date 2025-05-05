@@ -99,8 +99,7 @@ class EmotionDetectionBloc
 
       // Only save if the emotion is one we want to track
       if (dominantEmotion == "angry" ||
-          dominantEmotion == "sad" ||
-          dominantEmotion == "neutral") {
+          dominantEmotion == "sad" ) {
         final emotionId =
             await _saveEmotionToFirebase(dominantEmotion, emotionScores);
 
@@ -139,7 +138,7 @@ class EmotionDetectionBloc
     try {
       final user = FirebaseAuth.instance.currentUser;
       if (user == null) return null;
-      if (emotion != "angry" && emotion != "sad" && emotion != "neutral") {
+      if (emotion != "angry" && emotion != "sad") {
         print("Ignoring emotion: $emotion as it's not in our target list");
         return null; // Don't save emotions we don't care about
       }
