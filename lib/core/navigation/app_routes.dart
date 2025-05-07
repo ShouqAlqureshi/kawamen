@@ -4,6 +4,7 @@ import 'package:kawamen/features/emotion_detection/screens/emotion_test_screen.d
 import 'package:kawamen/features/login/view/login_page.dart';
 import 'package:kawamen/features/home/home_page.dart';
 import 'package:kawamen/intro_screen.dart';
+import 'package:kawamen/features/emotion_detection/screens/performance_metrics_screen.dart';
 
 import '../../features/Treatment/CBT_therapy/screen/CBT_therapy_page.dart';
 import '../../features/Treatment/deep_breathing/screen/deep_breathing_page.dart';
@@ -16,11 +17,12 @@ class AppRoutes {
   static const String home = '/home';
   static const String treatment1 = '/cbt-therapy';
   static const String treatment2 = '/deep-breathing';
+  static const String performanceMetrics = '/performance-metrics';
 
   static Route<dynamic> generateRoute(RouteSettings settings) {
     // Extract arguments if they exist
     final args = settings.arguments as Map<String, dynamic>? ?? {};
-    
+
     switch (settings.name) {
       case entry:
         return MaterialPageRoute(builder: (_) => const EntryScreen());
@@ -48,6 +50,10 @@ class AppRoutes {
             userTreatmentId: args['userTreatmentId'] as String?,
             treatmentId: args['treatmentId'] as String? ?? 'DeepBreathing',
           ),
+        );
+      case performanceMetrics:
+        return MaterialPageRoute(
+          builder: (_) => PerformanceMetricsScreen(),
         );
       default:
         return MaterialPageRoute(

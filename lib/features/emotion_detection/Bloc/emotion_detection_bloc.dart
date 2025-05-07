@@ -98,8 +98,7 @@ class EmotionDetectionBloc
       final emotionScores = await repository.getEmotionScores(result);
 
       // Only save if the emotion is one we want to track
-      if (dominantEmotion == "angry" ||
-          dominantEmotion == "sad" ) {
+      if (dominantEmotion == "angry" || dominantEmotion == "sad") {
         final emotionId =
             await _saveEmotionToFirebase(dominantEmotion, emotionScores);
 
@@ -187,11 +186,7 @@ class EmotionDetectionBloc
       final user = FirebaseAuth.instance.currentUser;
       if (user == null) return;
 
-      // Check if this emotion is already in the history queue
-      int sameEmotionCount =
-          historyQueue.countSameEmotionInHistory(event.emotion);
-
-      // Add to history queue for tracking
+      // Create emotion data for logging
       Map<String, dynamic> emotionData = {
         'emotion': event.emotion,
         'timestamp': DateTime.now(),
@@ -199,44 +194,25 @@ class EmotionDetectionBloc
         'intensity': event.intensity,
       };
 
-      // Log the emotion for tracking
+      // Log the emotion for tracking (keep this for records)
       logger.logEmotion(event.emotion, event.intensity, DateTime.now());
 
-      // If it appeared 3 times or first time, process it (send notification)
-      if (sameEmotionCount >= 2 || sameEmotionCount == 0) {
-        // Reset tracking if we reached threshold
-        if (sameEmotionCount >= 2) {
-          historyQueue.queue
-              .removeWhere((item) => item['emotion'] == event.emotion);
-        }
+      // Always add to history queue
+      historyQueue.addEmotion(emotionData);
 
-        // Add to cached queue
-        historyQueue.addEmotion(emotionData);
+      // Update treatment status to 'notified' - no more 'skipped' status
+      await _updateTreatmentStatus(event.emotionId, 'notified');
 
-        // Update treatment status to 'notified'
-        await _updateTreatmentStatus(event.emotionId, 'notified');
+      // Always send notification regardless of previous detections
+      notificationService.bloc.add(ShowEmotionNotification(
+        event.emotion,
+        event.intensity,
+        event.emotionId,
+      ));
 
-        // Send notification through your teammate's notification service
-        notificationService.bloc.add(ShowEmotionNotification(
-          event.emotion,
-          event.intensity,
-          event.emotionId,
-        ));
-
-        print(
-            "Notification sent for emotion: ${event.emotion} (ID: ${event.emotionId})");
-        emit(EmotionNotified(event.emotion, event.intensity, event.emotionId));
-      } else {
-        // Just add to history queue if it's redundant (no notification sent)
-        historyQueue.addEmotion(emotionData);
-
-        // Update treatment status to 'skipped' (duplicate)
-        await _updateTreatmentStatus(event.emotionId, 'skipped');
-
-        print(
-            "Notification skipped for emotion: ${event.emotion} (duplicate, count: ${sameEmotionCount + 1})");
-        emit(EmotionSkipped(event.emotion, sameEmotionCount + 1));
-      }
+      print(
+          "Notification sent for emotion: ${event.emotion} (ID: ${event.emotionId})");
+      emit(EmotionNotified(event.emotion, event.intensity, event.emotionId));
     } catch (e) {
       print("Error checking and notifying emotion: $e");
       emit(DetectionFailure(e.toString()));

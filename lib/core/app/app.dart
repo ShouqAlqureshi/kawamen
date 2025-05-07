@@ -22,6 +22,7 @@ import 'package:kawamen/features/registration/repository/auth_repository.dart';
 import 'package:kawamen/features/login/bloc/login_bloc.dart';
 import '../navigation/MainNavigator.dart';
 import '../services/Notification_service.dart';
+import 'package:kawamen/features/emotion_detection/screens/performance_metrics_screen.dart'; // Ensure this is the correct path
 
 class App extends StatefulWidget {
   const App({super.key});
@@ -101,6 +102,7 @@ class _AppState extends State<App> with WidgetsBindingObserver {
           routes: {
             '/deep-breathing': (context) => const DeepBreathingPage(),
             '/cbt-therapy': (context) => const CBTTherapyPage(),
+            '/performance-metrics': (context) => PerformanceMetricsScreen(),
             // other routes...
           },
         ),
