@@ -94,7 +94,6 @@ otherwise if it already fetche just copy it and send
       final prefs = await SharedPreferences.getInstance();
       final emotionDetectionToggle =
           prefs.getBool('emotionDetectionToggle') ?? false;
-      final notificationToggle = prefs.getBool('notificationToggle') ?? false;
       final microphoneToggle = prefs.getBool('microphoneToggle') ?? false;
 
       // Fetch user data from Firestore
@@ -109,11 +108,10 @@ otherwise if it already fetche just copy it and send
           emit(ToggleStatesLoaded(
             userData: userDoc,
             emotionDetectionToggle: emotionDetectionToggle,
-            notificationToggle: notificationToggle,
             microphoneToggle: microphoneToggle,
             userId: userId,
             showControlCenter:
-                keepControlCenterOpen, // Preserve the panel state
+                keepControlCenterOpen, 
           ));
         }
       }
@@ -133,18 +131,9 @@ otherwise if it already fetche just copy it and send
         final currentState = state as ToggleStatesLoaded;
         final bool keepControlCenterOpen = currentState.showControlCenter;
 
-        // Handle specific toggles
-        if (event.toggleName == 'emotionDetectionToggle') {
-          // Rest of your toggle logic here
-        } else if (event.toggleName == 'microphoneToggle') {
-          // Rest of your microphone logic here
-        }
-
         // Fetch updated toggle states but preserve showControlCenter
-        final prefs = await SharedPreferences.getInstance();
         final emotionDetectionToggle =
             prefs.getBool('emotionDetectionToggle') ?? false;
-        final notificationToggle = prefs.getBool('notificationToggle') ?? false;
         final microphoneToggle = prefs.getBool('microphoneToggle') ?? false;
 
         // Get updated user data
@@ -157,7 +146,6 @@ otherwise if it already fetche just copy it and send
             emit(ToggleStatesLoaded(
               userData: userDoc,
               emotionDetectionToggle: emotionDetectionToggle,
-              notificationToggle: notificationToggle,
               microphoneToggle: microphoneToggle,
               userId: userId,
               showControlCenter: keepControlCenterOpen, // Keep panel open

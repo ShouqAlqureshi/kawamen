@@ -62,8 +62,11 @@ class _AppState extends State<App> with WidgetsBindingObserver {
           create: (context) => LoginBloc(),
         ),
         BlocProvider(
-          create: (context) =>
-              ProfileBloc(context: context)..add(FetchToggleStates()),
+          create: (context) {
+            final profileBloc = ProfileBloc(context: context);
+            profileBloc.add(FetchToggleStates());
+            return profileBloc;
+          },
         ),
         // Remove the EmotionBloc provider
         BlocProvider<EmotionDetectionBloc>.value(value: _emotionDetectionBloc),

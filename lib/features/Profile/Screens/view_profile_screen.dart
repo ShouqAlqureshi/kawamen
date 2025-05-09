@@ -635,7 +635,6 @@ class ViewProfileScreen extends StatelessWidget {
       ),
       child: Column(
         children: [
-// In your _buildSwitchTile for emotion detection
           _buildSwitchTile(
             title: 'اكتشاف المشاعر',
             subtitle: "ايقاف هذه الخاصيه لن يسمح للتطبيق توفير اقتراحات العلاج",
