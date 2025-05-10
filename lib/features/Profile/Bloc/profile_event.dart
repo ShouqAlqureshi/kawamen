@@ -29,5 +29,6 @@ class ReauthenticationComplete extends ProfileEvent {
   ReauthenticationComplete(this.credential);
 }
 
-class ToggleControlCenter extends ProfileEvent {}  // Add this
+class ToggleControlCenter extends ProfileEvent {}  
+class InitializeEmotionDetection extends ProfileEvent{}
 

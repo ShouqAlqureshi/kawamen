@@ -32,6 +32,10 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
     on<ToggleControlCenter>(_onToggleControlCenter);
     on<Logout>(_onLogout);
     on<FetchUserInfo>(_onFetchUserInfo);
+    on<InitializeEmotionDetection>(_onInitializeEmotionDetection);
+
+    // Initialize emotion detection state when bloc is created
+    add(InitializeEmotionDetection());
   }
 /*
 this function refreshes user data it fetch and send the 
@@ -110,8 +114,7 @@ otherwise if it already fetche just copy it and send
             emotionDetectionToggle: emotionDetectionToggle,
             microphoneToggle: microphoneToggle,
             userId: userId,
-            showControlCenter:
-                keepControlCenterOpen, 
+            showControlCenter: keepControlCenterOpen,
           ));
         }
       }
@@ -292,6 +295,25 @@ otherwise if it already fetche just copy it and send
           .pushNamedAndRemoveUntil(AppRoutes.login, (route) => false);
     } catch (e) {
       emit(ProfileError('Error logging out: ${e.toString()}'));
+    }
+  }
+
+  Future<void> _onInitializeEmotionDetection(event, emit) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final emotionDetectionToggle =
+          prefs.getBool('emotionDetectionToggle') ?? false;
+      if (emotionDetectionToggle) {
+        // Check if microphone permission is granted before enabling
+        final microphoneToggle = prefs.getBool('microphoneToggle') ?? false;
+
+        if (!microphoneToggle) {
+          // If microphone is off, we can't enable emotion detection
+          await prefs.setBool('emotionDetectionToggle', false);
+        }
+      }
+    } catch (e) {
+      emit(ProfileError('Error initializing emotion detection: $e'));
     }
   }
 
