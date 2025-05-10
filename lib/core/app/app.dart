@@ -14,7 +14,7 @@ import 'package:kawamen/features/emotion_detection/Bloc/emotion_detection_bloc.d
 import 'package:kawamen/features/emotion_detection/Bloc/emotion_detection_state.dart';
 import 'package:kawamen/features/emotion_detection/repository/emotion_detection_repository.dart';
 import 'package:kawamen/features/emotion_detection/service/audio_recorder_service.dart';
-import 'package:kawamen/features/home/home_page.dart';
+import 'package:kawamen/features/home/screen/home_page.dart';
 import 'package:kawamen/features/registration/bloc/auth_bloc.dart';
 import 'package:kawamen/features/registration/bloc/auth_event.dart';
 import 'package:kawamen/features/registration/bloc/auth_state.dart';

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:convex_bottom_bar/convex_bottom_bar.dart';
 import 'package:kawamen/features/Dashboard/screen/dashboard_screen.dart';
 import 'package:kawamen/features/Profile/Screens/view_profile_screen.dart';
-import '../../features/home/home_page.dart';
+import '../../features/home/screen/home_page.dart';
 
 class MainNavigator extends StatefulWidget {
   const MainNavigator({Key? key}) : super(key: key);

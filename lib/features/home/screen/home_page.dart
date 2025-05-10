@@ -10,8 +10,8 @@ import 'package:kawamen/features/LogIn/view/login_view.dart';
 import 'package:kawamen/features/Treatment/CBT_therapy/screen/CBT_therapy_page.dart';
 import 'package:kawamen/features/Treatment/deep_breathing/screen/deep_breathing_page.dart';
 import 'package:kawamen/features/home/bloc/home_state.dart';
-import '../../core/services/Notification_service.dart';
-import 'bloc/home_bloc.dart';
+import '../../../core/services/Notification_service.dart';
+import '../bloc/home_bloc.dart';
 
 class HomePage extends StatelessWidget {
   final bool showBottomNav;
