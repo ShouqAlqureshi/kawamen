@@ -51,13 +51,28 @@ The application operates **passively** after microphone permission is granted, e
   * Secure registration, login, password reset, and profile management
 
 ---
-🖼️ Screenshots
+## 🖼️ Screenshots
 
 Below are selected screenshots that highlight the core user experience of Kawamen. 
 ![Home Screen](screenshots/home.png)
-![Suggested Treatment](screenshots/treatment_suggestion.png)
-![Treatment Session](screenshots/treatment_session.png)
 ![Dashboard](screenshots/dashboard.png)
+
+---
+
+## 🎥 Demo Videos (Treatment Lifecycle)
+
+To better demonstrate the treatment lifecycle and real user interaction flow, demo videos are provided via Google Drive links.
+
+Treatment Lifecycle Demos
+
+🎬 Deep Breathing SessionShows the full flow from emotion detection → treatment suggestion → guided deep breathing session.
+
+🔗 [Watch Video on Google Drive](https://drive.google.com/file/d/1s-OSzkd9yX2faRLbBdpguJu5Z99hlhAh/view?usp=sharing)
+
+🎬 CBT Therapy SessionDemonstrates a CBT-based treatment flow including prompts, user interaction, and session completion.
+
+🔗 [Watch Video on Google Drive](https://drive.google.com/file/d/1rwzNnzferlmA3c6Mo5uRvGDKkIW_Nh2i/view?usp=sharing)
+
 
 ---
 
